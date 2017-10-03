@@ -7,41 +7,129 @@
 #include <thread>
 #include <fstream>
 #include <chrono>
+#include <iomanip>
 using std::string;
 
-#include <baseapi.h>
-#include <allheaders.h>
+#include <tesseract/baseapi.h>
+#include <leptonica/allheaders.h>
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/times.h> 
-#include <libgen.h>
+#include <boost/program_options.hpp>
+#include <boost/date_time.hpp>
+namespace po = boost::program_options;
+using boost::program_options::value;
 
-void list_file_in_directory(std::stack<string> &stack, string folder);
-void afficher(const std::stack<string>& p);
-string get_stack_top(std::stack<string>& p);
+#include "TesseractRunner.h"
+
 void run_tesseract(std::stack<string> *files, std::size_t* total, int* current);
 
-std::mutex g_stack_mutex;
-std::mutex g_thread_mutex;
+std::mutex g_console_mutex;
+
+void ShowHelp(char** argv, po::options_description& desc)
+{
+	std::cout << "Usage:\n";
+	std::cout << argv[0] << " --help\n";
+	std::cout << argv[0] << " [options...] /folder/of/images\n";
+	std::cout << argv[0] << " [options...] --folder /folder/of/images [options...]\n";
+
+	std::cout << "\nOptions:\n";
+	std::cout << desc << "\n";
+
+	std::cout << R"V0G0N(
+Page segmentation modes:
+  0    Orientation and script detection (OSD) only.
+  1    Automatic page segmentation with OSD.
+  2    Automatic page segmentation, but no OSD, or OCR.
+  3    Fully automatic page segmentation, but no OSD. (Default)
+  4    Assume a single column of text of variable sizes.
+  5    Assume a single uniform block of vertically aligned text.
+  6    Assume a single uniform block of text.
+  7    Treat the image as a single text line.
+  8    Treat the image as a single word.
+  9    Treat the image as a single word in a circle.
+ 10    Treat the image as a single character.
+ 11    Sparse text. Find as much text as possible in no particular order.
+ 12    Sparse text with OSD.
+ 13    Raw line. Treat the image as a single text line,
+                        bypassing hacks that are Tesseract-specific.
+OCR Engine modes:
+  0    Original Tesseract only.
+  1    Neural nets LSTM only.
+  2    Tesseract + LSTM.
+  3    Default, based on what is available.
+)V0G0N";
+}
 
 int main(int argc, char* argv[])
 {
+	// oblige le buffer desortie a etre thread safe
+	std::ios_base::sync_with_stdio(true);
 	int nb_process = 2;
-	std::stack<string> files;
 
-	struct stat sb;
-	if(argc < 2 || lstat(argv[1], &sb) != 0 || !S_ISDIR(sb.st_mode))
+	boost::program_options::positional_options_description pd;
+	pd.add("folder", -1);
+
+	po::options_description desc;
+	desc.add_options()
+		("PSM,p", value<int>()->default_value(0)->value_name("NUM"), "Page Segmentation Mode")
+		("OEM,o", value<int>()->default_value(0)->value_name("NUM"), "Ocr Engine Mode")
+		("lang,l", value < std::string > ()->default_value("fra")->value_name("LANG"), "Ocr Engine Mode")
+		("help,h", "")
+		("thread,t", value<int>(), "")
+		("folder,f", value<std::string>(), "");
+
+	po::variables_map vm;
+	try
 	{
-		std::cout << "Pleaser pass a folder in the first parameter\n";
+		po::store(po::command_line_parser(argc, argv).style(
+			boost::program_options::command_line_style::allow_short | 
+			boost::program_options::command_line_style::short_allow_next | 
+			boost::program_options::command_line_style::allow_dash_for_short |
+			boost::program_options::command_line_style::allow_sticky |
+			boost::program_options::command_line_style::unix_style)
+			.options(desc).positional(pd).run(), vm);
+		po::notify(vm);
+	}
+	catch(std::exception& e)
+	{
+		std::cout << e.what() << "\n\n";
+		std::cout << "Tapez :\n";
+		std::cout << "  " << argv[0] << " -h\n";
+		std::cout << "Pour afficher l'aide\n\n";
 		return 0;
 	}
 
-	if(argc > 2)
+
+	if (vm.count("help")) {
+		ShowHelp(argv, desc);
+		return 0;
+	}
+
+	if(!vm.count("folder"))
+	{
+		std::cout << "\nVeuiller indiquer un dossier a traiter\n\n";
+
+		std::cout << "Tapez :\n";
+		std::cout << "  " << argv[0] << " -h\n";
+		std::cout << "Pour afficher l'aide\n\n";
+		return 0;
+	}
+
+
+
+	struct stat sb;
+	if(lstat(vm["folder"].as<std::string>().c_str(), &sb) != 0 || !S_ISDIR(sb.st_mode))
+	{
+		std::cout << "Le chemin "<< vm["folder"].as<std::string>() << " n'est pas un dossier\n";
+		return 0;
+	}
+
+	if(vm.count("thread"))
 	{
 		try
 		{
-			nb_process = atoi(argv[2]);
+			nb_process = vm["thread"].as<int>();
 		}
 		catch(const std::exception &e)
 		{
@@ -50,144 +138,31 @@ int main(int argc, char* argv[])
 	}
 	std::cout << "Number of thread : " << nb_process << "\n";
 
-	list_file_in_directory(files, argv[1]);
+	Docapost::IA::Tesseract::TesseractRunner tessR(
+		static_cast<tesseract::PageSegMode>(vm["PSM"].as<int>()), 
+		static_cast<tesseract::OcrEngineMode>(vm["OEM"].as<int>()),
+		vm["lang"].as<std::string>());
+	tessR.SetConsoleMutex(&g_console_mutex);
 
-	afficher(files);
+	auto start = boost::posix_time::second_clock::local_time();
+	std::cout << "Starting time : " << start << "\n";
+
+	tessR.AddFolder(vm["folder"].as<std::string>());
 	
-	auto total = files.size();
-	auto current = 0;
+	tessR.DisplayFiles();
 
-	std::vector<std::thread> threads;
-	for(int i = 0; i < nb_process; i++)
-	{
-		threads.push_back(std::thread(run_tesseract, &files, &total, &current));
-	}
+	auto startProcess = boost::posix_time::second_clock::local_time();
+	std::cout << "Processing time : " << startProcess << "\n";
+	tessR.Run(nb_process);
+	
+	tessR.Wait();
 
-	for (auto& th : threads)
-		th.join();
+	auto end = boost::posix_time::second_clock::local_time();
+
+	auto processTime = end - startProcess;
+
+	std::cout << "End time : " << end << "\n";
+	std::cout << "Elapsed : " << processTime << "\n";
 
 	return 0;
-}
-
-int id = 0;
-void run_tesseract(std::stack<string> *files, std::size_t* total, int* current)
-{
-	int t_id = id++;
-	tesseract::TessBaseAPI *api = new tesseract::TessBaseAPI();
-	api->SetVariable("debug_file", (std::string("tesseract") + std::to_string(t_id) + string(".log")).c_str());
-	int res;
-	api->SetPageSegMode(tesseract::PSM_AUTO_OSD);
-	if (res = api->Init(NULL, "fra")) {
-		fprintf(stderr, "Could not initialize tesseract.\n");
-		exit(1);
-	}
-
-	string file;
-	struct stat sb;
-	try
-	{
-		while (!(file = get_stack_top(*files)).empty())
-		{
-			g_thread_mutex.lock();
-			auto c = *current = *current+1;
-			std::cout << "Thread " << t_id << " - " << c << "/" << *total << " - " << file << "\n";
-			g_thread_mutex.unlock();
-
-			Pix *image = pixRead(file.c_str());
-			api->SetImage(image);
-			char *outText = api->GetUTF8Text();
-
-			string output_file = file.substr(0, file.find_last_of(".")) + ".txt";
-			std::ofstream output;
-			output.open(output_file, std::ofstream::trunc | std::ofstream::out);
-			output << outText;
-			output.close();
-
-			delete[] outText;
-			pixDestroy(&image);
-		}
-
-
-		g_thread_mutex.lock();
-		std::cout << "Thread " << t_id << " End\n";
-		g_thread_mutex.unlock();
-
-		api->End();
-	}
-	catch (const std::exception& e)
-	{
-		std::cout << "Thread " << t_id << " " << e.what();
-	}
-}
-
-string get_stack_top(std::stack<string>& p)
-{
-	while (true)
-	{
-		g_stack_mutex.lock();
-		if (p.empty())
-		{
-			g_stack_mutex.unlock();
-			return string();
-		}
-
-		string f = p.top();
-
-		p.pop();
-
-		g_stack_mutex.unlock();
-		return f;
-	}
-}
-
-void afficher(const std::stack<string>& p)
-{
-	std::stack<string> t = p;
-
-	std::cout << "Files : \n";
-	while (!t.empty())
-	{
-		std::cout << "\t" << t.top();
-		t.pop();
-		std::cout << "\n";
-	}
-	std::cout << "\n";
-}
-
-void list_file_in_directory(std::stack<string> &stack, string folder)
-{
-	DIR *dir;
-	struct dirent *ent;
-	struct stat sb;
-	if ((dir = opendir(folder.c_str())) != NULL) {
-		/* print all the files and directories within directory */
-		while ((ent = readdir(dir)) != NULL) {
-			if (!strcmp(ent->d_name, ".") || !strcmp(ent->d_name, ".."))
-			{
-				// do nothing (straight logic)
-			}
-			else
-			{
-				string str = folder + string(ent->d_name);
-				int ret = lstat(str.c_str(), &sb);
-				if (S_ISDIR(sb.st_mode))
-				{
-					str += "/";
-					list_file_in_directory(stack, str);
-				}
-				else
-				{
-					string file = string(ent->d_name);
-					string ext = file.substr(file.find_last_of("."));
-					if(ext == ".jpg" || ext == ".tif" || ext == ".png" || ext == ".jpeg")
-						stack.push(str);
-				}
-			}
-		}
-		closedir(dir);
-	}
-	else {
-		/* could not open directory */
-		perror("");
-	}
 }

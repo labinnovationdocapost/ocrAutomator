@@ -28,6 +28,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="TesseractRunner.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="TesseractRunner.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{f95b37cf-a719-46ca-8879-b37ae473d7ea}</ProjectGuid>
@@ -64,22 +68,23 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>E:\LinuxHeader\Tesseract;E:\LinuxHeader\Leptonica;E:\LinuxHeader;E:\LinuxHeader\bits;E:\LinuxHeader\sys;$(IncludePath)</IncludePath>
+    <IncludePath>..\Includes;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>..\Includes\Tesseract;..\Includes\Leptonica;..\Includes;..\Includes\bits;..\Includes\sys;..\Includes\*;$(IncludePath)</IncludePath>
+    <IncludePath>..\Includes;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>/usr/include/leptonica;/usr/include/tesseract;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>~/boost_1_65_1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <LibraryDependencies>tesseract;lept</LibraryDependencies>
+      <LibraryDependencies>tesseract;lept;boost_program_options;pthread</LibraryDependencies>
+      <AdditionalLibraryDirectories>~/boost_1_65_1/stage/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>/usr/include/leptonica;/usr/include/tesseract;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>tesseract;lept</LibraryDependencies>
