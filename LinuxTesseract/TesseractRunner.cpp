@@ -1,61 +1,57 @@
 #include "TesseractRunner.h"
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 int Docapost::IA::Tesseract::TesseractRunner::next_id = 0;
 
-Docapost::IA::Tesseract::TesseractRunner::TesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang) : g_console_mutex(new std::mutex()), total(0), current(0), psm(psm), oem(oem), lang(lang)
+Docapost::IA::Tesseract::TesseractRunner::TesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang) : total(0), current(0), psm(psm), oem(oem), lang(lang)
 {
 	std::cout << "Initialisation : \n  PSM=" << this->psm << "\n  OEM=" << this->oem << "\n  Lang=" << this->lang << "\n";
 }
 
-void Docapost::IA::Tesseract::TesseractRunner::AddFolder(std::string folder)
+void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(boost::filesystem::path folder)
 {
-	DIR *dir;
-	struct dirent *ent;
-	struct stat sb;
-	if ((dir = opendir(folder.c_str())) != NULL) {
-		/* print all the files and directories within directory */
-		while ((ent = readdir(dir)) != NULL) {
-			if (!strcmp(ent->d_name, ".") || !strcmp(ent->d_name, ".."))
+	if (!boost::filesystem::is_directory(folder))
+	{
+		return;
+	}
+
+	for (auto& entry : boost::make_iterator_range(boost::filesystem::directory_iterator(folder), {}))
+	{
+		boost::filesystem::path path = entry.path();
+		if (!path.filename_is_dot() && !path.filename_is_dot_dot())
+		{
+			if (boost::filesystem::is_directory(path))
 			{
-				// do nothing (straight logic)
+				this->_AddFolder(path);
 			}
 			else
 			{
-				std::string str = folder + std::string(ent->d_name);
-				int ret = lstat(str.c_str(), &sb);
-				if (S_ISDIR(sb.st_mode))
+				for (auto& extension : extensions)
 				{
-					str += "/";
-					this->AddFolder(str);
-				}
-				else
-				{
-					std::string file = std::string(ent->d_name);
-					std::string ext = file.substr(file.find_last_of("."));
-
-					for (auto& extension : extensions)
+					if (boost::iequals<string, string>(extension, path.extension().string()))
 					{
-						if (boost::iequals(extension, ext))
-						{
-							files.push(str);
-							break;
-						}
+						files.push(path.string());
+						break;
 					}
 				}
 			}
 		}
-		closedir(dir);
 	}
-	else {
-		/* could not open directory */
-		perror("");
-	}
+}
+void Docapost::IA::Tesseract::TesseractRunner::AddFolder(boost::filesystem::path folder)
+{
+	if (files.size() > 0)
+		return;
+	input = folder;
+	_AddFolder(folder);
 	total = files.size();
 }
 
 void Docapost::IA::Tesseract::TesseractRunner::Run(int nbThread)
 {
+	if (!output.empty())
+	{
+		boost::filesystem::create_directories(output);
+	}
 	for (int i = 0; i < nbThread; i++)
 	{
 		boost::shared_ptr<std::thread> ptr(new std::thread(&TesseractRunner::ThreadLoop, this));
@@ -94,10 +90,20 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop()
 			api->SetImage(image);
 			char *outText = api->GetUTF8Text();
 
+			boost::filesystem::path r_path;
+			if(output.empty())
+			{
+				r_path = boost::filesystem::change_extension(file, ".txt");
+			}
+			else
+			{
+				r_path = boost::filesystem::absolute(boost::filesystem::relative(file, input), output);
+				r_path = r_path.parent_path() / (boost::filesystem::change_extension(r_path.filename(), ".txt"));
+				boost::filesystem::create_directories(r_path.parent_path());
+			}
 
-			std::string output_file = file.substr(0, file.find_last_of(".")) + ".txt";
 			std::ofstream output;
-			output.open(output_file, std::ofstream::trunc | std::ofstream::out);
+			output.open(r_path.string(), std::ofstream::trunc | std::ofstream::out);
 			output << outText;
 			output.close();
 
@@ -106,7 +112,7 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop()
 
 			end = boost::posix_time::microsec_clock::local_time();
 
-			std::cout << "\033[32mThread " << id << " - " << curr << "/" << total << " - " << file << " [" << (end - start) << "]\033[0m" << std::endl;
+			std::cout << "\033[32mThread " << id << " - " << curr << "/" << total << " - " << r_path << " [" << (end - start) << "]\033[0m" << std::endl;
 		}
 
 
@@ -126,15 +132,13 @@ void Docapost::IA::Tesseract::TesseractRunner::Wait()
 		th->join();
 }
 
-void Docapost::IA::Tesseract::TesseractRunner::SetConsoleMutex(std::mutex* mutex)
+void Docapost::IA::Tesseract::TesseractRunner::SetOutput(std::string folder)
 {
-	delete g_console_mutex;
-	g_console_mutex = mutex;
+	this->output = folder;
 }
 
 void Docapost::IA::Tesseract::TesseractRunner::DisplayFiles() const
 {
-	g_console_mutex->lock();
 	std::stack<std::string> t = files;
 
 	std::cout << "Files : \n";
@@ -145,7 +149,6 @@ void Docapost::IA::Tesseract::TesseractRunner::DisplayFiles() const
 		std::cout << "\n";
 	}
 	std::cout << "\n";
-	g_console_mutex->unlock();
 }
 
 std::string Docapost::IA::Tesseract::TesseractRunner::GetFile()

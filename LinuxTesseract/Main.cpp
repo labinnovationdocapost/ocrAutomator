@@ -72,11 +72,12 @@ int main(int argc, char* argv[])
 
 	po::options_description desc;
 	desc.add_options()
-		("PSM,p", value<int>()->default_value(0)->value_name("NUM"), "Page Segmentation Mode")
-		("OEM,o", value<int>()->default_value(0)->value_name("NUM"), "Ocr Engine Mode")
-		("lang,l", value < std::string > ()->default_value("fra")->value_name("LANG"), "Ocr Engine Mode")
+		("PSM", value<int>()->default_value(0)->value_name("NUM"), "Page Segmentation Mode")
+		("OEM", value<int>()->default_value(0)->value_name("NUM"), "Ocr Engine Mode")
+		("lang,l", value <std::string>()->default_value("fra")->value_name("LANG"), "Lnague utilisé pour l'OCR")
 		("help,h", "")
-		("thread,t", value<int>(), "")
+		("thread,t", value<int>(), "Nombre de threads en parralèle")
+		("output,o", value<std::string>(), "Dossier de sortie")
 		("folder,f", value<std::string>(), "");
 
 	po::variables_map vm;
@@ -142,7 +143,6 @@ int main(int argc, char* argv[])
 		static_cast<tesseract::PageSegMode>(vm["PSM"].as<int>()), 
 		static_cast<tesseract::OcrEngineMode>(vm["OEM"].as<int>()),
 		vm["lang"].as<std::string>());
-	tessR.SetConsoleMutex(&g_console_mutex);
 
 	auto start = boost::posix_time::second_clock::local_time();
 	std::cout << "Starting time : " << start << "\n";
@@ -150,6 +150,11 @@ int main(int argc, char* argv[])
 	tessR.AddFolder(vm["folder"].as<std::string>());
 	
 	tessR.DisplayFiles();
+
+	if (vm.count("output"))
+	{
+		tessR.SetOutput(vm["output"].as<std::string>());
+	}
 
 	auto startProcess = boost::posix_time::second_clock::local_time();
 	std::cout << "Processing time : " << startProcess << "\n";

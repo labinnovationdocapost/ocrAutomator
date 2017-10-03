@@ -9,6 +9,7 @@ Le projet est compiler grace à Visual Studio for Linux Development (inclu dans l
 - Si vous voulez avoir l'autocompletion, copier les fichiers sources de `/user/include/*` ver le dossier Includes de la solution
 - telecharger Boost : `wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.bz2` puis extraire sous `~/` avec `tar --bzip2 -xf /path/to/boost_1_65_1.tar.bz2`.
 - puis suivre la procédure : (http://www.boost.org/doc/libs/1_65_1/more/getting_started/unix-variants.html)
+- Si vous souhaitez utilisé les lib static de Boost, enelver les .so générés précédement
 
 >Pour l'utilisation avec WSl (Windows Subsystem for Linux)
 - Suivre le tutoriel : https://blogs.msdn.microsoft.com/vcblog/2017/02/08/targeting-windows-subsystem-for-linux-from-visual-studio/
