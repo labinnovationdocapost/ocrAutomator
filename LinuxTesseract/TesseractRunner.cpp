@@ -87,7 +87,9 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop()
 	int res;
 	api->SetPageSegMode(psm);
 	if (res = api->Init(NULL, lang.c_str(), oem)) {
-		std::cerr << "Thread " << id << " - " << "Could not initialize tesseract\n";
+		std::stringstream cstring;
+		cstring << "Thread " << id << " - " << "Could not initialize tesseract\n";
+		std::cerr << cstring.str();
 		return;
 	}
 	std::cout << "Thread " << id << " - Start\n";

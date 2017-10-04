@@ -74,12 +74,12 @@ int main(int argc, char* argv[])
 	desc.add_options()
 		("PSM", value<int>()->default_value(0)->value_name("NUM"), "Page Segmentation Mode")
 		("OEM", value<int>()->default_value(0)->value_name("NUM"), "Ocr Engine Mode")
-		("lang,l", value <std::string>()->default_value("fra")->value_name("LANG"), "Lnague utilisé pour l'OCR")
+		("lang,l", value <std::string>()->default_value("fra")->value_name("LANG"), "Langue utilisé pour l'OCR")
 		("help,h", "")
-		("thread,t", value<int>(), "Nombre de threads en parralèle")
-		("output,o", value<std::string>(), "Dossier de sortie")
+		("thread,t", value<int>()->value_name("NUM"), "Nombre de threads en parralèle")
+		("output,o", value<std::string>()->value_name("DOSSIER"), "Dossier de sortie")
 		("continue,c", "Ne pas ecraser les fichiers existant")
-		("folder,f", value<std::string>(), "");
+		("folder,f", value<std::string>()->value_name("DOSSIER"), "");
 
 	po::variables_map vm;
 	try
@@ -121,9 +121,10 @@ int main(int argc, char* argv[])
 
 
 	struct stat sb;
-	if(lstat(vm["folder"].as<std::string>().c_str(), &sb) != 0 || !S_ISDIR(sb.st_mode))
+	
+	if (!fs::is_directory(vm["folder"].as<std::string>()))
 	{
-		std::cout << "Le chemin "<< vm["folder"].as<std::string>() << " n'est pas un dossier\n";
+		std::cout << "Le chemin "<< vm["folder"].as<std::string>() << " n'est pas un dossier valide\n";
 		return 0;
 	}
 
@@ -173,10 +174,10 @@ int main(int argc, char* argv[])
 
 	auto processTime = end - startProcess;
 
-	std::cout << "Starting time :   " << start << "\n";
-	std::cout << "Processing time : " << startProcess << "\n";
-	std::cout << "End time :        " << end << "\n";
-	std::cout << "Elapsed :         " << processTime << "\n";
+	std::cout << "Demarrage :  " << start << "\n";
+	std::cout << "Traitement : " << startProcess << "\n";
+	std::cout << "Fin :        " << end << "\n";
+	std::cout << "Durée :      " << processTime << "\n";
 
 	return 0;
 }

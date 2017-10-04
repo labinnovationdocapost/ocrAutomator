@@ -25,12 +25,14 @@ Le projet est compiler grace à Visual Studio for Linux Development (inclu dans l
 ./LinuxTesseract.out [options...] --folder /folder/of/images [options...]
 
 Options:
-  -p [ --PSM ] NUM (=0)     Page Segmentation Mode
-  -o [ --OEM ] NUM (=0)     Ocr Engine Mode
-  -l [ --lang ] LANG (=fra) Ocr Engine Mode
+  --PSM NUM (=0)            Page Segmentation Mode
+  --OEM NUM (=0)            Ocr Engine Mode
+  -l [ --lang ] LANG (=fra) Langue utilis pour l'OCR
   -h [ --help ]
-  -t [ --thread ] arg
-  -f [ --folder ] arg
+  -t [ --thread ] NUM       Nombre de threads en parralle
+  -o [ --output ] DOSSIER   Dossier de sortie
+  -c [ --continue ]         Ne pas ecraser les fichiers existant
+  -f [ --folder ] DOSSIER
 
 
 Page segmentation modes:
