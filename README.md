@@ -53,7 +53,8 @@ OCR Engine modes:
   0    Original Tesseract only.
   1    Neural nets LSTM only.
   2    Tesseract + LSTM.
-  3    Default, based on what is available.```
+  3    Default, based on what is available.
+```
 
 Pour plus d'info :
-`LinuxTesseract.out --help`
+- `LinuxTesseract.out --help`

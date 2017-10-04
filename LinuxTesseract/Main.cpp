@@ -78,6 +78,7 @@ int main(int argc, char* argv[])
 		("help,h", "")
 		("thread,t", value<int>(), "Nombre de threads en parralèle")
 		("output,o", value<std::string>(), "Dossier de sortie")
+		("continue,c", "Ne pas ecraser les fichiers existant")
 		("folder,f", value<std::string>(), "");
 
 	po::variables_map vm;
@@ -137,6 +138,14 @@ int main(int argc, char* argv[])
 			
 		}
 	}
+
+	bool resume = false;
+
+	if (vm.count("continue"))
+	{
+		resume = true;
+	}
+
 	std::cout << "Number of thread : " << nb_process << "\n";
 
 	Docapost::IA::Tesseract::TesseractRunner tessR(
@@ -145,19 +154,17 @@ int main(int argc, char* argv[])
 		vm["lang"].as<std::string>());
 
 	auto start = boost::posix_time::second_clock::local_time();
-	std::cout << "Starting time : " << start << "\n";
-
-	tessR.AddFolder(vm["folder"].as<std::string>());
-	
-	tessR.DisplayFiles();
 
 	if (vm.count("output"))
 	{
 		tessR.SetOutput(vm["output"].as<std::string>());
 	}
 
+	tessR.AddFolder(vm["folder"].as<std::string>(), resume);
+
+	tessR.DisplayFiles();
+
 	auto startProcess = boost::posix_time::second_clock::local_time();
-	std::cout << "Processing time : " << startProcess << "\n";
 	tessR.Run(nb_process);
 	
 	tessR.Wait();
@@ -166,8 +173,10 @@ int main(int argc, char* argv[])
 
 	auto processTime = end - startProcess;
 
-	std::cout << "End time : " << end << "\n";
-	std::cout << "Elapsed : " << processTime << "\n";
+	std::cout << "Starting time :   " << start << "\n";
+	std::cout << "Processing time : " << startProcess << "\n";
+	std::cout << "End time :        " << end << "\n";
+	std::cout << "Elapsed :         " << processTime << "\n";
 
 	return 0;
 }

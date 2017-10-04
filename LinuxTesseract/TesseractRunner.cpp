@@ -7,21 +7,21 @@ Docapost::IA::Tesseract::TesseractRunner::TesseractRunner(tesseract::PageSegMode
 	std::cout << "Initialisation : \n  PSM=" << this->psm << "\n  OEM=" << this->oem << "\n  Lang=" << this->lang << "\n";
 }
 
-void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(boost::filesystem::path folder)
+void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool resume)
 {
-	if (!boost::filesystem::is_directory(folder))
+	if (!fs::is_directory(folder))
 	{
 		return;
 	}
 
-	for (auto& entry : boost::make_iterator_range(boost::filesystem::directory_iterator(folder), {}))
+	for (auto& entry : boost::make_iterator_range(fs::directory_iterator(folder), {}))
 	{
-		boost::filesystem::path path = entry.path();
+		fs::path path = entry.path();
 		if (!path.filename_is_dot() && !path.filename_is_dot_dot())
 		{
-			if (boost::filesystem::is_directory(path))
+			if (fs::is_directory(path))
 			{
-				this->_AddFolder(path);
+				this->_AddFolder(path, resume);
 			}
 			else
 			{
@@ -29,6 +29,25 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(boost::filesystem::pat
 				{
 					if (boost::iequals<string, string>(extension, path.extension().string()))
 					{
+						if (resume)
+						{
+							fs::path r_path;
+							if (output.empty())
+							{
+								r_path = fs::change_extension(path, ".txt");
+							}
+							else
+							{
+								r_path = fs::absolute(fs::relative(path, input), output);
+								r_path = r_path.parent_path() / (fs::change_extension(r_path.filename(), ".txt"));
+							}
+
+							if (fs::exists(r_path))
+							{
+								break;
+							}
+						}
+
 						files.push(path.string());
 						break;
 					}
@@ -37,12 +56,12 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(boost::filesystem::pat
 		}
 	}
 }
-void Docapost::IA::Tesseract::TesseractRunner::AddFolder(boost::filesystem::path folder)
+void Docapost::IA::Tesseract::TesseractRunner::AddFolder(fs::path folder, bool resume)
 {
 	if (files.size() > 0)
 		return;
 	input = folder;
-	_AddFolder(folder);
+	_AddFolder(folder, resume);
 	total = files.size();
 }
 
@@ -50,7 +69,7 @@ void Docapost::IA::Tesseract::TesseractRunner::Run(int nbThread)
 {
 	if (!output.empty())
 	{
-		boost::filesystem::create_directories(output);
+		fs::create_directories(output);
 	}
 	for (int i = 0; i < nbThread; i++)
 	{
@@ -90,16 +109,16 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop()
 			api->SetImage(image);
 			char *outText = api->GetUTF8Text();
 
-			boost::filesystem::path r_path;
-			if(output.empty())
+			fs::path r_path;
+			if (output.empty())
 			{
-				r_path = boost::filesystem::change_extension(file, ".txt");
+				r_path = fs::change_extension(file, ".txt");
 			}
 			else
 			{
-				r_path = boost::filesystem::absolute(boost::filesystem::relative(file, input), output);
-				r_path = r_path.parent_path() / (boost::filesystem::change_extension(r_path.filename(), ".txt"));
-				boost::filesystem::create_directories(r_path.parent_path());
+				r_path = fs::absolute(fs::relative(file, input), output);
+				r_path = r_path.parent_path() / (fs::change_extension(r_path.filename(), ".txt"));
+				fs::create_directories(r_path.parent_path());
 			}
 
 			std::ofstream output;

@@ -28,6 +28,7 @@ using std::string;
 #include <boost/date_time.hpp>
 
 namespace po = boost::program_options;
+namespace fs = boost::filesystem;
 using boost::program_options::value;
 
 namespace Docapost {
@@ -48,19 +49,19 @@ namespace Docapost {
 				tesseract::PageSegMode psm;
 				tesseract::OcrEngineMode oem;
 				std::string lang;
-				boost::filesystem::path output;
-				boost::filesystem::path input;
+				fs::path output;
+				fs::path input;
 
 				void ThreadLoop();
 				std::string GetFile();
-				void _AddFolder(boost::filesystem::path folder);
+				void _AddFolder(fs::path folder, bool resume);
 			public :
 				explicit TesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang = "fra");
 				TesseractRunner(std::string lang = "fra") : TesseractRunner(tesseract::PSM_OSD_ONLY, tesseract::OcrEngineMode::OEM_TESSERACT_ONLY, lang) {}
 				explicit TesseractRunner(tesseract::PageSegMode psm, std::string lang = "fra") : TesseractRunner(psm, tesseract::OcrEngineMode::OEM_TESSERACT_ONLY, lang) {}
 				explicit TesseractRunner(tesseract::OcrEngineMode ocr, std::string lang = "fra") : TesseractRunner(tesseract::PSM_OSD_ONLY, ocr, lang) {}
 
-				void AddFolder(boost::filesystem::path folder);
+				void AddFolder(fs::path folder, bool resume = false);
 				void Run(int nbThread);
 				void Wait();
 
