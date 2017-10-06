@@ -62,7 +62,7 @@ void Docapost::IA::Tesseract::TesseractRunner::AddFolder(fs::path folder, bool r
 		return;
 	input = folder;
 	_AddFolder(folder, resume);
-	total = files.size();
+	total = static_cast<int>(files.size());
 }
 
 void Docapost::IA::Tesseract::TesseractRunner::Run(int nbThread)
@@ -85,17 +85,17 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop()
 	api->SetVariable("debug_file", (std::string("tesseract") + std::to_string(id) + std::string(".log")).c_str());
 	api->SetVariable("out", "quiet");
 	int res;
-	api->SetPageSegMode(psm);
-	if (res = api->Init(NULL, lang.c_str(), oem)) {
+	
+	if ((res = api->Init(NULL, lang.c_str(), oem))) {
 		std::stringstream cstring;
 		cstring << "Thread " << id << " - " << "Could not initialize tesseract\n";
 		std::cerr << cstring.str();
 		return;
 	}
+	api->SetPageSegMode(psm);
 	std::cout << "Thread " << id << " - Start\n";
 
 	std::string file;
-	struct stat sb;
 	try
 	{
 		boost::posix_time::ptime start, end;

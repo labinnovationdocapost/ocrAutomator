@@ -119,9 +119,6 @@ int main(int argc, char* argv[])
 	}
 
 
-
-	struct stat sb;
-	
 	if (!fs::is_directory(vm["folder"].as<std::string>()))
 	{
 		std::cout << "Le chemin "<< vm["folder"].as<std::string>() << " n'est pas un dossier valide\n";
