@@ -1,15 +1,15 @@
 # LinuxTesseract
 
 
-Le projet est compiler grace à Visual Studio for Linux Development (inclu dans l'instalation de Visual Studio 2017)
+Le projet est compilÃ© grÃ¢ce Ã  Visual Studio for Linux Development (inclus dans l'installation de Visual Studio 2017)
 
 
-## Instalation
+## Installation
 - Suivre le tutoriel suivant : https://blogs.msdn.microsoft.com/vcblog/2016/03/30/visual-c-for-linux-development/
-- Si vous voulez avoir l'autocompletion, copier les fichiers sources de `/user/include/*` ver le dossier Includes de la solution
-- telecharger Boost : `wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.bz2` puis extraire sous `~/` avec `tar --bzip2 -xf /path/to/boost_1_65_1.tar.bz2`.
-- puis suivre la procédure : (http://www.boost.org/doc/libs/1_65_1/more/getting_started/unix-variants.html)
-- Si vous souhaitez utilisé les lib static de Boost, enelver les .so générés précédement
+- Si vous voulez avoir l'auto complÃ©tion, copiez les fichiers sources de `/user/include/*` vers le dossier Includes de la solution
+- TÃ©lÃ©charger Boost : `wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.bz2` puis extraire sous `~/` avec `tar --bzip2 -xf /path/to/boost_1_65_1.tar.bz2`.
+- puis suivre la procÃ©dure : (http://www.boost.org/doc/libs/1_65_1/more/getting_started/unix-variants.html)
+- Si vous souhaitez utiliser les lib static de Boost, enlever les .so gÃ©nÃ©rÃ©s prÃ©cÃ©demment
 
 >Pour l'utilisation avec WSl (Windows Subsystem for Linux)
 - Suivre le tutoriel : https://blogs.msdn.microsoft.com/vcblog/2017/02/08/targeting-windows-subsystem-for-linux-from-visual-studio/
