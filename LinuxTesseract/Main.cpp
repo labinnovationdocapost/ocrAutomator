@@ -72,8 +72,8 @@ int main(int argc, char* argv[])
 
 	po::options_description desc;
 	desc.add_options()
-		("PSM", value<int>()->default_value(0)->value_name("NUM"), "Page Segmentation Mode")
-		("OEM", value<int>()->default_value(0)->value_name("NUM"), "Ocr Engine Mode")
+		("psm", value<int>()->default_value(3)->value_name("NUM"), "Page Segmentation Mode")
+		("oem", value<int>()->default_value(3)->value_name("NUM"), "Ocr Engine Mode")
 		("lang,l", value <std::string>()->default_value("fra")->value_name("LANG"), "Langue utilisé pour l'OCR")
 		("help,h", "")
 		("thread,t", value<int>()->value_name("NUM"), "Nombre de threads en parralèle")
