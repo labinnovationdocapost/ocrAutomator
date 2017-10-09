@@ -89,6 +89,7 @@ int main(int argc, char* argv[])
 			boost::program_options::command_line_style::short_allow_next | 
 			boost::program_options::command_line_style::allow_dash_for_short |
 			boost::program_options::command_line_style::allow_sticky |
+			boost::program_options::command_line_style::case_insensitive |
 			boost::program_options::command_line_style::unix_style)
 			.options(desc).positional(pd).run(), vm);
 		po::notify(vm);
