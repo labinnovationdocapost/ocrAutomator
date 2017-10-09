@@ -148,8 +148,8 @@ int main(int argc, char* argv[])
 	std::cout << "Number of thread : " << nb_process << "\n";
 
 	Docapost::IA::Tesseract::TesseractRunner tessR(
-		static_cast<tesseract::PageSegMode>(vm["PSM"].as<int>()), 
-		static_cast<tesseract::OcrEngineMode>(vm["OEM"].as<int>()),
+		static_cast<tesseract::PageSegMode>(vm["psm"].as<int>()), 
+		static_cast<tesseract::OcrEngineMode>(vm["oem"].as<int>()),
 		vm["lang"].as<std::string>());
 
 	auto start = boost::posix_time::second_clock::local_time();
