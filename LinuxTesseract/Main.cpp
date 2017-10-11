@@ -8,6 +8,7 @@
 #include <fstream>
 #include <chrono>
 #include <iomanip>
+#include <csignal>
 using std::string;
 
 #include <tesseract/baseapi.h>
@@ -22,7 +23,13 @@ using boost::program_options::value;
 
 #include "TesseractRunner.h"
 
-void run_tesseract(std::stack<string> *files, std::size_t* total, int* current);
+#if DISPLAY
+#include "Display.h"
+
+void resizeHandler(int sig);
+
+Display* display;
+#endif
 
 std::mutex g_console_mutex;
 
@@ -79,8 +86,10 @@ int main(int argc, char* argv[])
 		("thread,t", value<int>()->value_name("NUM"), "Nombre de threads en parralèle")
 		("output,o", value<std::string>()->value_name("DOSSIER"), "Dossier de sortie")
 		("continue,c", "Ne pas ecraser les fichiers existant")
+		("nodisplay,n", "Ne pas afficher l'interface")
 		("folder,f", value<std::string>()->value_name("DOSSIER"), "");
 
+	
 	po::variables_map vm;
 	try
 	{
@@ -145,14 +154,11 @@ int main(int argc, char* argv[])
 		resume = true;
 	}
 
-	std::cout << "Number of thread : " << nb_process << "\n";
-
 	Docapost::IA::Tesseract::TesseractRunner tessR(
 		static_cast<tesseract::PageSegMode>(vm["psm"].as<int>()), 
 		static_cast<tesseract::OcrEngineMode>(vm["oem"].as<int>()),
 		vm["lang"].as<std::string>());
 
-	auto start = boost::posix_time::second_clock::local_time();
 
 	if (vm.count("output"))
 	{
@@ -161,21 +167,43 @@ int main(int argc, char* argv[])
 
 	tessR.AddFolder(vm["folder"].as<std::string>(), resume);
 
-	tessR.DisplayFiles();
 
 	auto startProcess = boost::posix_time::second_clock::local_time();
 	tessR.Run(nb_process);
-	
+
+#if DISPLAY
+	if(vm.count("nodisplay"))
+	{
+		tessR.Wait();
+	}
+	else
+	{
+		display = new Display(tessR);
+
+		signal(SIGWINCH, resizeHandler);
+		display->Run();
+
+		delete display;
+	}
+#else
 	tessR.Wait();
+#endif
 
-	auto end = boost::posix_time::second_clock::local_time();
 
-	auto processTime = end - startProcess;
 
-	std::cout << "Demarrage :  " << start << "\n";
-	std::cout << "Traitement : " << startProcess << "\n";
-	std::cout << "Fin :        " << end << "\n";
-	std::cout << "Durée :      " << processTime << "\n";
+	auto processTime = tessR.GetEndTime() - tessR.GetStartTime();
+
+	std::cout << "Total Files : " << tessR.GetNbFiles() << "\n";
+	std::cout << "Start       : " << tessR.GetStartTime() << "\n";
+	std::cout << "End         : " << tessR.GetEndTime() << "\n";
+	std::cout << "Duration    : " << processTime << "\n";
 
 	return 0;
 }
+
+#if DISPLAY
+void resizeHandler(int sig)
+{
+	display->Resize();
+}
+#endif

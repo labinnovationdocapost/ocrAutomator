@@ -1,10 +1,14 @@
 #include "TesseractRunner.h"
 
-int Docapost::IA::Tesseract::TesseractRunner::next_id = 0;
+#include <leptonica/allheaders.h>
+#include <future>
 
-Docapost::IA::Tesseract::TesseractRunner::TesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang) : total(0), current(0), psm(psm), oem(oem), lang(lang)
+std::atomic_int Docapost::IA::Tesseract::TesseractRunner::next_id{ 0 };
+
+Docapost::IA::Tesseract::TesseractRunner::TesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang) : total(0), skip(0), psm(psm), oem(oem), lang(lang)
 {
-	std::cout << "Initialisation : \n  PSM=" << this->psm << "\n  OEM=" << this->oem << "\n  Lang=" << this->lang << "\n";
+	//std::cout << "Initialisation : \n  PSM=" << this->psm << "\n  OEM=" << this->oem << "\n  Lang=" << this->lang << "\n";
+	setMsgSeverity(L_SEVERITY_NONE);
 }
 
 void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool resume)
@@ -44,11 +48,13 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool 
 
 							if (fs::exists(r_path))
 							{
+								skip++;
 								break;
 							}
 						}
 
-						files.push(path.string());
+						total++;
+						files.push(new FileStatus(path.string()));
 						break;
 					}
 				}
@@ -62,30 +68,45 @@ void Docapost::IA::Tesseract::TesseractRunner::AddFolder(fs::path folder, bool r
 		return;
 	input = folder;
 	_AddFolder(folder, resume);
-	total = static_cast<int>(files.size());
+	//total = static_cast<int>(files.size());
 }
 
 void Docapost::IA::Tesseract::TesseractRunner::Run(int nbThread)
 {
+	start = boost::posix_time::second_clock::local_time();
 	if (!output.empty())
 	{
 		fs::create_directories(output);
 	}
 	for (int i = 0; i < nbThread; i++)
 	{
-		boost::shared_ptr<std::thread> ptr(new std::thread(&TesseractRunner::ThreadLoop, this));
-		threads.push_back(ptr);
+		int id = next_id++;
+		//threads.push_back(ptr);
+		threads[id] = new std::thread(&TesseractRunner::ThreadLoop, this, id);
 	}
 }
 
-void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop()
+void Docapost::IA::Tesseract::TesseractRunner::AddThread()
 {
-	auto id = next_id++;
+	int id = next_id++;
+	threads[id] = new std::thread(&TesseractRunner::ThreadLoop, this, id);
+}
+
+void Docapost::IA::Tesseract::TesseractRunner::RemoveThread()
+{
+	boost::lock_guard<std::mutex> lock(g_thread_mutex);
+
+	if(threads.size() > threadToStop +1)
+		threadToStop++;
+}
+
+void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
+{
 	tesseract::TessBaseAPI *api = new tesseract::TessBaseAPI();
 	api->SetVariable("debug_file", (std::string("tesseract") + std::to_string(id) + std::string(".log")).c_str());
 	api->SetVariable("out", "quiet");
 	int res;
-	
+
 	if ((res = api->Init(NULL, lang.c_str(), oem))) {
 		std::stringstream cstring;
 		cstring << "Thread " << id << " - " << "Could not initialize tesseract\n";
@@ -93,32 +114,29 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop()
 		return;
 	}
 	api->SetPageSegMode(psm);
-	std::cout << "Thread " << id << " - Start\n";
 
-	std::string file;
+	FileStatus* file;
 	try
 	{
-		boost::posix_time::ptime start, end;
-		int curr = 0;
-		while (!(file = GetFile()).empty())
+		while ((file = GetFile()) != nullptr)
 		{
-			curr = current = current + 1;
-			std::cout << "Thread " << id << " - " << current << "/" << total << " - " << file << "\n";
 
-			start = boost::posix_time::microsec_clock::local_time();
+			file->thread = id;
+			onStartProcessFile(file);
+			file->start = boost::posix_time::microsec_clock::local_time();
 
-			Pix *image = pixRead(file.c_str());
+			Pix *image = pixRead(file->name.c_str());
 			api->SetImage(image);
 			char *outText = api->GetUTF8Text();
 
 			fs::path r_path;
 			if (output.empty())
 			{
-				r_path = fs::change_extension(file, ".txt");
+				r_path = fs::change_extension(file->name, ".txt");
 			}
 			else
 			{
-				r_path = fs::absolute(fs::relative(file, input), output);
+				r_path = fs::absolute(fs::relative(file->name, input), output);
 				r_path = r_path.parent_path() / (fs::change_extension(r_path.filename(), ".txt"));
 				fs::create_directories(r_path.parent_path());
 			}
@@ -131,13 +149,20 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop()
 			delete[] outText;
 			pixDestroy(&image);
 
-			end = boost::posix_time::microsec_clock::local_time();
+			file->end = boost::posix_time::microsec_clock::local_time();
+			file->ellapsed = file->end - file->start;
+			file->output = r_path.string();
 
-			std::cout << "\033[32mThread " << id << " - " << curr << "/" << total << " - " << r_path << " [" << (end - start) << "]\033[0m" << std::endl;
+
+			boost::lock_guard<std::mutex> lock(g_thread_mutex);
+			if(threadToStop > 0)
+			{
+				--threadToStop;
+				threads.erase(id);
+
+				break;
+			}
 		}
-
-
-		std::cout << "Thread " << id << " - End\n";
 
 		api->End();
 	}
@@ -145,12 +170,20 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop()
 	{
 		std::cout << "Thread - " << id << " " << e.what();
 	}
+
+	threads.erase(id);
+	boost::lock_guard<std::mutex> lock(g_thread_mutex);
+	if (threads.size() == 0)
+	{
+		end = boost::posix_time::second_clock::local_time();
+		onProcessEnd();
+	}
 }
 
 void Docapost::IA::Tesseract::TesseractRunner::Wait()
 {
 	for (auto& th : threads)
-		th->join();
+		th.second->join();
 }
 
 void Docapost::IA::Tesseract::TesseractRunner::SetOutput(std::string folder)
@@ -160,7 +193,7 @@ void Docapost::IA::Tesseract::TesseractRunner::SetOutput(std::string folder)
 
 void Docapost::IA::Tesseract::TesseractRunner::DisplayFiles() const
 {
-	std::stack<std::string> t = files;
+	std::stack<FileStatus*> t = files;
 
 	std::cout << "Files : \n";
 	while (!t.empty())
@@ -172,7 +205,7 @@ void Docapost::IA::Tesseract::TesseractRunner::DisplayFiles() const
 	std::cout << "\n";
 }
 
-std::string Docapost::IA::Tesseract::TesseractRunner::GetFile()
+FileStatus* Docapost::IA::Tesseract::TesseractRunner::GetFile()
 {
 	while (true)
 	{
@@ -180,10 +213,10 @@ std::string Docapost::IA::Tesseract::TesseractRunner::GetFile()
 		if (files.empty())
 		{
 			g_stack_mutex.unlock();
-			return std::string();
+			return nullptr;
 		}
 
-		std::string f = files.top();
+		auto f = files.top();
 
 		files.pop();
 

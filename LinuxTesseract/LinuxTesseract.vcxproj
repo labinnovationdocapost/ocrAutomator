@@ -27,10 +27,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Display.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="TesseractRunner.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Display.h" />
+    <ClInclude Include="FileStatus.h" />
     <ClInclude Include="TesseractRunner.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -77,12 +80,15 @@
     <ClCompile>
       <AdditionalIncludeDirectories>/root//boost_1_65_1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Verbose>true</Verbose>
+      <PreprocessorDefinitions>DISPLAY</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system</LibraryDependencies>
+      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses</LibraryDependencies>
       <AdditionalLibraryDirectories>/root/boost_1_65_1/stage/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SharedLibrarySearchPath>%(SharedLibrarySearchPath)</SharedLibrarySearchPath>
       <VerboseOutput>true</VerboseOutput>
+      <AdditionalDependencies>$(StlAdditionalDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/usr/lib/x86_64-linux-gnu/libcurses.a %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

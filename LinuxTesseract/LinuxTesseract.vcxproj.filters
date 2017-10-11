@@ -2,9 +2,30 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="TesseractRunner.cpp" />
+    <ClCompile Include="TesseractRunner.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Display.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="TesseractRunner.h" />
+    <ClInclude Include="TesseractRunner.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Display.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="FileStatus.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{abde010c-f3af-44a3-b319-10c3351ea090}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{8fa5b12e-89cd-4845-9195-1941cc627855}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
