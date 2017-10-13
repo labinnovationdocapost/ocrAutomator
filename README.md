@@ -1,4 +1,4 @@
-# LinuxTesseract
+# Tesseract Automator
 
 
 Le projet est compilé grâce à Visual Studio for Linux Development (inclus dans l'installation de Visual Studio 2017)
