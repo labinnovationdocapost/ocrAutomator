@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
 		("parallel,p", value<int>()->value_name("NUM"), "Nombre de threads en parralèle")
 		("output,o", value<std::string>()->value_name("DOSSIER"), "Dossier de sortie (défaut: dossier actuel)")
 		("continue,c", "Ne pas ecraser les fichiers existant")
-		("nodisplay,n", "Ne pas afficher l'interface")
+		("silent,s", "Ne pas afficher l'interface")
 		("exif,e", "Copier l'image dans le fichier de sortie et écrire le résulat dans les Exif")
 		("text,t", "Ecrire le résultat dans un fichier texte (.txt) dans le dossier de sortie")
 		("folder,f", value<std::string>()->value_name("DOSSIER"), "");
@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
 	tessR.Run(nb_process);
 
 #if DISPLAY
-	if(vm.count("nodisplay"))
+	if(vm.count("silent"))
 	{
 		tessR.Wait();
 	}
