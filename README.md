@@ -7,16 +7,16 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
 ## Installation
 - Suivre le tutoriel suivant : https://blogs.msdn.microsoft.com/vcblog/2016/03/30/visual-c-for-linux-development/
 - Si vous voulez avoir l'auto complétion, copiez les fichiers sources de `/user/include/*` vers le dossier Includes de la solution
-- Télécharger Boost : `wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.bz2` puis extraire sous `~/` avec `tar --bzip2 -xf /path/to/boost_1_65_1.tar.bz2`.
-- puis suivre la procédure : (http://www.boost.org/doc/libs/1_65_1/more/getting_started/unix-variants.html)
-- Si vous souhaitez utiliser les lib static de Boost, enlever les .so générés précédemment
 
 >Pour l'utilisation avec WSl (Windows Subsystem for Linux)
 - Suivre le tutoriel : https://blogs.msdn.microsoft.com/vcblog/2017/02/08/targeting-windows-subsystem-for-linux-from-visual-studio/
 
 ## Configuration de Linux
 - Installer le package Tesseract 4.0 LSTM : https://launchpad.net/~alex-p/+archive/ubuntu/tesseract-ocr
-- Installer le package libtesseract-dev et libleptonica-dev
+- Installer les package libtesseract-dev, libleptonica-dev, libncurses5-dev et libexiv2-dev
+- Télécharger Boost : `wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.bz2` puis extraire dans `/root/boost_1_65_1` avec `tar --bzip2 -xf /path/to/boost_1_65_1.tar.bz2`.
+- puis suivre la procédure : (http://www.boost.org/doc/libs/1_65_1/more/getting_started/unix-variants.html)
+- Si vous souhaitez utiliser les lib static de Boost, enlever les .so générés précédemments
 
 ## Utilisation
 ```Usage:

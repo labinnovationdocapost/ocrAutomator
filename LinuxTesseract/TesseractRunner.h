@@ -32,8 +32,25 @@ using boost::program_options::value;
 namespace Docapost {
 	namespace IA {
 		namespace Tesseract {
+			enum TesseractOutputFlags
+			{
+				Exif = 2,
+				Text = 1,
+				None = 0
+			};
+			inline TesseractOutputFlags operator|(TesseractOutputFlags a, TesseractOutputFlags b)
+			{
+				return static_cast<TesseractOutputFlags>(static_cast<int>(a) | static_cast<int>(b));
+			}
+			inline TesseractOutputFlags& operator|=(TesseractOutputFlags& a, TesseractOutputFlags b)
+			{
+				return a = a | b;
+			}
+
 			class TesseractRunner {
 			private:
+				const std::string softName = "Docapost Tesseract Automator";
+
 				static std::atomic_int next_id;
 
 				std::stack<FileStatus*> files;
@@ -42,6 +59,8 @@ namespace Docapost {
 				std::map<int, std::thread*> threads;
 
 				int threadToStop = 0;
+
+				TesseractOutputFlags outputTypes;
 
 				int total;
 				int skip;
@@ -57,8 +76,10 @@ namespace Docapost {
 				void ThreadLoop(int id);
 				FileStatus* GetFile();
 				void _AddFolder(fs::path folder, bool resume);
+				bool FileExist(fs::path path)  const;
+				bool ExifExist(fs::path path)  const;
 			public:
-				explicit TesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang = "fra");
+				explicit TesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang = "fra", TesseractOutputFlags type = TesseractOutputFlags::None);
 				TesseractRunner(std::string lang = "fra") : TesseractRunner(tesseract::PSM_OSD_ONLY, tesseract::OcrEngineMode::OEM_TESSERACT_ONLY, lang) {}
 				explicit TesseractRunner(tesseract::PageSegMode psm, std::string lang = "fra") : TesseractRunner(psm, tesseract::OcrEngineMode::OEM_TESSERACT_ONLY, lang) {}
 				explicit TesseractRunner(tesseract::OcrEngineMode ocr, std::string lang = "fra") : TesseractRunner(tesseract::PSM_OSD_ONLY, ocr, lang) {}
@@ -70,6 +91,7 @@ namespace Docapost {
 				void Wait();
 
 				void SetOutput(std::string folder);
+				void SetOutput(fs::path folder);
 
 				void DisplayFiles() const;
 

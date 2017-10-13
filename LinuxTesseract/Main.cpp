@@ -83,10 +83,12 @@ int main(int argc, char* argv[])
 		("oem", value<int>()->default_value(3)->value_name("NUM"), "Ocr Engine Mode")
 		("lang,l", value <std::string>()->default_value("fra")->value_name("LANG"), "Langue utilisé pour l'OCR")
 		("help,h", "")
-		("thread,t", value<int>()->value_name("NUM"), "Nombre de threads en parralèle")
-		("output,o", value<std::string>()->value_name("DOSSIER"), "Dossier de sortie")
+		("parallel,p", value<int>()->value_name("NUM"), "Nombre de threads en parralèle")
+		("output,o", value<std::string>()->value_name("DOSSIER"), "Dossier de sortie (défaut: dossier actuel)")
 		("continue,c", "Ne pas ecraser les fichiers existant")
 		("nodisplay,n", "Ne pas afficher l'interface")
+		("exif,e", "Copier l'image dans le fichier de sortie et écrire le résulat dans les Exif")
+		("text,t", "Ecrire le résultat dans un fichier texte (.txt) dans le dossier de sortie")
 		("folder,f", value<std::string>()->value_name("DOSSIER"), "");
 
 	
@@ -154,15 +156,35 @@ int main(int argc, char* argv[])
 		resume = true;
 	}
 
+	Docapost::IA::Tesseract::TesseractOutputFlags types = Docapost::IA::Tesseract::TesseractOutputFlags::None;
+	if (vm.count("exif"))
+	{
+		types |= Docapost::IA::Tesseract::TesseractOutputFlags::Exif;
+	}
+
+	if (vm.count("text"))
+	{
+		types |= Docapost::IA::Tesseract::TesseractOutputFlags::Text;
+	}
+	if(types == Docapost::IA::Tesseract::TesseractOutputFlags::None)
+	{
+		types |= Docapost::IA::Tesseract::TesseractOutputFlags::Text;
+	}
+
 	Docapost::IA::Tesseract::TesseractRunner tessR(
 		static_cast<tesseract::PageSegMode>(vm["psm"].as<int>()), 
 		static_cast<tesseract::OcrEngineMode>(vm["oem"].as<int>()),
-		vm["lang"].as<std::string>());
+		vm["lang"].as<std::string>(), types);
+
 
 
 	if (vm.count("output"))
 	{
 		tessR.SetOutput(vm["output"].as<std::string>());
+	}
+	else
+	{
+		tessR.SetOutput(boost::filesystem::current_path());
 	}
 
 	tessR.AddFolder(vm["folder"].as<std::string>(), resume);

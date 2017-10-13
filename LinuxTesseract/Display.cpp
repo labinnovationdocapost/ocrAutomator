@@ -154,7 +154,7 @@ void Display::Draw()
 
 
 		if (isEnd)
-			cstring << "\t Finish: " << timeEnd;
+			cstring << "files: " << files_count << "/" << tessR.GetNbFiles() << "\t Average: " << (tessR.GetEndTime() - tessR.GetStartTime()) / tessR.GetNbFiles() << "/Image" << "\t Ellapsed: " << tessR.GetEndTime() - tessR.GetStartTime() << "\t Finish: " << tessR.GetEndTime();
 		else
 		{
 			auto remaining = (s.sum / s.count / tessR.GetNbThread()) * (tessR.GetNbFiles() - files_count);

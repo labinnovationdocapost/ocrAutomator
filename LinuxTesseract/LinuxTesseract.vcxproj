@@ -83,21 +83,23 @@
       <PreprocessorDefinitions>DISPLAY</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses</LibraryDependencies>
+      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses;exiv2</LibraryDependencies>
       <AdditionalLibraryDirectories>/root/boost_1_65_1/stage/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SharedLibrarySearchPath>%(SharedLibrarySearchPath)</SharedLibrarySearchPath>
       <VerboseOutput>true</VerboseOutput>
       <AdditionalDependencies>$(StlAdditionalDependencies);%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>/usr/lib/x86_64-linux-gnu/libcurses.a %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/usr/lib/x86_64-linux-gnu/libcurses.a /usr/lib/x86_64-linux-gnu/libexiv2.a %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>/root/boost_1_65_1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DISPLAY;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system</LibraryDependencies>
+      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses;exiv2</LibraryDependencies>
       <AdditionalLibraryDirectories>/root/boost_1_65_1/stage/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>/usr/lib/x86_64-linux-gnu/libcurses.a /usr/lib/x86_64-linux-gnu/libexiv2.a %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
