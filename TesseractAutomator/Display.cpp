@@ -123,7 +123,7 @@ void Display::Draw()
 		cstring << "Start: " << tessR.GetStartTime() << " | End: In Progress | Ellapsed: " << (boost::posix_time::second_clock::local_time() - tessR.GetStartTime());
 		mvwprintw(top, 2, 0, "%s\n", cstring.str().c_str());
 	}
-	mvwprintw(top, 3, 0, "Files Total: %d | Files Skip: %d\n", tessR.GetNbFiles(), tessR.GetNbSkipFiles());
+	mvwprintw(top, 3, 0, "Files Total: %d | Files Skip: %d | Mode: %d\n", tessR.GetNbFiles(), tessR.GetNbSkipFiles(), tessR.GetOutputTypes());
 	wrefresh(top);
 
 	mvwprintw(header, 0, 0, "%-15s %-6s %s -> %s\n", "Ellapsed", "Thread", "Origin", "Output");

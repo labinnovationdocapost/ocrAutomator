@@ -11,20 +11,55 @@ Docapost::IA::Tesseract::TesseractRunner::TesseractRunner(tesseract::PageSegMode
 	setMsgSeverity(L_SEVERITY_NONE);
 }
 
-bool Docapost::IA::Tesseract::TesseractRunner::FileExist(fs::path path) const
+fs::path Docapost::IA::Tesseract::TesseractRunner::ConstructNewTextFilePath(fs::path path) const
 {
-	fs::path r_path;
-	if (output.empty())
+	fs::path new_path;
+
+	if (output.empty() || output == input)
 	{
-		r_path = fs::change_extension(path, ".txt");
+		new_path = fs::change_extension(path, ".txt");
 	}
 	else
 	{
-		r_path = fs::absolute(fs::relative(path, input), output);
-		r_path = r_path.parent_path() / (fs::change_extension(r_path.filename(), ".txt"));
-	}
+		auto relative_path = fs::relative(path, input);
 
-	if (fs::exists(r_path))
+		new_path = fs::absolute(relative_path, output);
+		if (outputTypes & TesseractOutputFlags::Flattern)
+			new_path = new_path.parent_path() / boost::replace_all_copy(fs::change_extension(relative_path, ".txt").string(), "/", "_");
+		else
+			new_path = new_path.parent_path() / fs::change_extension(new_path.filename(), ".txt");
+
+	}
+	return new_path;
+}
+
+fs::path Docapost::IA::Tesseract::TesseractRunner::ConstructNewExifFilePath(fs::path path) const
+{
+	fs::path new_path;
+
+	auto relative_path = fs::relative(path, input);
+	if (output.empty() || output == input)
+	{
+		return path;
+	}
+	else
+	{
+		new_path = fs::absolute(relative_path, output);
+
+		if (outputTypes & TesseractOutputFlags::Flattern)
+			new_path = new_path.parent_path() / boost::replace_all_copy(relative_path.string(), "/", "_");
+		else
+			new_path = new_path.parent_path() / new_path.filename();
+
+	}
+	return new_path;
+}
+
+bool Docapost::IA::Tesseract::TesseractRunner::FileExist(fs::path path) const
+{
+	auto new_path = ConstructNewTextFilePath(path);
+
+	if (fs::exists(new_path))
 	{
 		return true;
 	}
@@ -33,23 +68,14 @@ bool Docapost::IA::Tesseract::TesseractRunner::FileExist(fs::path path) const
 
 bool Docapost::IA::Tesseract::TesseractRunner::ExifExist(fs::path path) const
 {
-	fs::path r_path;
-	if (output.empty())
-	{
-		r_path = fs::change_extension(path, ".txt");
-	}
-	else
-	{
-		r_path = fs::absolute(fs::relative(path, input), output);
-		r_path = r_path.parent_path() / r_path.filename();
-	}
+	auto new_path = ConstructNewExifFilePath(path);
 
-	if (!fs::exists(r_path))
+	if (!fs::exists(new_path))
 	{
 		return false;
 	}
 
-	Exiv2::Image::AutoPtr o_image = Exiv2::ImageFactory::open(r_path.string());
+	Exiv2::Image::AutoPtr o_image = Exiv2::ImageFactory::open(new_path.string());
 	o_image->readMetadata();
 	Exiv2::ExifData &exifData = o_image->exifData();
 
@@ -87,7 +113,7 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool 
 						if (resume)
 						{
 							bool toProcess = false;
-							if(outputTypes & TesseractOutputFlags::Text)
+							if (outputTypes & TesseractOutputFlags::Text)
 							{
 								toProcess = toProcess || !FileExist(path);
 							}
@@ -145,7 +171,7 @@ void Docapost::IA::Tesseract::TesseractRunner::RemoveThread()
 {
 	boost::lock_guard<std::mutex> lock(g_thread_mutex);
 
-	if(threads.size() > threadToStop +1)
+	if (threads.size() > threadToStop + 1)
 		threadToStop++;
 }
 
@@ -178,22 +204,15 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 			api->SetImage(image);
 			char *outText = api->GetUTF8Text();
 
-			fs::path r_path;
-			if(outputTypes & TesseractOutputFlags::Text)
+			fs::path new_path;
+			if (outputTypes & TesseractOutputFlags::Text)
 			{
-				if (output.empty())
-				{
-					r_path = fs::change_extension(file->name, ".txt");
-				}
-				else
-				{
-					r_path = fs::absolute(fs::relative(file->name, input), output);
-					r_path = r_path.parent_path() / (fs::change_extension(r_path.filename(), ".txt"));
-					fs::create_directories(r_path.parent_path());
-				}
+				new_path = ConstructNewTextFilePath(file->name);
+
+				fs::create_directories(new_path.parent_path());
 
 				std::ofstream output;
-				output.open(r_path.string(), std::ofstream::trunc | std::ofstream::out);
+				output.open(new_path.string(), std::ofstream::trunc | std::ofstream::out);
 				output << outText;
 				output.close();
 
@@ -201,31 +220,27 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 
 			if (outputTypes & TesseractOutputFlags::Exif)
 			{
-				auto relative = fs::relative(file->name, input);
-				if (output.empty())
+				new_path = ConstructNewExifFilePath(file->name);
+
+				if (!output.empty() && output != input)
 				{
-					r_path = file->name;
-				}
-				else
-				{
-					r_path = fs::absolute(relative, output);
-					r_path = r_path.parent_path() / r_path.filename();
-					fs::create_directories(r_path.parent_path());
-					if(fs::exists(r_path))
+					fs::create_directories(new_path.parent_path());
+					if (fs::exists(new_path))
 					{
-						fs::remove(r_path);
+						fs::remove(new_path);
 					}
-					fs::copy_file(file->name, r_path);
+					fs::copy_file(file->name, new_path);
 				}
+
 				Exiv2::ExifData exifData;
 				auto v = Exiv2::Value::create(Exiv2::asciiString);
 				v->read(outText);
 				Exiv2::ExifKey key("Exif.Image.ImageDescription");
 				exifData.add(key, v.get());
-				exifData["Exif.Image.ImageID"] = relative.string();
+				exifData["Exif.Image.ImageID"] = fs::relative(file->name, input).string();
 				exifData["Exif.Image.ProcessingSoftware"] = softName;
 
-				auto o_image = Exiv2::ImageFactory::open(r_path.string());
+				auto o_image = Exiv2::ImageFactory::open(new_path.string());
 				o_image->setExifData(exifData);
 				o_image->writeMetadata();
 			}
@@ -235,11 +250,11 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 
 			file->end = boost::posix_time::microsec_clock::local_time();
 			file->ellapsed = file->end - file->start;
-			file->output = r_path.string();
+			file->output = new_path.string();
 
 
 			boost::lock_guard<std::mutex> lock(g_thread_mutex);
-			if(threadToStop > 0)
+			if (threadToStop > 0)
 			{
 				--threadToStop;
 				threads.erase(id);

@@ -34,6 +34,7 @@ namespace Docapost {
 		namespace Tesseract {
 			enum TesseractOutputFlags
 			{
+				Flattern = 4,
 				Exif = 2,
 				Text = 1,
 				None = 0
@@ -78,6 +79,8 @@ namespace Docapost {
 				void _AddFolder(fs::path folder, bool resume);
 				bool FileExist(fs::path path)  const;
 				bool ExifExist(fs::path path)  const;
+				fs::path ConstructNewExifFilePath(fs::path path) const;
+				fs::path ConstructNewTextFilePath(fs::path path) const;
 			public:
 				explicit TesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang = "fra", TesseractOutputFlags type = TesseractOutputFlags::None);
 				TesseractRunner(std::string lang = "fra") : TesseractRunner(tesseract::PSM_OSD_ONLY, tesseract::OcrEngineMode::OEM_TESSERACT_ONLY, lang) {}
@@ -100,6 +103,7 @@ namespace Docapost {
 				boost::signals2::signal<void(FileStatus*)> onStartProcessFile;
 				boost::signals2::signal<void()> onProcessEnd;
 
+				TesseractOutputFlags GetOutputTypes() const { return outputTypes; }
 				int GetNbFiles() const { return total; }
 				int GetNbSkipFiles() const { return skip; }
 				fs::path GetInput() const { return input; }

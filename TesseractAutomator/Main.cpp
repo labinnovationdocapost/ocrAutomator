@@ -38,7 +38,7 @@ void ShowHelp(char** argv, po::options_description& desc)
 	std::cout << "Usage:\n";
 	std::cout << argv[0] << " --help\n";
 	std::cout << argv[0] << " [options...] /folder/of/images\n";
-	std::cout << argv[0] << " [options...] --folder /folder/of/images [options...]\n";
+	std::cout << argv[0] << " [options...] --input /folder/of/images [options...]\n";
 
 	std::cout << "\nOptions:\n";
 	std::cout << desc << "\n";
@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
 	int nb_process = 2;
 
 	boost::program_options::positional_options_description pd;
-	pd.add("folder", -1);
+	pd.add("input", -1);
 
 	po::options_description desc;
 	desc.add_options()
@@ -89,7 +89,8 @@ int main(int argc, char* argv[])
 		("silent,s", "Ne pas afficher l'interface")
 		("exif,e", "Copier l'image dans le fichier de sortie et écrire le résulat dans les Exif")
 		("text,t", "Ecrire le résultat dans un fichier texte (.txt) dans le dossier de sortie")
-		("folder,f", value<std::string>()->value_name("DOSSIER"), "");
+		("flatten,f", "Ajout le chemin relatif a [input] en prefixe du fichier")
+		("input,i", value<std::string>()->value_name("DOSSIER"), "");
 
 	
 	po::variables_map vm;
@@ -120,7 +121,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	if(!vm.count("folder"))
+	if(!vm.count("input"))
 	{
 		std::cout << "\nVeuiller indiquer un dossier a traiter\n\n";
 
@@ -131,17 +132,17 @@ int main(int argc, char* argv[])
 	}
 
 
-	if (!fs::is_directory(vm["folder"].as<std::string>()))
+	if (!fs::is_directory(vm["input"].as<std::string>()))
 	{
-		std::cout << "Le chemin "<< vm["folder"].as<std::string>() << " n'est pas un dossier valide\n";
+		std::cout << "Le chemin "<< vm["input"].as<std::string>() << " n'est pas un dossier valide\n";
 		return 0;
 	}
 
-	if(vm.count("thread"))
+	if(vm.count("parallel"))
 	{
 		try
 		{
-			nb_process = vm["thread"].as<int>();
+			nb_process = vm["parallel"].as<int>();
 		}
 		catch(const std::exception &e)
 		{
@@ -166,9 +167,15 @@ int main(int argc, char* argv[])
 	{
 		types |= Docapost::IA::Tesseract::TesseractOutputFlags::Text;
 	}
+
 	if(types == Docapost::IA::Tesseract::TesseractOutputFlags::None)
 	{
 		types |= Docapost::IA::Tesseract::TesseractOutputFlags::Text;
+	}
+
+	if (vm.count("flatten"))
+	{
+		types |= Docapost::IA::Tesseract::TesseractOutputFlags::Flattern;
 	}
 
 	Docapost::IA::Tesseract::TesseractRunner tessR(
@@ -187,7 +194,7 @@ int main(int argc, char* argv[])
 		tessR.SetOutput(boost::filesystem::current_path());
 	}
 
-	tessR.AddFolder(vm["folder"].as<std::string>(), resume);
+	tessR.AddFolder(vm["input"].as<std::string>(), resume);
 
 
 	auto startProcess = boost::posix_time::second_clock::local_time();
