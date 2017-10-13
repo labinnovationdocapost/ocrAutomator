@@ -1,9 +1,9 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LinuxTesseract", "LinuxTesseract\LinuxTesseract.vcxproj", "{F95B37CF-A719-46CA-8879-B37AE473D7EA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TesseractAutomator", "TesseractAutomator\TesseractAutomator.vcxproj", "{F95B37CF-A719-46CA-8879-B37AE473D7EA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EA140BF6-A107-4812-87AF-26832857466A}"
 	ProjectSection(SolutionItems) = preProject

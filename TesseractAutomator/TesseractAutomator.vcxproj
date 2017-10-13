@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
@@ -39,7 +39,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{f95b37cf-a719-46ca-8879-b37ae473d7ea}</ProjectGuid>
     <Keyword>Linux</Keyword>
-    <RootNamespace>LinuxTesseract</RootNamespace>
+    <RootNamespace>TesseractAutomator</RootNamespace>
     <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
     <ApplicationType>Linux</ApplicationType>
     <ApplicationTypeRevision>1.0</ApplicationTypeRevision>
@@ -72,6 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>..\Includes;$(IncludePath)</IncludePath>
+    <TargetExt />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>..\Includes;$(IncludePath)</IncludePath>
@@ -88,7 +89,6 @@
       <SharedLibrarySearchPath>%(SharedLibrarySearchPath)</SharedLibrarySearchPath>
       <VerboseOutput>true</VerboseOutput>
       <AdditionalDependencies>$(StlAdditionalDependencies);%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>/usr/lib/x86_64-linux-gnu/libcurses.a /usr/lib/x86_64-linux-gnu/libexiv2.a %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -99,7 +99,8 @@
     <Link>
       <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses;exiv2</LibraryDependencies>
       <AdditionalLibraryDirectories>/root/boost_1_65_1/stage/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalOptions>/usr/lib/x86_64-linux-gnu/libcurses.a /usr/lib/x86_64-linux-gnu/libexiv2.a %(AdditionalOptions)</AdditionalOptions>
+      <VerboseOutput>true</VerboseOutput>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

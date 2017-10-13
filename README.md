@@ -8,7 +8,7 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
 - Suivre le tutoriel suivant : https://blogs.msdn.microsoft.com/vcblog/2016/03/30/visual-c-for-linux-development/
 - Si vous voulez avoir l'auto complétion, copiez les fichiers sources de `/user/include/*` vers le dossier Includes de la solution
 
->Pour l'utilisation avec WSl (Windows Subsystem for Linux)
+>Pour l'utilisation avec WSL (Windows Subsystem for Linux)
 - Suivre le tutoriel : https://blogs.msdn.microsoft.com/vcblog/2017/02/08/targeting-windows-subsystem-for-linux-from-visual-studio/
 
 ## Configuration de Linux
@@ -20,18 +20,23 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
 
 ## Utilisation
 ```Usage:
-./LinuxTesseract.out --help
-./LinuxTesseract.out [options...] /folder/of/images
-./LinuxTesseract.out [options...] --folder /folder/of/images [options...]
+./TesseractAutomator --help
+./TesseractAutomator [options...] /folder/of/images
+./TesseractAutomator [options...] --folder /folder/of/images [options...]
 
 Options:
-  --PSM NUM (=0)            Page Segmentation Mode
-  --OEM NUM (=0)            Ocr Engine Mode
+  --psm NUM (=3)            Page Segmentation Mode
+  --oem NUM (=3)            Ocr Engine Mode
   -l [ --lang ] LANG (=fra) Langue utilis pour l'OCR
   -h [ --help ]
-  -t [ --thread ] NUM       Nombre de threads en parralle
-  -o [ --output ] DOSSIER   Dossier de sortie
+  -p [ --parallel ] NUM     Nombre de threads en parralle
+  -o [ --output ] DOSSIER   Dossier de sortie (dfaut: dossier actuel)
   -c [ --continue ]         Ne pas ecraser les fichiers existant
+  -n [ --nodisplay ]        Ne pas afficher l'interface
+  -e [ --exif ]             Copier l'image dans le fichier de sortie et crire
+                            le rsulat dans les Exif
+  -t [ --text ]             Ecrire le rsultat dans un fichier texte (.txt)
+                            dans le dossier de sortie
   -f [ --folder ] DOSSIER
 
 
@@ -59,4 +64,4 @@ OCR Engine modes:
 ```
 
 Pour plus d'info :
-- `LinuxTesseract.out --help`
+- `TesseractAutomator --help`
