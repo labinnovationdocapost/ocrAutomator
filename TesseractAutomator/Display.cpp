@@ -83,7 +83,7 @@ struct Sum
 	Sum() : count(0) {};
 	void operator()(FileStatus* fs)
 	{
-		if (!fs->output.empty())
+		if (fs->isEnd)
 		{
 			sum += fs->ellapsed;
 			count++;
@@ -104,7 +104,7 @@ void Display::Draw()
 	}
 	else
 	{
-		mvwprintw(top, 0, 0, "Input : %s | Output: %s\n", tessR.GetInput().c_str(), tessR.GetOutput().c_str());
+		mvwprintw(top, 0, 0, "Input : %s | Exif Output: %s | Text Output : %s\n", tessR.GetInput().c_str(), tessR.GetOutput()[Docapost::IA::Tesseract::TesseractOutputFlags::Exif].string().c_str(), tessR.GetOutput()[Docapost::IA::Tesseract::TesseractOutputFlags::Text].string().c_str());
 	}
 	if (tessR.GetThreadToStop() > 0)
 		mvwprintw(top, 1, 0, "Threads: %d (-%d) | Page Segmentation Mode: %d | Ocr Engine Mode: %d\n", tessR.GetNbThread(), tessR.GetThreadToStop(), tessR.GetPSM(), tessR.GetOEM());
@@ -126,22 +126,24 @@ void Display::Draw()
 	mvwprintw(top, 3, 0, "Files Total: %d | Files Skip: %d | Mode: %d\n", tessR.GetNbFiles(), tessR.GetNbSkipFiles(), tessR.GetOutputTypes());
 	wrefresh(top);
 
-	mvwprintw(header, 0, 0, "%-15s %-6s %s -> %s\n", "Ellapsed", "Thread", "Origin", "Output");
+	//mvwprintw(header, 0, 0, "%-15s %-6s %s -> %s\n", "Ellapsed", "Thread", "Origin", "Output");
+	mvwprintw(header, 0, 0, "%-15s %-6s %s\n", "Ellapsed", "Thread", "Origin");
 	wrefresh(header);
 
 	wmove(win, 0, 0);
 	Sum s{};
 	for (auto j = std::max(static_cast<int>(files_count) - h, 0); j < files_count; j++)
 	{
-		if (files[j]->output.empty())
-		{
-			wprintw(win, "%-15s %-6d %s\n", "", files[j]->thread, files[j]->name.c_str());
-		}
-		else
+		if (files[j]->isEnd)
 		{
 			std::stringstream cstring;
 			cstring << "" << files[j]->ellapsed;
-			wprintw(win, "%-15s %-6d %s -> %s\n", cstring.str().c_str(), files[j]->thread, files[j]->name.c_str(), files[j]->output.c_str());
+			//wprintw(win, "%-15s %-6d %s -> %s\n", cstring.str().c_str(), files[j]->thread, files[j]->relative_name.c_str(), boost::algorithm::join(files[j]->relative_output, " | ").c_str());
+			wprintw(win, "%-15s %-6d %s\n", cstring.str().c_str(), files[j]->thread, files[j]->relative_name.c_str());
+		}
+		else
+		{
+			wprintw(win, "%-15s %-6d %s\n", "", files[j]->thread, files[j]->relative_name.c_str());
 		}
 
 		s(files[j]);
@@ -154,14 +156,28 @@ void Display::Draw()
 
 
 		if (isEnd)
-			cstring << "files: " << files_count << "/" << tessR.GetNbFiles() << "\t Average: " << (tessR.GetEndTime() - tessR.GetStartTime()) / tessR.GetNbFiles() << "/Image" << "\t Ellapsed: " << tessR.GetEndTime() - tessR.GetStartTime() << "\t Finish: " << tessR.GetEndTime();
+		{
+			auto average = (tessR.GetEndTime() - tessR.GetStartTime()) / tessR.GetNbFiles();
+			cstring << "files: " << files_count << "/" << tessR.GetNbFiles() 
+			<< "\t Average: " << std::setw(2) << std::setfill('0') << average.hours() << ":"
+				<< std::setw(2) << std::setfill('0') << average.minutes() << ":"
+				<< std::setw(2) << std::setfill('0') << average.seconds() << "."
+				<< std::setw(3) << std::setfill('0') << average.fractional_seconds() / 1000 << "/Image"
+			<< "\t Ellapsed: " << tessR.GetEndTime() - tessR.GetStartTime() << "\t Finish: " << tessR.GetEndTime();
+		}
 		else
 		{
 			auto remaining = (s.sum / s.count / tessR.GetNbThread()) * (tessR.GetNbFiles() - files_count);
+			auto average = s.sum / s.count / tessR.GetNbThread();
 			cstring << "files: " << files_count << "/" << tessR.GetNbFiles()
-				<< "\t Average: " << s.sum / s.count / tessR.GetNbThread() << "/Image";
+				<< "\t Average: " << std::setw(2) << std::setfill('0') << average.hours() << ":"
+				<< std::setw(2) << std::setfill('0') << average.minutes() << ":"
+				<< std::setw(2) << std::setfill('0') << average.seconds() << "."
+				<< std::setw(3) << std::setfill('0') << average.fractional_seconds()/1000 << "/Image";
 
-			cstring << "\t Remaining: " << remaining
+			cstring << "\t Remaining: " << std::setw(2) << std::setfill('0') << remaining.hours() << ":"
+				<< std::setw(2) << std::setfill('0') << remaining.minutes() << ":"
+				<< std::setw(2) << std::setfill('0') << remaining.seconds()
 				<< "\t Estimated End: " << boost::posix_time::second_clock::local_time() + remaining;
 		}
 		cstring << std::endl;

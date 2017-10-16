@@ -133,7 +133,7 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool 
 						}
 
 						total++;
-						files.push(new FileStatus(path.string()));
+						files.push(new FileStatus(path.string(), fs::relative(path, input).string()));
 						break;
 					}
 				}
@@ -218,6 +218,8 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 				output << outText;
 				output.close();
 
+				file->output.push_back(new_path.string());
+				file->relative_output.push_back(fs::relative(new_path, outputs[TesseractOutputFlags::Text]).string());
 			}
 
 			if (outputTypes & TesseractOutputFlags::Exif)
@@ -246,6 +248,9 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 				auto o_image = Exiv2::ImageFactory::open(new_path.string());
 				o_image->setExifData(exifData);
 				o_image->writeMetadata();
+
+				file->output.push_back(new_path.string());
+				file->relative_output.push_back(fs::relative(new_path, outputs[TesseractOutputFlags::Exif]).string());
 			}
 
 			delete[] outText;
@@ -253,7 +258,7 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 
 			file->end = boost::posix_time::microsec_clock::local_time();
 			file->ellapsed = file->end - file->start;
-			file->output = new_path.string();
+			file->isEnd = true;
 
 
 			boost::lock_guard<std::mutex> lock(g_thread_mutex);

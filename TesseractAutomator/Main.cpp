@@ -34,7 +34,7 @@ Display* display;
 
 std::mutex g_console_mutex;
 
-#define VERSION "1.2.2"
+#define VERSION "1.2.3"
 
 void ShowHelp(char** argv, po::options_description& desc)
 {
@@ -58,7 +58,7 @@ Exemple:
 
 	std::cout << std::endl;
 
-std::cout << R"V0G0N(
+	std::cout << R"V0G0N(
 Page segmentation modes:
   0    Orientation and script detection (OSD) only.
   1    Automatic page segmentation with OSD.
@@ -108,13 +108,13 @@ int main(int argc, char* argv[])
 		("version,v", "Affiche le numero de version de l'application")
 		("input,i", value<std::string>()->value_name("DOSSIER"), "");
 
-	
+
 	po::variables_map vm;
 	try
 	{
 		po::store(po::command_line_parser(argc, argv).style(
-			boost::program_options::command_line_style::allow_short | 
-			boost::program_options::command_line_style::short_allow_next | 
+			boost::program_options::command_line_style::allow_short |
+			boost::program_options::command_line_style::short_allow_next |
 			boost::program_options::command_line_style::allow_dash_for_short |
 			boost::program_options::command_line_style::allow_sticky |
 			boost::program_options::command_line_style::case_insensitive |
@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
 			.options(desc).positional(pd).run(), vm);
 		po::notify(vm);
 	}
-	catch(std::exception& e)
+	catch (std::exception& e)
 	{
 		std::cout << e.what() << "\n\n";
 		std::cout << "Tapez :\n";
@@ -152,7 +152,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	if(!vm.count("input"))
+	if (!vm.count("input"))
 	{
 		std::cout << "\nVeuiller indiquer un dossier a traiter\n\n";
 
@@ -165,19 +165,19 @@ int main(int argc, char* argv[])
 
 	if (!fs::is_directory(vm["input"].as<std::string>()))
 	{
-		std::cout << "Le chemin "<< vm["input"].as<std::string>() << " n'est pas un dossier valide\n";
+		std::cout << "Le chemin " << vm["input"].as<std::string>() << " n'est pas un dossier valide\n";
 		return 0;
 	}
 
-	if(vm.count("parallel"))
+	if (vm.count("parallel"))
 	{
 		try
 		{
 			nb_process = vm["parallel"].as<int>();
 		}
-		catch(const std::exception &e)
+		catch (const std::exception &e)
 		{
-			
+
 		}
 	}
 
@@ -188,12 +188,12 @@ int main(int argc, char* argv[])
 		resume = true;
 	}
 
-	boost::unordered_map <Docapost::IA::Tesseract::TesseractOutputFlags,fs::path> map;
+	boost::unordered_map <Docapost::IA::Tesseract::TesseractOutputFlags, fs::path> map;
 	Docapost::IA::Tesseract::TesseractOutputFlags types = Docapost::IA::Tesseract::TesseractOutputFlags::None;
 	if (vm.count("exif"))
 	{
 		types |= Docapost::IA::Tesseract::TesseractOutputFlags::Exif;
-		if(vm["exif"].as<std::string>().empty())
+		if (vm["exif"].as<std::string>().empty())
 		{
 			map[Docapost::IA::Tesseract::TesseractOutputFlags::Exif] = vm["output"].as<std::string>();
 		}
@@ -216,7 +216,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	if(types == Docapost::IA::Tesseract::TesseractOutputFlags::None)
+	if (types == Docapost::IA::Tesseract::TesseractOutputFlags::None)
 	{
 		types |= Docapost::IA::Tesseract::TesseractOutputFlags::Text;
 		map[Docapost::IA::Tesseract::TesseractOutputFlags::Text] = vm["output"].as<std::string>();
@@ -228,11 +228,25 @@ int main(int argc, char* argv[])
 	}
 
 	Docapost::IA::Tesseract::TesseractRunner tessR(
-		static_cast<tesseract::PageSegMode>(vm["psm"].as<int>()), 
+		static_cast<tesseract::PageSegMode>(vm["psm"].as<int>()),
 		static_cast<tesseract::OcrEngineMode>(vm["oem"].as<int>()),
 		vm["lang"].as<std::string>(), types);
 
+#if DISPLAY
+	std::thread* th = nullptr;
+	if (!vm.count("silent"))
+	{
+		th = new std::thread([&]()
+		{
+			display = new Display(tessR);
 
+			signal(SIGWINCH, resizeHandler);
+			display->Run();
+
+			delete display;
+		});
+	}
+#endif
 
 	tessR.SetOutput(map);
 
@@ -242,25 +256,23 @@ int main(int argc, char* argv[])
 	auto startProcess = boost::posix_time::second_clock::local_time();
 	tessR.Run(nb_process);
 
+
 #if DISPLAY
-	if(vm.count("silent"))
+	if (vm.count("silent"))
 	{
 		tessR.Wait();
 	}
 	else
 	{
-		display = new Display(tessR);
-
-		signal(SIGWINCH, resizeHandler);
-		display->Run();
-
-		delete display;
+		if (th != nullptr)
+		{
+			th->join();
+			delete th;
+		}
 	}
 #else
 	tessR.Wait();
 #endif
-
-
 
 	auto processTime = tessR.GetEndTime() - tessR.GetStartTime();
 

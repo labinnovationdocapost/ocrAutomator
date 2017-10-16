@@ -108,7 +108,7 @@ namespace Docapost {
 				int GetNbFiles() const { return total; }
 				int GetNbSkipFiles() const { return skip; }
 				fs::path GetInput() const { return input; }
-				fs::path GetOutput() const { return outputs.begin()->second; }
+				boost::unordered_map<TesseractOutputFlags, fs::path> GetOutput() const { return outputs; }
 				tesseract::PageSegMode GetPSM() const { return psm; }
 				tesseract::OcrEngineMode GetOEM() const { return oem; }
 				std::size_t GetNbThread() {
