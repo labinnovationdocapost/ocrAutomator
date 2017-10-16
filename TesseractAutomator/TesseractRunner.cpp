@@ -15,7 +15,8 @@ fs::path Docapost::IA::Tesseract::TesseractRunner::ConstructNewTextFilePath(fs::
 {
 	fs::path new_path;
 
-	if (output.empty() || output == input)
+	auto it = outputs.find(TesseractOutputFlags::Text);
+	if (it == outputs.end() || it->second == input)
 	{
 		new_path = fs::change_extension(path, ".txt");
 	}
@@ -23,7 +24,7 @@ fs::path Docapost::IA::Tesseract::TesseractRunner::ConstructNewTextFilePath(fs::
 	{
 		auto relative_path = fs::relative(path, input);
 
-		new_path = fs::absolute(relative_path, output);
+		new_path = fs::absolute(relative_path, it->second);
 		if (outputTypes & TesseractOutputFlags::Flattern)
 			new_path = new_path.parent_path() / boost::replace_all_copy(fs::change_extension(relative_path, ".txt").string(), "/", "_");
 		else
@@ -38,13 +39,14 @@ fs::path Docapost::IA::Tesseract::TesseractRunner::ConstructNewExifFilePath(fs::
 	fs::path new_path;
 
 	auto relative_path = fs::relative(path, input);
-	if (output.empty() || output == input)
+	auto it = outputs.find(TesseractOutputFlags::Exif);
+	if (it == outputs.end() || it->second == input)
 	{
 		return path;
 	}
 	else
 	{
-		new_path = fs::absolute(relative_path, output);
+		new_path = fs::absolute(relative_path, it->second);
 
 		if (outputTypes & TesseractOutputFlags::Flattern)
 			new_path = new_path.parent_path() / boost::replace_all_copy(relative_path.string(), "/", "_");
@@ -150,10 +152,10 @@ void Docapost::IA::Tesseract::TesseractRunner::AddFolder(fs::path folder, bool r
 void Docapost::IA::Tesseract::TesseractRunner::Run(int nbThread)
 {
 	start = boost::posix_time::second_clock::local_time();
-	if (!output.empty())
-	{
-		fs::create_directories(output);
-	}
+
+	for (const auto& kv : outputs) {
+		fs::create_directories(kv.second);
+	};
 	for (int i = 0; i < nbThread; i++)
 	{
 		int id = next_id++;
@@ -222,7 +224,8 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 			{
 				new_path = ConstructNewExifFilePath(file->name);
 
-				if (!output.empty() && output != input)
+				auto it = outputs.find(TesseractOutputFlags::Exif);
+				if (it != outputs.end() && it->second != input)
 				{
 					fs::create_directories(new_path.parent_path());
 					if (fs::exists(new_path))
@@ -286,13 +289,9 @@ void Docapost::IA::Tesseract::TesseractRunner::Wait()
 		th.second->join();
 }
 
-void Docapost::IA::Tesseract::TesseractRunner::SetOutput(std::string folder)
+void Docapost::IA::Tesseract::TesseractRunner::SetOutput(boost::unordered_map<TesseractOutputFlags, fs::path>& folders)
 {
-	this->output = folder;
-}
-void Docapost::IA::Tesseract::TesseractRunner::SetOutput(fs::path folder)
-{
-	this->output = folder;
+	this->outputs = folders;
 }
 
 void Docapost::IA::Tesseract::TesseractRunner::DisplayFiles() const

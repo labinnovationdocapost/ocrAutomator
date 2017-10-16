@@ -18,6 +18,7 @@ using std::string;
 #include <sys/stat.h>
 #include <boost/program_options.hpp>
 #include <boost/date_time.hpp>
+#include <boost/unordered_map.hpp>
 namespace po = boost::program_options;
 using boost::program_options::value;
 
@@ -43,9 +44,21 @@ void ShowHelp(char** argv, po::options_description& desc)
 	std::cout << argv[0] << " [options...] --input /folder/of/images [options...]\n";
 
 	std::cout << "\nOptions:\n";
-	std::cout << desc << "\n";
+	std::cout << desc << std::endl;
 
 	std::cout << R"V0G0N(
+Information sur --exif et --text
+Si aucun dossier n'est specifie le dossier utilise sera celui défini par --output. 
+Si --output n'est pas definit, le dossier de sortie sera le dossier courrant.
+Exemple: 
+)V0G0N";
+	std::cout << argv[0] << " --input /folder/of/images -et --output /output/folder\n";
+	std::cout << argv[0] << " --input /folder/of/images -e --text /text/output/folder --output /output/folder\n";
+	std::cout << argv[0] << " --input /folder/of/images --exif /image/output/folder --text /text/output/folder\n";
+
+	std::cout << std::endl;
+
+std::cout << R"V0G0N(
 Page segmentation modes:
   0    Orientation and script detection (OSD) only.
   1    Automatic page segmentation with OSD.
@@ -86,11 +99,11 @@ int main(int argc, char* argv[])
 		("lang,l", value <std::string>()->default_value("fra")->value_name("LANG"), "Langue utilise pour l'OCR")
 		("help,h", "")
 		("parallel,p", value<int>()->value_name("NUM"), "Nombre de threads en parrallele")
-		("output,o", value<std::string>()->value_name("DOSSIER"), "Dossier de sortie (defaut: dossier actuel)")
+		("output,o", value<std::string>()->value_name("DOSSIER")->default_value(boost::filesystem::current_path().string()), "Dossier de sortie (defaut: dossier actuel)")
 		("continue,c", "Ne pas ecraser les fichiers existant")
 		("silent,s", "Ne pas afficher l'interface")
-		("exif,e", "Copier l'image dans le fichier de sortie et écrire le resulat dans les Exif")
-		("text,t", "Ecrire le resultat dans un fichier texte (.txt) dans le dossier de sortie")
+		("exif,e", value<std::string>()->value_name("DOSSIER")->default_value("")->implicit_value(""), "Copier l'image dans le fichier de sortie et écrire le resulat dans les Exif")
+		("text,t", value<std::string>()->value_name("DOSSIER")->default_value("")->implicit_value(""), "Ecrire le resultat dans un fichier texte (.txt) dans le dossier de sortie")
 		("flatten,f", "Ajout le chemin relatif a [input] en prefixe du fichier")
 		("version,v", "Affiche le numero de version de l'application")
 		("input,i", value<std::string>()->value_name("DOSSIER"), "");
@@ -175,20 +188,38 @@ int main(int argc, char* argv[])
 		resume = true;
 	}
 
+	boost::unordered_map <Docapost::IA::Tesseract::TesseractOutputFlags,fs::path> map;
 	Docapost::IA::Tesseract::TesseractOutputFlags types = Docapost::IA::Tesseract::TesseractOutputFlags::None;
 	if (vm.count("exif"))
 	{
 		types |= Docapost::IA::Tesseract::TesseractOutputFlags::Exif;
+		if(vm["exif"].as<std::string>().empty())
+		{
+			map[Docapost::IA::Tesseract::TesseractOutputFlags::Exif] = vm["output"].as<std::string>();
+		}
+		else
+		{
+			map[Docapost::IA::Tesseract::TesseractOutputFlags::Exif] = vm["exif"].as<std::string>();
+		}
 	}
 
 	if (vm.count("text"))
 	{
 		types |= Docapost::IA::Tesseract::TesseractOutputFlags::Text;
+		if (vm["text"].as<std::string>().empty())
+		{
+			map[Docapost::IA::Tesseract::TesseractOutputFlags::Text] = vm["output"].as<std::string>();
+		}
+		else
+		{
+			map[Docapost::IA::Tesseract::TesseractOutputFlags::Text] = vm["text"].as<std::string>();
+		}
 	}
 
 	if(types == Docapost::IA::Tesseract::TesseractOutputFlags::None)
 	{
 		types |= Docapost::IA::Tesseract::TesseractOutputFlags::Text;
+		map[Docapost::IA::Tesseract::TesseractOutputFlags::Text] = vm["output"].as<std::string>();
 	}
 
 	if (vm.count("flatten"))
@@ -203,14 +234,7 @@ int main(int argc, char* argv[])
 
 
 
-	if (vm.count("output"))
-	{
-		tessR.SetOutput(vm["output"].as<std::string>());
-	}
-	else
-	{
-		tessR.SetOutput(boost::filesystem::current_path());
-	}
+	tessR.SetOutput(map);
 
 	tessR.AddFolder(vm["input"].as<std::string>(), resume);
 

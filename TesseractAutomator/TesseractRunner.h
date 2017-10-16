@@ -21,6 +21,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/signals2.hpp>
 #include <boost/thread.hpp>
+#include <boost/unordered_map.hpp>
 using std::string;
 #include <tesseract/baseapi.h>
 
@@ -63,13 +64,14 @@ namespace Docapost {
 
 				TesseractOutputFlags outputTypes;
 
+				boost::unordered_map<TesseractOutputFlags, fs::path> outputs;
+
 				int total;
 				int skip;
 
 				tesseract::PageSegMode psm;
 				tesseract::OcrEngineMode oem;
 				std::string lang;
-				fs::path output;
 				fs::path input;
 				boost::posix_time::ptime start;
 				boost::posix_time::ptime end;
@@ -93,8 +95,7 @@ namespace Docapost {
 				void RemoveThread();
 				void Wait();
 
-				void SetOutput(std::string folder);
-				void SetOutput(fs::path folder);
+				void SetOutput(boost::unordered_map<TesseractOutputFlags, fs::path>& folders);
 
 				void DisplayFiles() const;
 
@@ -107,7 +108,7 @@ namespace Docapost {
 				int GetNbFiles() const { return total; }
 				int GetNbSkipFiles() const { return skip; }
 				fs::path GetInput() const { return input; }
-				fs::path GetOutput() const { return output; }
+				fs::path GetOutput() const { return outputs.begin()->second; }
 				tesseract::PageSegMode GetPSM() const { return psm; }
 				tesseract::OcrEngineMode GetOEM() const { return oem; }
 				std::size_t GetNbThread() {
