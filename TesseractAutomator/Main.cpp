@@ -33,6 +33,8 @@ Display* display;
 
 std::mutex g_console_mutex;
 
+#define VERSION "1.2.2"
+
 void ShowHelp(char** argv, po::options_description& desc)
 {
 	std::cout << "Usage:\n";
@@ -81,15 +83,16 @@ int main(int argc, char* argv[])
 	desc.add_options()
 		("psm", value<int>()->default_value(3)->value_name("NUM"), "Page Segmentation Mode")
 		("oem", value<int>()->default_value(3)->value_name("NUM"), "Ocr Engine Mode")
-		("lang,l", value <std::string>()->default_value("fra")->value_name("LANG"), "Langue utilisé pour l'OCR")
+		("lang,l", value <std::string>()->default_value("fra")->value_name("LANG"), "Langue utilise pour l'OCR")
 		("help,h", "")
-		("parallel,p", value<int>()->value_name("NUM"), "Nombre de threads en parralèle")
-		("output,o", value<std::string>()->value_name("DOSSIER"), "Dossier de sortie (défaut: dossier actuel)")
+		("parallel,p", value<int>()->value_name("NUM"), "Nombre de threads en parrallele")
+		("output,o", value<std::string>()->value_name("DOSSIER"), "Dossier de sortie (defaut: dossier actuel)")
 		("continue,c", "Ne pas ecraser les fichiers existant")
 		("silent,s", "Ne pas afficher l'interface")
-		("exif,e", "Copier l'image dans le fichier de sortie et écrire le résulat dans les Exif")
-		("text,t", "Ecrire le résultat dans un fichier texte (.txt) dans le dossier de sortie")
+		("exif,e", "Copier l'image dans le fichier de sortie et écrire le resulat dans les Exif")
+		("text,t", "Ecrire le resultat dans un fichier texte (.txt) dans le dossier de sortie")
 		("flatten,f", "Ajout le chemin relatif a [input] en prefixe du fichier")
+		("version,v", "Affiche le numero de version de l'application")
 		("input,i", value<std::string>()->value_name("DOSSIER"), "");
 
 	
@@ -118,6 +121,21 @@ int main(int argc, char* argv[])
 
 	if (vm.count("help")) {
 		ShowHelp(argv, desc);
+		return 0;
+	}
+
+	if (vm.count("version"))
+	{
+		std::cout << "Tesseract Automator" << std::endl;
+		std::cout << "Version: " << VERSION;
+#if NDEBUG
+		std::cout << " RELEASE";
+#else
+		std::cout << " DEBUG";
+#endif
+		std::cout << std::endl;
+
+		std::cout << "Date: " << __DATE__ << " " << __TIME__ << std::endl;
 		return 0;
 	}
 
