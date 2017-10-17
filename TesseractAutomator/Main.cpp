@@ -42,7 +42,7 @@ Display* display;
 
 std::mutex g_console_mutex;
 
-#define VERSION "1.2.3"
+#define VERSION "1.2.4"
 
 void ShowHelp(char** argv, po::options_description& desc)
 {
