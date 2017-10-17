@@ -77,6 +77,7 @@ namespace Docapost {
 				boost::posix_time::ptime end;
 
 				void ThreadLoop(int id);
+				void AddFile(FileStatus* file);
 				FileStatus* GetFile();
 				void _AddFolder(fs::path folder, bool resume);
 				bool FileExist(fs::path path)  const;

@@ -19,6 +19,14 @@ using std::string;
 #include <boost/program_options.hpp>
 #include <boost/date_time.hpp>
 #include <boost/unordered_map.hpp>
+#include <execinfo.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <unistd.h>
+
+#define __USE_GNU
+#include <ucontext.h>
+
 namespace po = boost::program_options;
 using boost::program_options::value;
 
@@ -83,8 +91,80 @@ OCR Engine modes:
 )V0G0N";
 }
 
+void segfault_action(int sig, siginfo_t *info, void *secret)
+{
+	/*void *array[10];
+	auto size = backtrace(array, 10);
+
+	fprintf(stderr, "Error: signal %d:\n", signal);
+	backtrace_symbols_fd(array, size, STDERR_FILENO);
+
+	exit(0);*/  
+	void *trace[16];
+	char **messages = (char **)NULL;
+	int i, trace_size = 0;
+	ucontext_t *uc = (ucontext_t *)secret;
+
+	auto file = fopen("TesseractAutomatorLog.log", "w");
+	/* Do something useful with siginfo_t */
+	if (sig == SIGSEGV)
+	fprintf(file, "Got signal %d, faulty address is %p, "
+		"from %p\n", sig, info->si_addr,
+		uc->uc_mcontext.gregs[REG_RIP]);
+	else
+	fprintf(file, "Got signal %d\n", sig);
+
+	trace_size = backtrace(trace, 16);
+	/* overwrite sigaction with caller's address */
+	trace[1] = (void *)uc->uc_mcontext.gregs[REG_RIP];
+
+	messages = backtrace_symbols(trace, trace_size);
+	/* skip first stack frame (points here) */
+	fprintf(file, "[bt] Execution path:\n");
+	for (i = 1; i<trace_size; ++i)
+	{
+		fprintf(file, "[bt] %s\n", messages[i]);
+
+		/* find first occurence of '(' or ' ' in message[i] and assume
+		* everything before that is the file name. (Don't go beyond 0 though
+		* (string terminator)*/
+		size_t p = 0;
+		while (messages[i][p] != '(' && messages[i][p] != ' '
+			&& messages[i][p] != 0)
+			++p;
+
+		char syscom[512];
+		sprintf(syscom, "addr2line %p -e %.*s", trace[i], p, messages[i]);
+		//last parameter is the filename of the symbol
+		FILE* ptr;
+		char buf[BUFSIZ];
+
+		fprintf(file, "%s\n", syscom);
+		if ((ptr = popen(syscom, "r")) != NULL) {
+			while (fgets(buf, BUFSIZ, ptr) != NULL)
+			{
+
+				fprintf(file, "%s", buf);
+			}
+			pclose(ptr);
+		}
+	}
+
+	delete display;
+	exit(0);
+}
+
 int main(int argc, char* argv[])
 {
+	struct sigaction sa;
+
+	memset(&sa, 0, sizeof(struct sigaction));
+	sigemptyset(&sa.sa_mask);
+	sa.sa_sigaction = segfault_action;
+	sa.sa_flags = SA_SIGINFO | SA_RESTART;
+
+	sigaction(SIGSEGV, &sa, nullptr);
+
 	// oblige le buffer desortie a etre thread safe
 	std::ios_base::sync_with_stdio(true);
 	int nb_process = 2;
@@ -104,7 +184,7 @@ int main(int argc, char* argv[])
 		("silent,s", "Ne pas afficher l'interface")
 		("exif,e", value<std::string>()->value_name("DOSSIER")->default_value("")->implicit_value(""), "Copier l'image dans le fichier de sortie et écrire le resulat dans les Exif")
 		("text,t", value<std::string>()->value_name("DOSSIER")->default_value("")->implicit_value(""), "Ecrire le resultat dans un fichier texte (.txt) dans le dossier de sortie")
-		("flatten,f", "Ajout le chemin relatif a [input] en prefixe du fichier")
+		("prefixe,f", "Ajout le chemin relatif a [input] en prefixe du fichier")
 		("version,v", "Affiche le numero de version de l'application")
 		("input,i", value<std::string>()->value_name("DOSSIER"), "");
 
@@ -222,7 +302,7 @@ int main(int argc, char* argv[])
 		map[Docapost::IA::Tesseract::TesseractOutputFlags::Text] = vm["output"].as<std::string>();
 	}
 
-	if (vm.count("flatten"))
+	if (vm.count("prefixe"))
 	{
 		types |= Docapost::IA::Tesseract::TesseractOutputFlags::Flattern;
 	}

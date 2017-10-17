@@ -26,7 +26,7 @@ fs::path Docapost::IA::Tesseract::TesseractRunner::ConstructNewTextFilePath(fs::
 
 		new_path = fs::absolute(relative_path, it->second);
 		if (outputTypes & TesseractOutputFlags::Flattern)
-			new_path = new_path.parent_path() / boost::replace_all_copy(fs::change_extension(relative_path, ".txt").string(), "/", "_");
+			new_path = new_path.parent_path() / boost::replace_all_copy(fs::change_extension(relative_path, ".txt").string(), "/", "__");
 		else
 			new_path = new_path.parent_path() / fs::change_extension(new_path.filename(), ".txt");
 
@@ -49,7 +49,7 @@ fs::path Docapost::IA::Tesseract::TesseractRunner::ConstructNewExifFilePath(fs::
 		new_path = fs::absolute(relative_path, it->second);
 
 		if (outputTypes & TesseractOutputFlags::Flattern)
-			new_path = new_path.parent_path() / boost::replace_all_copy(relative_path.string(), "/", "_");
+			new_path = new_path.parent_path() / boost::replace_all_copy(relative_path.string(), "/", "__");
 		else
 			new_path = new_path.parent_path() / new_path.filename();
 
@@ -197,12 +197,16 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 	{
 		while ((file = GetFile()) != nullptr)
 		{
-
 			file->thread = id;
 			onStartProcessFile(file);
 			file->start = boost::posix_time::microsec_clock::local_time();
 
 			Pix *image = pixRead(file->name.c_str());
+			if (image == nullptr)
+			{
+				AddFile(file);
+				continue;
+			}
 			api->SetImage(image);
 			char *outText = api->GetUTF8Text();
 
@@ -331,4 +335,12 @@ FileStatus* Docapost::IA::Tesseract::TesseractRunner::GetFile()
 		g_stack_mutex.unlock();
 		return f;
 	}
+}
+
+void Docapost::IA::Tesseract::TesseractRunner::AddFile(FileStatus* file)
+{
+	g_stack_mutex.lock();
+	files.push(file);
+
+	g_stack_mutex.unlock();
 }
