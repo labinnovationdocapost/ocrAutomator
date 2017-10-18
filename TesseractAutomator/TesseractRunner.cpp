@@ -26,7 +26,7 @@ fs::path Docapost::IA::Tesseract::TesseractRunner::ConstructNewTextFilePath(fs::
 
 		new_path = fs::absolute(relative_path, it->second);
 		if (outputTypes & TesseractOutputFlags::Flattern)
-			new_path = new_path.parent_path() / boost::replace_all_copy(fs::change_extension(relative_path, ".txt").string(), "/", "__");
+			new_path = new_path.parent_path() / boost::replace_all_copy(fs::change_extension(relative_path, ".txt").string(), "/", separator);
 		else
 			new_path = new_path.parent_path() / fs::change_extension(new_path.filename(), ".txt");
 
@@ -49,7 +49,7 @@ fs::path Docapost::IA::Tesseract::TesseractRunner::ConstructNewExifFilePath(fs::
 		new_path = fs::absolute(relative_path, it->second);
 
 		if (outputTypes & TesseractOutputFlags::Flattern)
-			new_path = new_path.parent_path() / boost::replace_all_copy(relative_path.string(), "/", "__");
+			new_path = new_path.parent_path() / boost::replace_all_copy(relative_path.string(), "/", separator);
 		else
 			new_path = new_path.parent_path() / new_path.filename();
 

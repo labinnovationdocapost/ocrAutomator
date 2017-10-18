@@ -182,9 +182,9 @@ int main(int argc, char* argv[])
 		("output,o", value<std::string>()->value_name("DOSSIER")->default_value(boost::filesystem::current_path().string()), "Dossier de sortie (defaut: dossier actuel)")
 		("continue,c", "Ne pas ecraser les fichiers existant")
 		("silent,s", "Ne pas afficher l'interface")
-		("exif,e", value<std::string>()->value_name("DOSSIER")->default_value("")->implicit_value(""), "Copier l'image dans le fichier de sortie et écrire le resulat dans les Exif")
-		("text,t", value<std::string>()->value_name("DOSSIER")->default_value("")->implicit_value(""), "Ecrire le resultat dans un fichier texte (.txt) dans le dossier de sortie")
-		("prefixe,f", "Ajout le chemin relatif a [input] en prefixe du fichier")
+		("exif,e", value<std::string>()->value_name("DOSSIER")->default_value("")->implicit_value(""), "Copier l'image dans le fichier de sortie et écrire le resulat dans les Exif. Si non sépcifié le paramètre --output est utilisé")
+		("text,t", value<std::string>()->value_name("DOSSIER")->default_value("")->implicit_value(""), "Ecrire le resultat dans un fichier texte (.txt) dans le dossier de sortie. Si non sépcifié le paramètre --output est utilisé")
+		("prefixe,f", value<std::string>()->value_name("SEPARATOR")->default_value("__")->implicit_value("__"), "Ajout le chemin relatif a [input] en prefixe du fichier.Defaut: __")
 		("version,v", "Affiche le numero de version de l'application")
 		("input,i", value<std::string>()->value_name("DOSSIER"), "");
 
@@ -311,6 +311,11 @@ int main(int argc, char* argv[])
 		static_cast<tesseract::PageSegMode>(vm["psm"].as<int>()),
 		static_cast<tesseract::OcrEngineMode>(vm["oem"].as<int>()),
 		vm["lang"].as<std::string>(), types);
+
+	if (vm.count("prefixe"))
+	{
+		tessR.SetSeparator(vm["prefixe"].as<std::string>());
+	}
 
 #if DISPLAY
 	std::thread* th = nullptr;

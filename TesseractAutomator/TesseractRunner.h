@@ -71,6 +71,7 @@ namespace Docapost {
 
 				tesseract::PageSegMode psm;
 				tesseract::OcrEngineMode oem;
+				std::string separator = "__";
 				std::string lang;
 				fs::path input;
 				boost::posix_time::ptime start;
@@ -105,6 +106,8 @@ namespace Docapost {
 				boost::signals2::signal<void(FileStatus*)> onStartProcessFile;
 				boost::signals2::signal<void()> onProcessEnd;
 
+				void SetSeparator(std::string separator) { this->separator = separator; }
+				std::string GetSeparator() const { return separator; }
 				TesseractOutputFlags GetOutputTypes() const { return outputTypes; }
 				int GetNbFiles() const { return total; }
 				int GetNbSkipFiles() const { return skip; }
