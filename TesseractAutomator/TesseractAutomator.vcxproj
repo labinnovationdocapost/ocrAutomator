@@ -29,12 +29,57 @@
   <ItemGroup>
     <ClCompile Include="Display.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="NetworkClient.cpp" />
+    <ClCompile Include="NetworkSession.cpp" />
+    <ClCompile Include="Network.cpp" />
+    <ClCompile Include="Protobuf\Broadcast.pb.cc" />
+    <ClCompile Include="Protobuf\Declare.pb.cc" />
+    <ClCompile Include="Protobuf\File.pb.cc" />
+    <ClCompile Include="Protobuf\Message_Master.pb.cc" />
+    <ClCompile Include="Protobuf\Message_Slave.pb.cc" />
+    <ClCompile Include="Protobuf\NetworkInfo.pb.cc" />
+    <ClCompile Include="Protobuf\Result.pb.cc" />
+    <ClCompile Include="Protobuf\Status.pb.cc" />
+    <ClCompile Include="Protobuf\Synchro_Master.pb.cc" />
+    <ClCompile Include="Protobuf\Synchro_Slave.pb.cc" />
+    <ClCompile Include="SlaveDisplay.cpp" />
     <ClCompile Include="TesseractRunner.cpp" />
+    <ClCompile Include="TesseractSlaveRunner.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Display.h" />
     <ClInclude Include="FileStatus.h" />
+    <ClInclude Include="FileSum.h" />
+    <ClInclude Include="NetworkClient.h" />
+    <ClInclude Include="NetworkSession.h" />
+    <ClInclude Include="Network.h" />
+    <ClInclude Include="Protobuf\Broadcast.pb.h" />
+    <ClInclude Include="Protobuf\Declare.pb.h" />
+    <ClInclude Include="Protobuf\File.pb.h" />
+    <ClInclude Include="Protobuf\Message_Master.pb.h" />
+    <ClInclude Include="Protobuf\Message_Slave.pb.h" />
+    <ClInclude Include="Protobuf\NetworkInfo.pb.h" />
+    <ClInclude Include="Protobuf\Result.pb.h" />
+    <ClInclude Include="Protobuf\Status.pb.h" />
+    <ClInclude Include="Protobuf\Synchro_Master.pb.h" />
+    <ClInclude Include="Protobuf\Synchro_Slave.pb.h" />
+    <ClInclude Include="Protobuf_all.h" />
+    <ClInclude Include="SlaveDisplay.h" />
     <ClInclude Include="TesseractRunner.h" />
+    <ClInclude Include="TesseractSlaveRunner.h" />
+    <ClInclude Include="Version.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Protobuf\Broadcast.proto" />
+    <None Include="Protobuf\File.proto" />
+    <None Include="Protobuf\Message_Master.proto" />
+    <None Include="Protobuf\Message_Slave.proto" />
+    <None Include="Protobuf\NetworkInfo.proto" />
+    <None Include="Protobuf\Declare.proto" />
+    <None Include="Protobuf\Result.proto" />
+    <None Include="Protobuf\Status.proto" />
+    <None Include="Protobuf\Synchro_Master.proto" />
+    <None Include="Protobuf\Synchro_Slave.proto" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{f95b37cf-a719-46ca-8879-b37ae473d7ea}</ProjectGuid>
@@ -81,15 +126,18 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>/root//boost_1_65_1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <Verbose>true</Verbose>
+      <Verbose>false</Verbose>
       <PreprocessorDefinitions>DISPLAY</PreprocessorDefinitions>
+      <CppLanguageStandard>c++11</CppLanguageStandard>
+      <CppAdditionalWarning>switch;no-deprecated-declarations;empty-body;return-type;parentheses;no-format;uninitialized;unreachable-code;unused-function;unused-value;unused-variable</CppAdditionalWarning>
     </ClCompile>
     <Link>
-      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses;exiv2</LibraryDependencies>
+      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses;exiv2;protobuf-lite;protobuf</LibraryDependencies>
       <AdditionalLibraryDirectories>/root/boost_1_65_1/stage/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SharedLibrarySearchPath>%(SharedLibrarySearchPath)</SharedLibrarySearchPath>
-      <VerboseOutput>true</VerboseOutput>
+      <VerboseOutput>false</VerboseOutput>
       <AdditionalDependencies>$(StlAdditionalDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>-g -rdynamic %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

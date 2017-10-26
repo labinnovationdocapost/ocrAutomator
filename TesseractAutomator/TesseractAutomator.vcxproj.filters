@@ -10,6 +10,51 @@
     <ClCompile Include="TesseractRunner.cpp">
       <Filter>Source Code</Filter>
     </ClCompile>
+    <ClCompile Include="Network.cpp">
+      <Filter>Source Code</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkSession.cpp">
+      <Filter>Source Code</Filter>
+    </ClCompile>
+    <ClCompile Include="Protobuf\Declare.pb.cc">
+      <Filter>Proto</Filter>
+    </ClCompile>
+    <ClCompile Include="Protobuf\File.pb.cc">
+      <Filter>Proto</Filter>
+    </ClCompile>
+    <ClCompile Include="Protobuf\NetworkInfo.pb.cc">
+      <Filter>Proto</Filter>
+    </ClCompile>
+    <ClCompile Include="Protobuf\Status.pb.cc">
+      <Filter>Proto</Filter>
+    </ClCompile>
+    <ClCompile Include="Protobuf\Broadcast.pb.cc">
+      <Filter>Proto</Filter>
+    </ClCompile>
+    <ClCompile Include="Protobuf\Message_Master.pb.cc">
+      <Filter>Proto</Filter>
+    </ClCompile>
+    <ClCompile Include="Protobuf\Message_Slave.pb.cc">
+      <Filter>Proto</Filter>
+    </ClCompile>
+    <ClCompile Include="Protobuf\Result.pb.cc">
+      <Filter>Proto</Filter>
+    </ClCompile>
+    <ClCompile Include="Protobuf\Synchro_Master.pb.cc">
+      <Filter>Proto</Filter>
+    </ClCompile>
+    <ClCompile Include="Protobuf\Synchro_Slave.pb.cc">
+      <Filter>Proto</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkClient.cpp">
+      <Filter>Source Code\Slave</Filter>
+    </ClCompile>
+    <ClCompile Include="TesseractSlaveRunner.cpp">
+      <Filter>Source Code\Slave</Filter>
+    </ClCompile>
+    <ClCompile Include="SlaveDisplay.cpp">
+      <Filter>Source Code\Slave</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Display.h">
@@ -21,6 +66,60 @@
     <ClInclude Include="TesseractRunner.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="Network.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkSession.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Version.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Protobuf\Status.pb.h">
+      <Filter>Proto\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Protobuf\NetworkInfo.pb.h">
+      <Filter>Proto\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Protobuf\File.pb.h">
+      <Filter>Proto\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Protobuf\Declare.pb.h">
+      <Filter>Proto\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Protobuf_all.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Protobuf\Synchro_Master.pb.h">
+      <Filter>Proto\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Protobuf\Synchro_Slave.pb.h">
+      <Filter>Proto\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Protobuf\Result.pb.h">
+      <Filter>Proto\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Protobuf\Message_Slave.pb.h">
+      <Filter>Proto\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Protobuf\Message_Master.pb.h">
+      <Filter>Proto\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Protobuf\Broadcast.pb.h">
+      <Filter>Proto\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="TesseractSlaveRunner.h">
+      <Filter>Headers\Slave</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkClient.h">
+      <Filter>Headers\Slave</Filter>
+    </ClInclude>
+    <ClInclude Include="SlaveDisplay.h">
+      <Filter>Headers\Slave</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSum.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -29,5 +128,58 @@
     <Filter Include="Source Code">
       <UniqueIdentifier>{5b17de6e-902d-4941-92c4-5fca9162e953}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Proto Source">
+      <UniqueIdentifier>{5a8cd6a0-17e5-4455-9e06-8bb26956a848}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Proto">
+      <UniqueIdentifier>{c1329eb8-988a-4b24-90e7-22c46278ab81}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Proto\Headers">
+      <UniqueIdentifier>{c202e974-9809-4c1f-85c9-f0c0b1668383}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Proto Source\Master">
+      <UniqueIdentifier>{e526c57f-27d7-4a35-9d62-bf8b5e856da3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Proto Source\Slave">
+      <UniqueIdentifier>{b38d33e7-d274-425e-9dc2-174b259eb253}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Slave">
+      <UniqueIdentifier>{c4db08fa-92a5-4273-98d5-300f164a513c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Code\Slave">
+      <UniqueIdentifier>{9a0a2405-fbc2-4bfd-9f1b-1c16b8bf0545}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Protobuf\Message_Slave.proto">
+      <Filter>Proto Source\Slave</Filter>
+    </None>
+    <None Include="Protobuf\Synchro_Slave.proto">
+      <Filter>Proto Source\Slave</Filter>
+    </None>
+    <None Include="Protobuf\Result.proto">
+      <Filter>Proto Source\Slave</Filter>
+    </None>
+    <None Include="Protobuf\Message_Master.proto">
+      <Filter>Proto Source\Master</Filter>
+    </None>
+    <None Include="Protobuf\Synchro_Master.proto">
+      <Filter>Proto Source\Master</Filter>
+    </None>
+    <None Include="Protobuf\File.proto">
+      <Filter>Proto Source\Master</Filter>
+    </None>
+    <None Include="Protobuf\NetworkInfo.proto">
+      <Filter>Proto Source\Master</Filter>
+    </None>
+    <None Include="Protobuf\Declare.proto">
+      <Filter>Proto Source\Slave</Filter>
+    </None>
+    <None Include="Protobuf\Status.proto">
+      <Filter>Proto Source\Master</Filter>
+    </None>
+    <None Include="Protobuf\Broadcast.proto">
+      <Filter>Proto Source\Slave</Filter>
+    </None>
   </ItemGroup>
 </Project>

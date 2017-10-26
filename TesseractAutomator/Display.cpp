@@ -1,8 +1,5 @@
 #include "Display.h"
 
-int k = 0;
-int l = 0;
-
 #define COLOR_GREY 8
 
 #define HTOP 4
@@ -70,6 +67,7 @@ Display::Display(Docapost::IA::Tesseract::TesseractRunner& tessR) : tessR(tessR)
 	Init();
 	tessR.onStartProcessFile.connect(boost::bind(&Display::ShowFile, this, _1));
 	tessR.onProcessEnd.connect(boost::bind(&Display::OnEnd, this));
+	tessR.onFileCanceled.connect(boost::bind(&Display::OnCanceled, this, _1));
 }
 
 
@@ -78,26 +76,9 @@ Display::~Display()
 	endwin();
 }
 
-struct Sum
-{
-	Sum() : count(0) {};
-	void operator()(FileStatus* fs)
-	{
-		if (fs->isEnd)
-		{
-			sum += fs->ellapsed;
-			count++;
-		}
-	}
-	boost::posix_time::ptime::time_duration_type sum;
-	int count;
-};
 
-void Display::Draw()
+void Display::DrawHeader() const
 {
-	boost::lock_guard<std::mutex> lock(g_thread_mutex);
-	const auto cfiles = files;
-	auto files_count = files.size();
 	if (tessR.GetOutput().empty())
 	{
 		mvwprintw(top, 0, 0, "Input : %s | Output: %s\n", tessR.GetInput().c_str(), tessR.GetInput().c_str());
@@ -107,9 +88,9 @@ void Display::Draw()
 		mvwprintw(top, 0, 0, "Input : %s | Exif Output: %s | Text Output : %s\n", tessR.GetInput().c_str(), tessR.GetOutput()[Docapost::IA::Tesseract::TesseractOutputFlags::Exif].string().c_str(), tessR.GetOutput()[Docapost::IA::Tesseract::TesseractOutputFlags::Text].string().c_str());
 	}
 	if (tessR.GetThreadToStop() > 0)
-		mvwprintw(top, 1, 0, "Threads: %d (-%d) | Page Segmentation Mode: %d | Ocr Engine Mode: %d\n", tessR.GetNbThread(), tessR.GetThreadToStop(), tessR.GetPSM(), tessR.GetOEM());
+		mvwprintw(top, 1, 0, "Threads Local/Remote: %d (-%d)/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d\n", tessR.GetNbThread(), tessR.GetThreadToStop(), tessR.GetRemoteThread(), tessR.GetPSM(), tessR.GetOEM());
 	else
-		mvwprintw(top, 1, 0, "Threads: %d | Page Segmentation Mode: %d | Ocr Engine Mode: %d\n", tessR.GetNbThread(), tessR.GetPSM(), tessR.GetOEM());
+		mvwprintw(top, 1, 0, "Threads Local/Remote: %d/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d\n", tessR.GetNbThread(), tessR.GetRemoteThread(), tessR.GetPSM(), tessR.GetOEM());
 
 	if (isEnd)
 	{
@@ -123,33 +104,56 @@ void Display::Draw()
 		cstring << "Start: " << tessR.GetStartTime() << " | End: In Progress | Ellapsed: " << (boost::posix_time::second_clock::local_time() - tessR.GetStartTime());
 		mvwprintw(top, 2, 0, "%s\n", cstring.str().c_str());
 	}
+
 	mvwprintw(top, 3, 0, "Files Total: %d | Files Skip: %d | Mode: %d\n", tessR.GetNbFiles(), tessR.GetNbSkipFiles(), tessR.GetOutputTypes());
 	wrefresh(top);
+}
 
-	//mvwprintw(header, 0, 0, "%-15s %-6s %s -> %s\n", "Ellapsed", "Thread", "Origin", "Output");
+void Display::DrawBody(const std::vector<FileStatus*> files, FileSum& s) const
+{
 	mvwprintw(header, 0, 0, "%-15s %-6s %s\n", "Ellapsed", "Thread", "Origin");
 	wrefresh(header);
 
 	wmove(win, 0, 0);
-	Sum s{};
-	for (auto j = std::max(static_cast<int>(files_count) - h, 0); j < files_count; j++)
+	for (auto j = std::max(static_cast<int>(files.size()) - h, 0); j < files.size(); j++)
 	{
 		if (files[j]->isEnd)
 		{
 			std::stringstream cstring;
 			cstring << "" << files[j]->ellapsed;
 			//wprintw(win, "%-15s %-6d %s -> %s\n", cstring.str().c_str(), files[j]->thread, files[j]->relative_name.c_str(), boost::algorithm::join(files[j]->relative_output, " | ").c_str());
-			wprintw(win, "%-15s %-6d %s\n", cstring.str().c_str(), files[j]->thread, files[j]->relative_name.c_str());
+			wprintw(win, "%-15s %-6d %-15s %s\n", cstring.str().c_str(), files[j]->thread,  files[j]->hostname.c_str(), files[j]->relative_name.c_str());
 		}
 		else
 		{
-			wprintw(win, "%-15s %-6d %s\n", "", files[j]->thread, files[j]->relative_name.c_str());
+			wprintw(win, "%-15s %-6d %-15s %s\n", "", files[j]->thread,  files[j]->hostname.c_str(), files[j]->relative_name.c_str());
 		}
 
 		s(files[j]);
 	}
 	wrefresh(win);
+}
 
+void Display::DrawBodyNetwork(const std::vector<FileStatus*> files, FileSum& s) const
+{
+	mvwprintw(header, 0, 0, "%-20s %-6s\n", "Hostname", "Thread");
+	wrefresh(top);
+
+	wmove(win, 0, 0);
+	for (auto j = std::max(static_cast<int>(files.size()) - h, 0); j < files.size(); j++)
+	{
+		s(files[j]);
+	}
+	wprintw(win, "%-20s %-6d\n", "Master", tessR.GetNbThread());
+	for(auto& slave : tessR.GetSlaves())
+	{
+		wprintw(win, "%-20s %-6d\n", slave.first.c_str(), slave.second);
+	}
+	wrefresh(win);
+}
+
+void Display::DrawFooter(const std::vector<FileStatus*> cfiles, FileSum s) const
+{
 	if (s.count > 0)
 	{
 		std::stringstream cstring;
@@ -158,18 +162,18 @@ void Display::Draw()
 		if (isEnd)
 		{
 			auto average = (tessR.GetEndTime() - tessR.GetStartTime()) / tessR.GetNbFiles();
-			cstring << "files: " << files_count << "/" << tessR.GetNbFiles() 
-			<< "\t Average: " << std::setw(2) << std::setfill('0') << average.hours() << ":"
+			cstring << "files: " << tessR.GetDone() << "/" << tessR.GetNbFiles() 
+				<< "\t Average: " << std::setw(2) << std::setfill('0') << average.hours() << ":"
 				<< std::setw(2) << std::setfill('0') << average.minutes() << ":"
 				<< std::setw(2) << std::setfill('0') << average.seconds() << "."
 				<< std::setw(3) << std::setfill('0') << average.fractional_seconds() / 1000 << "/Image"
-			<< "\t Ellapsed: " << tessR.GetEndTime() - tessR.GetStartTime() << "\t Finish: " << tessR.GetEndTime();
+				<< "\t Ellapsed: " << tessR.GetEndTime() - tessR.GetStartTime() << "\t Finish: " << tessR.GetEndTime();
 		}
 		else
 		{
-			auto remaining = (s.sum / s.count / tessR.GetNbThread()) * (tessR.GetNbFiles() - files_count);
-			auto average = s.sum / s.count / tessR.GetNbThread();
-			cstring << "files: " << files_count << "/" << tessR.GetNbFiles()
+			auto remaining = (s.sum / s.count / (tessR.GetNbThread() + tessR.GetRemoteThread())) * (tessR.GetNbFiles() - cfiles.size());
+			auto average = s.sum / s.count / (tessR.GetNbThread() + tessR.GetRemoteThread());
+			cstring << "files: " << tessR.GetDone() << "/" << tessR.GetNbFiles()
 				<< "\t Average: " << std::setw(2) << std::setfill('0') << average.hours() << ":"
 				<< std::setw(2) << std::setfill('0') << average.minutes() << ":"
 				<< std::setw(2) << std::setfill('0') << average.seconds() << "."
@@ -186,17 +190,36 @@ void Display::Draw()
 	}
 	else
 	{
-		mvwprintw(bottom, 0, 0, "files: %d/%d\t Average: Unknown\t Remaining: Unknown\t Estimated End: Unknown\n", files_count, tessR.GetNbFiles());
+		mvwprintw(bottom, 0, 0, "files: %d/%d\t Average: Unknown\t Remaining: Unknown\t Estimated End: Unknown\n", tessR.GetDone(), tessR.GetNbFiles());
 	}
 
 	wrefresh(bottom);
+}
 
-
+void Display::DrawCommand() const
+{
 	if (!isEnd)
-		mvwprintw(ctrl, 0, 0, "[CTRL+C] Abandon | [+]/[-] Increase/Decrease Thread\n");
+		mvwprintw(ctrl, 0, 0, "[CTRL+C] Abandon | [+]/[-] Increase/Decrease Thread | [v] Change view\n");
 	else
 		mvwprintw(ctrl, 0, 0, "[ENTER] Exit\n");
 	wrefresh(ctrl);
+}
+
+void Display::Draw()
+{
+	boost::lock_guard<std::mutex> lock(g_thread_mutex);
+	DrawHeader();
+
+	FileSum s{};
+
+	if(currentView == 0)
+		DrawBody(files, s);
+	if (currentView == 1)
+		DrawBodyNetwork(files, s);
+
+	DrawFooter(files, s);
+
+	DrawCommand();
 }
 
 void Display::Resize()
@@ -209,6 +232,11 @@ void Display::Resize()
 void Display::ShowFile(FileStatus* str)
 {
 	files.insert(files.end(), str);
+}
+void Display::OnCanceled(FileStatus* str)
+{
+	files.erase(std::remove(files.begin(), files.end(), str), files.end());
+	werase(win);
 }
 
 void Display::Run()
@@ -230,6 +258,12 @@ void Display::Run()
 			else if (ch == '-')
 			{
 				tessR.RemoveThread();
+			}
+			else if (ch == 'v')
+			{
+				currentView = (currentView + 1) % totalView;
+				werase(win);
+				Draw();
 			}
 			else if ((ch == KEY_ENTER || ch == '\n') && isEnd)
 			{

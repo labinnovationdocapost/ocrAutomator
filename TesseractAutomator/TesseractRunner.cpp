@@ -3,13 +3,109 @@
 #include <leptonica/allheaders.h>
 #include <future>
 #include <exiv2/exiv2.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 std::atomic_int Docapost::IA::Tesseract::TesseractRunner::next_id{ 0 };
 
-Docapost::IA::Tesseract::TesseractRunner::TesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang, Docapost::IA::Tesseract::TesseractOutputFlags types) : outputTypes(types), total(0), skip(0), psm(psm), oem(oem), lang(lang)
+
+Docapost::IA::Tesseract::TesseractRunner::TesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang, Docapost::IA::Tesseract::TesseractOutputFlags types) :
+	outputTypes(types),
+	total(0),
+	skip(0),
+	done(0),
+	psm(psm),
+	oem(oem),
+	lang(lang),
+	network(boost::make_shared<Network>(12000))
 {
 	setMsgSeverity(L_SEVERITY_NONE);
+
+	network->onSlaveConnect.connect(boost::bind(&TesseractRunner::OnSlaveConnectHandler, this, _1, _2, _3));
+
+	network->onSlaveSynchro.connect(boost::bind(&TesseractRunner::OnSlaveSynchroHandler, this, _1, _2, _3, _4));
+
+	network->onSlaveDisconnect.connect(boost::bind(&TesseractRunner::OnSlaveDisconnectHandler, this, _1, _2));
+
+	network->InitBroadcastReceiver();
+	network->InitComm();
+	networkThread =new std::thread([this]()
+	{
+		network->Start();
+	});
 }
+
+void Docapost::IA::Tesseract::TesseractRunner::OnSlaveConnectHandler(NetworkSession* ns, int thread, std::string hostname)
+{
+	slaves[ns->GetHostname()] = thread;
+	ns->SendStatus(this->done, this->skip, this->total, this->psm, this->oem, this->lang);
+}
+
+void Docapost::IA::Tesseract::TesseractRunner::OnSlaveSynchroHandler(NetworkSession* ns, int thread, int required, std::vector<std::tuple<std::string, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>& results)
+{
+	slaves[ns->GetHostname()] = thread;
+	std::lock_guard<std::mutex> lock(g_network_mutex);
+	try
+	{
+		for (auto& res : results)
+		{
+			std::string result, uuid;
+			boost::posix_time::ptime start, end;
+			boost::posix_time::time_duration ellapsed;
+			int threadId;
+			auto file = fileSend[std::get<0>(res)];
+			std::tie(uuid, file->thread, file->start, file->end, file->ellapsed, result) = res;
+			file->isEnd = true;
+			file->hostname = ns->GetHostname();
+			CreateOutput(file, result);
+			done++;
+			fileSend.erase(std::get<0>(res));
+		}
+		boost::unordered_map<std::string, std::vector<unsigned char>*> fileToSend;
+		for (int i = 0; i < required; i++)
+		{
+			FileStatus*  file;
+			if ((file = GetFile()) != nullptr)
+			{
+				auto id = boost::uuids::to_string(gen());
+
+				file->uuid = id;
+				fileSend[id] = file;
+				fileToSend[id] = OpenFileForLeptonica(fileSend[id]->name);
+				file->fileSize = fileToSend[id]->size();
+				onStartProcessFile(file);
+			}
+		}
+		ns->SendSynchro(threads.size(), done, fileToSend);
+	}
+	catch (std::exception& e)
+	{
+		std::cout << "ERROR !!! : " << e.what() << std::endl;
+	}
+}
+
+void Docapost::IA::Tesseract::TesseractRunner::OnSlaveDisconnectHandler(NetworkSession* ns, boost::unordered_map<std::string, bool>& noUsed)
+{
+	slaves.erase(ns->GetHostname());
+	std::lock_guard<std::mutex> lock(g_network_mutex);
+	try
+	{
+		for (auto& res : noUsed)
+		{
+			if (!res.second)
+			{
+				AddFile(fileSend[res.first]);
+				onFileCanceled(fileSend[res.first]);
+				fileSend.erase(res.first);
+			}
+		}
+
+	}
+	catch (std::exception& e)
+	{
+		std::cout << "ERROR !!! : " << e.what() << std::endl;
+	}
+}
+
 
 fs::path Docapost::IA::Tesseract::TesseractRunner::ConstructNewTextFilePath(fs::path path) const
 {
@@ -33,6 +129,7 @@ fs::path Docapost::IA::Tesseract::TesseractRunner::ConstructNewTextFilePath(fs::
 	}
 	return new_path;
 }
+
 
 fs::path Docapost::IA::Tesseract::TesseractRunner::ConstructNewExifFilePath(fs::path path) const
 {
@@ -177,6 +274,93 @@ void Docapost::IA::Tesseract::TesseractRunner::RemoveThread()
 		threadToStop++;
 }
 
+bool Docapost::IA::Tesseract::TesseractRunner::GetTextFromTesseract(tesseract::TessBaseAPI* api, std::vector<l_uint8>* imgData, std::string& text)
+{
+	Pix *image = pixReadMem(imgData->data(), imgData->size());
+	if (image == nullptr)
+	{
+		return false;
+	}
+
+	api->SetImage(image);
+	auto outtext = api->GetUTF8Text();
+
+	text = string(outtext);
+
+	pixDestroy(&image);
+	delete outtext;
+	delete imgData;
+
+	return true;
+}
+
+std::vector<l_uint8> * Docapost::IA::Tesseract::TesseractRunner::OpenFileForLeptonica(std::string uri)
+{
+	FILE* f = fopen(uri.c_str(), "r");
+
+	// Determine file size
+	fseek(f, 0, SEEK_END);
+	size_t size = ftell(f);
+
+	std::vector<l_uint8>* data = new std::vector<l_uint8>(size);
+	//l_uint8* data = new l_uint8[size];
+
+	rewind(f);
+	fread(data->data(), sizeof(l_uint8), size, f);
+
+	return data;
+}
+
+void Docapost::IA::Tesseract::TesseractRunner::CreateOutput(FileStatus* file, std::string outText)
+{
+	fs::path new_path;
+	if (outputTypes & TesseractOutputFlags::Text)
+	{
+		new_path = ConstructNewTextFilePath(file->name);
+
+		fs::create_directories(new_path.parent_path());
+
+		std::ofstream output;
+		output.open(new_path.string(), std::ofstream::trunc | std::ofstream::out);
+		output << outText;
+		output.close();
+
+		file->output.push_back(new_path.string());
+		file->relative_output.push_back(fs::relative(new_path, outputs[TesseractOutputFlags::Text]).string());
+	}
+
+	if (outputTypes & TesseractOutputFlags::Exif)
+	{
+		new_path = ConstructNewExifFilePath(file->name);
+
+		auto it = outputs.find(TesseractOutputFlags::Exif);
+		if (it != outputs.end() && it->second != input)
+		{
+			fs::create_directories(new_path.parent_path());
+			if (fs::exists(new_path))
+			{
+				fs::remove(new_path);
+			}
+			fs::copy_file(file->name, new_path);
+		}
+
+		Exiv2::ExifData exifData;
+		auto v = Exiv2::Value::create(Exiv2::asciiString);
+		v->read(outText);
+		Exiv2::ExifKey key("Exif.Image.ImageDescription");
+		exifData.add(key, v.get());
+		exifData["Exif.Image.ImageID"] = fs::relative(file->name, input).string();
+		exifData["Exif.Image.ProcessingSoftware"] = softName;
+
+		auto o_image = Exiv2::ImageFactory::open(new_path.string());
+		o_image->setExifData(exifData);
+		o_image->writeMetadata();
+
+		file->output.push_back(new_path.string());
+		file->relative_output.push_back(fs::relative(new_path, outputs[TesseractOutputFlags::Exif]).string());
+	}
+}
+
 void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 {
 	auto api = new tesseract::TessBaseAPI();
@@ -192,73 +376,38 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 	}
 	api->SetPageSegMode(psm);
 
-	FileStatus* file;
 	try
 	{
-		while ((file = GetFile()) != nullptr)
+		while (true)
 		{
+			FileStatus * file = GetFile();
+			if(file == nullptr)
+			{
+				if(fileSend.size() == 0)
+				{
+					break;
+				}
+				std::this_thread::sleep_for(std::chrono::milliseconds(300));
+				continue;
+			}
+			file->uuid = "";
 			file->thread = id;
 			onStartProcessFile(file);
 			file->start = boost::posix_time::microsec_clock::local_time();
 
-			Pix *image = pixRead(file->name.c_str());
-			if (image == nullptr)
+			auto data = OpenFileForLeptonica(file->name);
+			file->fileSize = data->size();
+
+			std::string outText;
+			if (!GetTextFromTesseract(api, data, outText))
 			{
 				AddFile(file);
 				continue;
 			}
-			api->SetImage(image);
-			char *outText = api->GetUTF8Text();
 
-			fs::path new_path;
-			if (outputTypes & TesseractOutputFlags::Text)
-			{
-				new_path = ConstructNewTextFilePath(file->name);
+			CreateOutput(file, outText);
 
-				fs::create_directories(new_path.parent_path());
-
-				std::ofstream output;
-				output.open(new_path.string(), std::ofstream::trunc | std::ofstream::out);
-				output << outText;
-				output.close();
-
-				file->output.push_back(new_path.string());
-				file->relative_output.push_back(fs::relative(new_path, outputs[TesseractOutputFlags::Text]).string());
-			}
-
-			if (outputTypes & TesseractOutputFlags::Exif)
-			{
-				new_path = ConstructNewExifFilePath(file->name);
-
-				auto it = outputs.find(TesseractOutputFlags::Exif);
-				if (it != outputs.end() && it->second != input)
-				{
-					fs::create_directories(new_path.parent_path());
-					if (fs::exists(new_path))
-					{
-						fs::remove(new_path);
-					}
-					fs::copy_file(file->name, new_path);
-				}
-
-				Exiv2::ExifData exifData;
-				auto v = Exiv2::Value::create(Exiv2::asciiString);
-				v->read(outText);
-				Exiv2::ExifKey key("Exif.Image.ImageDescription");
-				exifData.add(key, v.get());
-				exifData["Exif.Image.ImageID"] = fs::relative(file->name, input).string();
-				exifData["Exif.Image.ProcessingSoftware"] = softName;
-
-				auto o_image = Exiv2::ImageFactory::open(new_path.string());
-				o_image->setExifData(exifData);
-				o_image->writeMetadata();
-
-				file->output.push_back(new_path.string());
-				file->relative_output.push_back(fs::relative(new_path, outputs[TesseractOutputFlags::Exif]).string());
-			}
-
-			delete[] outText;
-			pixDestroy(&image);
+			done++;
 
 			file->end = boost::posix_time::microsec_clock::local_time();
 			file->ellapsed = file->end - file->start;
@@ -287,7 +436,13 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 	boost::lock_guard<std::mutex> lock(g_thread_mutex);
 	if (threads.size() == 0)
 	{
+		while (fileSend.size() > 0)
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(300));
+		}
 		end = boost::posix_time::second_clock::local_time();
+		network->Stop();
+		networkThread->join();
 		onProcessEnd();
 	}
 }
@@ -298,23 +453,28 @@ void Docapost::IA::Tesseract::TesseractRunner::Wait()
 		th.second->join();
 }
 
-void Docapost::IA::Tesseract::TesseractRunner::SetOutput(boost::unordered_map<TesseractOutputFlags, fs::path>& folders)
+void Docapost::IA::Tesseract::TesseractRunner::SetOutput(boost::unordered_map<TesseractOutputFlags, fs::path> folders)
 {
 	this->outputs = folders;
 }
 
 void Docapost::IA::Tesseract::TesseractRunner::DisplayFiles() const
 {
-	std::stack<FileStatus*> t = files;
+	std::queue<FileStatus*> t = files;
 
 	std::cout << "Files : \n";
 	while (!t.empty())
 	{
-		std::cout << "\t" << t.top();
+		std::cout << "\t" << t.front();
 		t.pop();
 		std::cout << "\n";
 	}
 	std::cout << "\n";
+}
+
+Docapost::IA::Tesseract::TesseractRunner::~TesseractRunner()
+{
+	network.reset();
 }
 
 FileStatus* Docapost::IA::Tesseract::TesseractRunner::GetFile()
@@ -328,7 +488,7 @@ FileStatus* Docapost::IA::Tesseract::TesseractRunner::GetFile()
 			return nullptr;
 		}
 
-		auto f = files.top();
+		auto f = files.front();
 
 		files.pop();
 

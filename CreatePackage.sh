@@ -11,7 +11,7 @@ Version: $VERSION
 Section: base
 Priority: optional
 Architecture: all
-Depends: libtesseract4 (>= 4), libncurses5 (>= 6.0), libexiv2-14 (>= 0.25)
+Depends: libtesseract4 (>= 4), libncurses5 (>= 6.0), libexiv2-14 (>= 0.25), libprotobuf-lite9v5 (>= 2.6.1), libprotobuf-lite9v5 (>=2.6.1)
 Maintainer: Innovation <cyril.tisserand@docapost.fr>
 Description: Automatise l'Ocr par Tesseract sur plusieur thread et dans plusieur modes différents
 Homepage: http://docapost.com" >> "/tmp/Package/DEBIAN/control"
