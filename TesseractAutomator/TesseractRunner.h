@@ -56,7 +56,7 @@ namespace Docapost {
 
 				static std::atomic_int next_id;
 
-				std::queue<FileStatus*> files;
+				std::deque<FileStatus*> files;
 				std::mutex g_stack_mutex;
 				std::mutex g_thread_mutex;
 				std::mutex g_network_mutex;
@@ -73,6 +73,8 @@ namespace Docapost {
 				int skip;
 				int done;
 
+				bool isEnd = false;
+
 				tesseract::PageSegMode psm;
 				tesseract::OcrEngineMode oem;
 				std::string lang;
@@ -83,6 +85,7 @@ namespace Docapost {
 
 				void ThreadLoop(int id);
 				void AddFile(FileStatus* file);
+				void AddFileBack(FileStatus* file);
 				FileStatus* GetFile();
 				void _AddFolder(fs::path folder, bool resume);
 				bool FileExist(fs::path path)  const;
@@ -91,7 +94,7 @@ namespace Docapost {
 				fs::path ConstructNewTextFilePath(fs::path path) const;
 
 				bool GetTextFromTesseract(tesseract::TessBaseAPI* api, std::vector<unsigned char>* image, std::string& text);
-				std::vector<unsigned char>* OpenFileForLeptonica(std::string uri);
+				std::vector<unsigned char>* OpenFileForLeptonica(FileStatus* file);
 				void CreateOutput(FileStatus* file, std::string outText);
 
 				boost::unordered_map<std::string, FileStatus*> fileSend;
@@ -122,7 +125,7 @@ namespace Docapost {
 
 				void DisplayFiles() const;
 
-				std::vector<std::string> extensions = { ".tif", ".tiff", ".png", ".jpg", ".jpeg" };
+				std::set<std::string> extensions = { ".tif", ".tiff", ".png", ".jpg", ".jpeg", ".pdf" };
 
 				boost::signals2::signal<void(FileStatus*)> onFileCanceled;
 				boost::signals2::signal<void(FileStatus*)> onStartProcessFile;

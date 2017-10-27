@@ -154,7 +154,7 @@ void Display::DrawBodyNetwork(const std::vector<FileStatus*> files, FileSum& s) 
 
 void Display::DrawFooter(const std::vector<FileStatus*> cfiles, FileSum s) const
 {
-	if (s.count > 0)
+	if (s.count > 0 && (tessR.GetRemoteThread() + tessR.GetNbThread() > 0 || isEnd))
 	{
 		std::stringstream cstring;
 

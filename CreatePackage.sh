@@ -1,5 +1,5 @@
 
-VERSION=1.2.4
+VERSION=1.3.0.1
 
 mkdir -p "/tmp/Package/DEBIAN"
 mkdir -p "/tmp/Package/usr/bin"
@@ -11,10 +11,11 @@ Version: $VERSION
 Section: base
 Priority: optional
 Architecture: all
-Depends: libtesseract4 (>= 4), libncurses5 (>= 6.0), libexiv2-14 (>= 0.25), libprotobuf-lite9v5 (>= 2.6.1), libprotobuf-lite9v5 (>=2.6.1)
+Depends: libtesseract4 (>= 4), libncurses5 (>= 6.0), libexiv2-14 (>= 0.25), libprotobuf-lite9v5 (>= 2.6.1), libprotobuf-lite9v5 (>=2.6.1), libmagick++-6.q16-5v5 (>=6.8.9.9)
 Maintainer: Innovation <cyril.tisserand@docapost.fr>
 Description: Automatise l'Ocr par Tesseract sur plusieur thread et dans plusieur modes différents
 Homepage: http://docapost.com" >> "/tmp/Package/DEBIAN/control"
 chmod -R 775 "/tmp/Package/"
 sudo dpkg-deb --build "/tmp/Package/" TesseractAutomator$VERSION.deb
 rm -R /tmp/Package
+#dpkg -i TesseractAutomator1.3.0.deb

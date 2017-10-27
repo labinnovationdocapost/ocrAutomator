@@ -163,7 +163,7 @@ void segfault_action(int sig, siginfo_t *info, void *secret)
 }
 #endif
 
-void Master(char** argv, po::variables_map vm)
+void Master(char** argv, po::variables_map& vm)
 {
 	int nb_process = 1;
 	if (vm.count("parallel"))
@@ -306,7 +306,7 @@ void Master(char** argv, po::variables_map vm)
 	std::cout << "Duration    : " << processTime << "\n";
 }
 
-void Slave(char** argv, po::variables_map vm)
+void Slave(char** argv, po::variables_map& vm)
 {
 	int nb_process = 1;
 	if (vm.count("parallel"))
@@ -370,6 +370,8 @@ int main(int argc, char* argv[])
 	sa.sa_flags = SA_SIGINFO | SA_RESTART;
 
 	sigaction(SIGSEGV, &sa, nullptr);
+
+	freopen("/dev/null", "a", stderr);
 #endif
 
 	// oblige le buffer desortie a etre thread safe

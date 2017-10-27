@@ -73,7 +73,7 @@ void NetworkClient::ReceiveData(int length)
 						dict[d.uuid()] = new std::vector<unsigned char>(d.file().begin(), d.file().end());
 					}
 				}
-				onMasterSynchro(m.synchro().totalthread(), m.synchro().done(), dict);
+				onMasterSynchro(m.synchro().totalthread(), m.synchro().skip(), m.synchro().done(), m.synchro().isend(), m.synchro().done(), dict);
 			}
 			//SendStatus(10, 20, 15, 1, 3, "fra");
 			ReceiveDataHeader();
@@ -147,46 +147,52 @@ void NetworkClient::BroadcastNetworkInfo(int port, std::string version)
 	// Broacast du message en UDP pour trouver les pairs
 	boost::asio::ip::udp::endpoint senderEndpoint(boost::asio::ip::address_v4::broadcast(), port);
 
-	timer.expires_from_now(boost::posix_time::seconds(1));
+	timer.expires_from_now(boost::posix_time::seconds(5));
 
 	udp_socket.async_send_to(boost::asio::buffer(*buffer, coded_output.ByteCount()), senderEndpoint, [this, self](boost::system::error_code ec, std::size_t bytes_transferred)
 	{
-		timer.cancel();
+		if (ec)
+			return;
 		// Une fois un pair trouver
 		boost::asio::ip::udp::endpoint masterEndpoint;
 		std::vector<char> rcv_buffer(300);
-		auto bytes_rcv = udp_socket.receive_from(boost::asio::buffer(rcv_buffer, 300), masterEndpoint);
-
-
-		Docapost::IA::Tesseract::Proto::NetworkInfo ni;
-		ni.ParseFromArray(rcv_buffer.data(), bytes_rcv);
-		// On vérifié ca version
-		if (ni.version() != VERSION)
+		udp_socket.async_receive_from(boost::asio::buffer(rcv_buffer, 300), masterEndpoint, [this, self, masterEndpoint, rcv_buffer](boost::system::error_code ec, std::size_t bytes_rcv)
 		{
-			std::cout << "Version mismatch, Expected : " << VERSION << " Received : " << ni.version() << std::endl;
-		}
+			if (ec)
+			{
+				return;
+			}
+			timer.cancel();
+			Docapost::IA::Tesseract::Proto::NetworkInfo ni;
+			ni.ParseFromArray(rcv_buffer.data(), bytes_rcv);
+			// On vérifié ca version
+			if (ni.version() != VERSION)
+			{
+				std::cout << "Version mismatch, Expected : " << VERSION << " Received : " << ni.version() << std::endl;
+			}
 
-		auto ip = masterEndpoint.address().to_string();
+			auto ip = masterEndpoint.address().to_string();
 
-		for (int i = 0; i < 3; i++)
-			try
-		{
-			// Et on ce connect en TCP a celui-ci
-			tcp_socket.connect(ip::tcp::endpoint(masterEndpoint.address(), ni.port()));
-			break;
-		}
-		catch (std::exception& e)
-		{
-			tcp_socket.close();
-			std::this_thread::sleep_for(std::chrono::milliseconds(300));
-		}
+			for (int i = 0; i < 3; i++)
+				try
+			{
+				// Et on ce connect en TCP a celui-ci
+				tcp_socket.connect(ip::tcp::endpoint(masterEndpoint.address(), ni.port()));
+				break;
+			}
+			catch (std::exception& e)
+			{
+				tcp_socket.close();
+				std::this_thread::sleep_for(std::chrono::milliseconds(300));
+			}
 
-		ReceiveDataHeader();
+			ReceiveDataHeader();
 
-		onMasterConnected();
+			onMasterConnected();
+		});
 	});
 
-	timer.async_wait([this, port, version, self](boost::system::error_code ec) { std::cout << "Expire, retry" << ec <<  std::endl; if (!ec) { BroadcastNetworkInfo(port, version); } });
+	timer.async_wait([this, port, version, self](boost::system::error_code ec) { std::cout << "Expire, retry" << ec << std::endl; if (!ec) { udp_socket.cancel(); BroadcastNetworkInfo(port, version); } });
 }
 
 void NetworkClient::SendDeclare(int thread, std::string version)

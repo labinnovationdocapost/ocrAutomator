@@ -37,9 +37,12 @@ void protobuf_AssignDesc_Synchro_5fMaster_2eproto() {
       "Synchro_Master.proto");
   GOOGLE_CHECK(file != NULL);
   Synchro_Master_descriptor_ = file->message_type(0);
-  static const int Synchro_Master_offsets_[3] = {
+  static const int Synchro_Master_offsets_[6] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Synchro_Master, totalthread_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Synchro_Master, done_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Synchro_Master, skip_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Synchro_Master, total_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Synchro_Master, isend_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Synchro_Master, data_),
   };
   Synchro_Master_reflection_ =
@@ -85,10 +88,11 @@ void protobuf_AddDesc_Synchro_5fMaster_2eproto() {
   ::Docapost::IA::Tesseract::Proto::protobuf_AddDesc_File_2eproto();
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
     "\n\024Synchro_Master.proto\022\033Docapost.IA.Tess"
-    "eract.Proto\032\nFile.proto\"d\n\016Synchro_Maste"
-    "r\022\023\n\013TotalThread\030\001 \002(\005\022\014\n\004done\030\002 \002(\005\022/\n\004"
-    "Data\030\003 \003(\0132!.Docapost.IA.Tesseract.Proto"
-    ".File", 165);
+    "eract.Proto\032\nFile.proto\"\220\001\n\016Synchro_Mast"
+    "er\022\023\n\013TotalThread\030\001 \002(\005\022\014\n\004done\030\002 \002(\005\022\014\n"
+    "\004skip\030\003 \002(\005\022\r\n\005total\030\004 \002(\005\022\r\n\005isEnd\030\005 \002("
+    "\010\022/\n\004Data\030\006 \003(\0132!.Docapost.IA.Tesseract."
+    "Proto.File", 210);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "Synchro_Master.proto", &protobuf_RegisterTypes);
   Synchro_Master::default_instance_ = new Synchro_Master();
@@ -108,6 +112,9 @@ struct StaticDescriptorInitializer_Synchro_5fMaster_2eproto {
 #ifndef _MSC_VER
 const int Synchro_Master::kTotalThreadFieldNumber;
 const int Synchro_Master::kDoneFieldNumber;
+const int Synchro_Master::kSkipFieldNumber;
+const int Synchro_Master::kTotalFieldNumber;
+const int Synchro_Master::kIsEndFieldNumber;
 const int Synchro_Master::kDataFieldNumber;
 #endif  // !_MSC_VER
 
@@ -131,6 +138,9 @@ void Synchro_Master::SharedCtor() {
   _cached_size_ = 0;
   totalthread_ = 0;
   done_ = 0;
+  skip_ = 0;
+  total_ = 0;
+  isend_ = false;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -176,7 +186,10 @@ void Synchro_Master::Clear() {
     ::memset(&first, 0, n);                                \
   } while (0)
 
-  ZR_(totalthread_, done_);
+  if (_has_bits_[0 / 32] & 31) {
+    ZR_(totalthread_, total_);
+    isend_ = false;
+  }
 
 #undef OFFSET_OF_FIELD_
 #undef ZR_
@@ -221,20 +234,65 @@ bool Synchro_Master::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(26)) goto parse_Data;
+        if (input->ExpectTag(24)) goto parse_skip;
         break;
       }
 
-      // repeated .Docapost.IA.Tesseract.Proto.File Data = 3;
+      // required int32 skip = 3;
       case 3: {
-        if (tag == 26) {
+        if (tag == 24) {
+         parse_skip:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &skip_)));
+          set_has_skip();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(32)) goto parse_total;
+        break;
+      }
+
+      // required int32 total = 4;
+      case 4: {
+        if (tag == 32) {
+         parse_total:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &total_)));
+          set_has_total();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(40)) goto parse_isEnd;
+        break;
+      }
+
+      // required bool isEnd = 5;
+      case 5: {
+        if (tag == 40) {
+         parse_isEnd:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
+                 input, &isend_)));
+          set_has_isend();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(50)) goto parse_Data;
+        break;
+      }
+
+      // repeated .Docapost.IA.Tesseract.Proto.File Data = 6;
+      case 6: {
+        if (tag == 50) {
          parse_Data:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                 input, add_data()));
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(26)) goto parse_Data;
+        if (input->ExpectTag(50)) goto parse_Data;
         if (input->ExpectAtEnd()) goto success;
         break;
       }
@@ -274,10 +332,25 @@ void Synchro_Master::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->done(), output);
   }
 
-  // repeated .Docapost.IA.Tesseract.Proto.File Data = 3;
+  // required int32 skip = 3;
+  if (has_skip()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->skip(), output);
+  }
+
+  // required int32 total = 4;
+  if (has_total()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(4, this->total(), output);
+  }
+
+  // required bool isEnd = 5;
+  if (has_isend()) {
+    ::google::protobuf::internal::WireFormatLite::WriteBool(5, this->isend(), output);
+  }
+
+  // repeated .Docapost.IA.Tesseract.Proto.File Data = 6;
   for (int i = 0; i < this->data_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      3, this->data(i), output);
+      6, this->data(i), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -300,11 +373,26 @@ void Synchro_Master::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->done(), target);
   }
 
-  // repeated .Docapost.IA.Tesseract.Proto.File Data = 3;
+  // required int32 skip = 3;
+  if (has_skip()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->skip(), target);
+  }
+
+  // required int32 total = 4;
+  if (has_total()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(4, this->total(), target);
+  }
+
+  // required bool isEnd = 5;
+  if (has_isend()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(5, this->isend(), target);
+  }
+
+  // repeated .Docapost.IA.Tesseract.Proto.File Data = 6;
   for (int i = 0; i < this->data_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
-        3, this->data(i), target);
+        6, this->data(i), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -333,8 +421,27 @@ int Synchro_Master::ByteSize() const {
           this->done());
     }
 
+    // required int32 skip = 3;
+    if (has_skip()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->skip());
+    }
+
+    // required int32 total = 4;
+    if (has_total()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->total());
+    }
+
+    // required bool isEnd = 5;
+    if (has_isend()) {
+      total_size += 1 + 1;
+    }
+
   }
-  // repeated .Docapost.IA.Tesseract.Proto.File Data = 3;
+  // repeated .Docapost.IA.Tesseract.Proto.File Data = 6;
   total_size += 1 * this->data_size();
   for (int i = 0; i < this->data_size(); i++) {
     total_size +=
@@ -375,6 +482,15 @@ void Synchro_Master::MergeFrom(const Synchro_Master& from) {
     if (from.has_done()) {
       set_done(from.done());
     }
+    if (from.has_skip()) {
+      set_skip(from.skip());
+    }
+    if (from.has_total()) {
+      set_total(from.total());
+    }
+    if (from.has_isend()) {
+      set_isend(from.isend());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -392,7 +508,7 @@ void Synchro_Master::CopyFrom(const Synchro_Master& from) {
 }
 
 bool Synchro_Master::IsInitialized() const {
-  if ((_has_bits_[0] & 0x00000003) != 0x00000003) return false;
+  if ((_has_bits_[0] & 0x0000001f) != 0x0000001f) return false;
 
   if (!::google::protobuf::internal::AllAreInitialized(this->data())) return false;
   return true;
@@ -402,6 +518,9 @@ void Synchro_Master::Swap(Synchro_Master* other) {
   if (other != this) {
     std::swap(totalthread_, other->totalthread_);
     std::swap(done_, other->done_);
+    std::swap(skip_, other->skip_);
+    std::swap(total_, other->total_);
+    std::swap(isend_, other->isend_);
     data_.Swap(&other->data_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);

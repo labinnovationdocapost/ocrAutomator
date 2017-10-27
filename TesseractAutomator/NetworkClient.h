@@ -59,7 +59,7 @@ public:
 	// threadToRun, done, skip, total, psm, oem, lang
 	boost::signals2::signal<void(int, int, int, int, int, int, std::string)> onMasterStatusChanged;
 	// thread, files
-	boost::signals2::signal<void(int, int, boost::unordered_map<std::string, std::vector<unsigned char>*>&)> onMasterSynchro;
+	boost::signals2::signal<void(int, int, int, int ,bool, boost::unordered_map<std::string, std::vector<unsigned char>*>&)> onMasterSynchro;
 
 	explicit NetworkClient(int port);
 	google::protobuf::uint32 readHeader(char* buf);

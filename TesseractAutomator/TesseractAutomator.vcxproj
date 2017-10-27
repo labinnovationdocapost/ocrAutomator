@@ -125,14 +125,14 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>/root//boost_1_65_1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/root//boost_1_65_1;/usr/include/ImageMagick-6;/usr/include/x86_64-linux-gnu/ImageMagick-6;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Verbose>false</Verbose>
-      <PreprocessorDefinitions>DISPLAY</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DISPLAY;MAGICKCORE_HDRI_ENABLE=0;MAGICKCORE_QUANTUM_DEPTH=16</PreprocessorDefinitions>
       <CppLanguageStandard>c++11</CppLanguageStandard>
       <CppAdditionalWarning>switch;no-deprecated-declarations;empty-body;return-type;parentheses;no-format;uninitialized;unreachable-code;unused-function;unused-value;unused-variable</CppAdditionalWarning>
     </ClCompile>
     <Link>
-      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses;exiv2;protobuf-lite;protobuf</LibraryDependencies>
+      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses;exiv2;protobuf-lite;protobuf;Magick++-6.Q16;MagickCore-6.Q16</LibraryDependencies>
       <AdditionalLibraryDirectories>/root/boost_1_65_1/stage/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SharedLibrarySearchPath>%(SharedLibrarySearchPath)</SharedLibrarySearchPath>
       <VerboseOutput>false</VerboseOutput>
@@ -142,12 +142,12 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>/root/boost_1_65_1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>DISPLAY;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>/root//boost_1_65_1;/usr/include/ImageMagick-6;/usr/include/x86_64-linux-gnu/ImageMagick-6;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DISPLAY;NDEBUG;DISPLAY;MAGICKCORE_HDRI_ENABLE=0;MAGICKCORE_QUANTUM_DEPTH=16;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>FullDebug</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses;exiv2</LibraryDependencies>
+      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses;exiv2;protobuf-lite;protobuf;Magick++-6.Q16;MagickCore-6.Q16</LibraryDependencies>
       <AdditionalLibraryDirectories>/root/boost_1_65_1/stage/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <VerboseOutput>true</VerboseOutput>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>

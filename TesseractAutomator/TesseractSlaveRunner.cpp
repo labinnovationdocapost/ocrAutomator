@@ -24,7 +24,7 @@ Docapost::IA::Tesseract::TesseractSlaveRunner::TesseractSlaveRunner() :
 	network->onMasterConnected.connect(boost::bind(&TesseractSlaveRunner::OnMasterConnectedHandler, this));
 	network->onMasterDisconnect.connect(boost::bind(&TesseractSlaveRunner::OnMasterDisconnectHandler, this));
 	network->onMasterStatusChanged.connect(boost::bind(&TesseractSlaveRunner::OnMasterStatusChangedHandler, this, _1, _2, _3, _4, _5, _6, _7));
-	network->onMasterSynchro.connect(boost::bind(&TesseractSlaveRunner::OnMasterSynchroHandler, this, _1, _2, _3));
+	network->onMasterSynchro.connect(boost::bind(&TesseractSlaveRunner::OnMasterSynchroHandler, this, _1, _2, _3, _4, _5, _6));
 }
 
 void Docapost::IA::Tesseract::TesseractSlaveRunner::OnMasterConnectedHandler()
@@ -72,9 +72,12 @@ void Docapost::IA::Tesseract::TesseractSlaveRunner::OnMasterStatusChangedHandler
 
 	//std::cout << "connected" << std::endl;
 }
-void Docapost::IA::Tesseract::TesseractSlaveRunner::OnMasterSynchroHandler(int thread, int done, boost::unordered_map<std::string, std::vector<unsigned char>*> files)
+void Docapost::IA::Tesseract::TesseractSlaveRunner::OnMasterSynchroHandler(int thread, int done, int skip, int total, bool end, boost::unordered_map<std::string, std::vector<unsigned char>*> files)
 {
+	this->skip = skip;
+	this->total = total;
 	this->done = done;
+	this->isEnd = end;
 	//std::cout << "Synchro : " << files.size() << std::endl;
 	for(auto& file : files)
 	{
@@ -89,7 +92,7 @@ void Docapost::IA::Tesseract::TesseractSlaveRunner::OnMasterSynchroHandler(int t
 	auto file_buffer = files.size();
 	g_stack_mutex.unlock();
 
-	if(done == total)
+	if(done == total && isEnd)
 	{
 		onProcessEnd();
 	}

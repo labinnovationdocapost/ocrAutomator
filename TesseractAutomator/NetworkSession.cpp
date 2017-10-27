@@ -160,7 +160,7 @@ void NetworkSession::SendStatus(int done, int skip, int total, int psm, int oem,
 	);
 }
 
-void NetworkSession::SendSynchro(int thread, int done, boost::unordered_map<std::string,std::vector<unsigned char>*> files)
+void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool isEnd, boost::unordered_map<std::string, std::vector<unsigned char>*> files)
 {
 	auto self(shared_from_this());
 
@@ -174,7 +174,7 @@ void NetworkSession::SendSynchro(int thread, int done, boost::unordered_map<std:
 		f->set_uuid(file.first);
 		f->set_file(file.second->data(), file.second->size());
 		file_send[file.first] = false;
-		delete file.second;
+		//delete file.second;
 	}
 
 	Docapost::IA::Tesseract::Proto::Message_Master m;

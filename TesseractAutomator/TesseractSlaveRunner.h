@@ -36,6 +36,8 @@ namespace Docapost {
 				int skip = 0;
 				int done = 0;
 
+				bool isEnd = false;
+
 				tesseract::PageSegMode psm = tesseract::PageSegMode::PSM_AUTO;
 				tesseract::OcrEngineMode oem = tesseract::OcrEngineMode::OEM_DEFAULT;
 				std::string lang;
@@ -53,7 +55,7 @@ namespace Docapost {
 				void OnMasterConnectedHandler();
 				void OnMasterDisconnectHandler();
 				void OnMasterStatusChangedHandler(int threadToRun, int done, int skip, int total, int psm, int oem, std::string lang);
-				void OnMasterSynchroHandler(int thread, int done, boost::unordered_map<std::string, std::vector<unsigned char>*> files);
+				void OnMasterSynchroHandler(int thread, int done, int skip, int total, bool end, boost::unordered_map<std::string, std::vector<unsigned char>*> files);
 			public:
 				boost::signals2::signal<void(SlaveFileStatus*)> onStartProcessFile;
 				boost::signals2::signal<void()> onProcessEnd;
