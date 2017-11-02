@@ -53,6 +53,7 @@ private:
 	boost::asio::io_service::strand strand;
 	std::thread* mainThread;
 	boost::asio::deadline_timer timer;
+	boost::asio::ip::udp::endpoint masterEndpoint;
 public:
 	boost::signals2::signal<void()> onMasterConnected;
 	boost::signals2::signal<void()> onMasterDisconnect;

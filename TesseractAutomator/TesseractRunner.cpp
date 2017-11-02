@@ -6,6 +6,8 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <Magick++.h>
 #include <boost/format.hpp>
+#include <podofo/podofo.h>
+
 
 std::atomic_int Docapost::IA::Tesseract::TesseractRunner::next_id{ 0 };
 
@@ -61,6 +63,7 @@ void Docapost::IA::Tesseract::TesseractRunner::OnSlaveSynchroHandler(NetworkSess
 			CreateOutput(file, result);
 			done++;
 			fileSend.erase(std::get<0>(res));
+			delete file->data;
 		}
 		boost::unordered_map<std::string, std::vector<unsigned char>*> fileToSend;
 		for (int i = 0; i < required; i++)
@@ -72,9 +75,8 @@ void Docapost::IA::Tesseract::TesseractRunner::OnSlaveSynchroHandler(NetworkSess
 
 				file->uuid = id;
 				fileSend[id] = file;
-				fileToSend[id] = OpenFileForLeptonica(fileSend[id]);
+				fileToSend[id] = OpenFileForLeptonica(file);
 				onStartProcessFile(file);
-				delete file->data;
 			}
 		}
 		ns->SendSynchro(threads.size(), done, skip, total, isEnd ,fileToSend);
@@ -210,36 +212,70 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool 
 				auto ext = path.extension().string();
 				if (extensions.count(ext))
 				{
-
-					if (ext == ".pdf")
+					try
 					{
-						Magick::ReadOptions options;
-						options.density(Magick::Geometry(10, 10));
 
-						std::list<Magick::Image> images;
-						Magick::readImages(&images, path.string(), options);
-
-						size_t i;
-						std::list<Magick::Image>::iterator image;
-						std::vector<FileStatus*>* siblings = new std::vector<FileStatus*>(images.size());
-						std::mutex* mutex_siblings = new std::mutex();
-						bool insert = false;
-						for (image = images.begin(), i = 0; image != images.end(); image++, i++)
+						if (ext == ".pdf")
 						{
-							auto output_file = (boost::format("%s/%s-%d.jpg") % path.parent_path().string() % fs::change_extension(path.filename(), "").string() % i).str();
+							PoDoFo::PdfMemDocument document{ path.string().c_str() };
+							//PoDoFo::PdfStreamedDocument document(path.string().c_str());
+							auto nbPages = document.GetPageCount();
 
+							std::vector<FileStatus*>* siblings = new std::vector<FileStatus*>(nbPages);
+							std::mutex* mutex_siblings = new std::mutex();
+							for (int i = 0; i < nbPages; i++)
+							{
+								auto output_file = (boost::format("%s/%s-%d.jpg") % path.parent_path().string() % fs::change_extension(path.filename(), "").string() % i).str();
+
+								bool toProcess = true;
+								if (resume)
+								{
+									toProcess = false;
+									if (outputTypes & TesseractOutputFlags::Text)
+									{
+										toProcess = toProcess || !FileExist(output_file);
+									}
+
+									if (outputTypes & TesseractOutputFlags::Exif)
+									{
+										toProcess = toProcess || !ExifExist(output_file);
+									}
+
+									if (!toProcess)
+									{
+										skip++;
+									}
+								}
+
+								if (toProcess)
+								{
+									total++;
+									auto file = new FileStatus(path.string(), fs::relative(path, input).string(), output_file);
+									file->filePosition = i;
+									(*siblings)[i] = file;
+									file->siblings = siblings;
+									file->mutex_siblings = mutex_siblings;
+									if (i == 0)
+									{
+										AddFileBack(file);
+									}
+								}
+							}
+						}
+						else
+						{
 							bool toProcess = true;
 							if (resume)
 							{
 								toProcess = false;
 								if (outputTypes & TesseractOutputFlags::Text)
 								{
-									toProcess = toProcess || !FileExist(output_file);
+									toProcess = toProcess || !FileExist(path);
 								}
 
 								if (outputTypes & TesseractOutputFlags::Exif)
 								{
-									toProcess = toProcess || !ExifExist(output_file);
+									toProcess = toProcess || !ExifExist(path);
 								}
 
 								if (!toProcess)
@@ -247,49 +283,16 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool 
 									skip++;
 								}
 							}
-
-							if(toProcess)
+							if (toProcess)
 							{
 								total++;
-								auto file = new FileStatus(path.string(), fs::relative(path, input).string(), output_file);
-								file->filePosition = i;
-								(*siblings)[i] = file;
-								file->siblings = siblings;
-								file->mutex_siblings = mutex_siblings;
-								if(!insert)
-								{
-									insert = true;
-									AddFileBack(file);
-								}
+								AddFileBack(new FileStatus(path.string(), fs::relative(path, input).string()));
 							}
 						}
 					}
-					else
+					catch(std::exception& e)
 					{
-						bool toProcess = true;
-						if (resume)
-						{
-							toProcess = false;
-							if (outputTypes & TesseractOutputFlags::Text)
-							{
-								toProcess = toProcess || !FileExist(path);
-							}
-
-							if (outputTypes & TesseractOutputFlags::Exif)
-							{
-								toProcess = toProcess || !ExifExist(path);
-							}
-
-							if (!toProcess)
-							{
-								skip++;
-							}
-						}
-						if (toProcess)
-						{
-							total++;
-							AddFileBack(new FileStatus(path.string(), fs::relative(path, input).string()));
-						}
+						std::cout << "Impossible de decoder le fichier " << path.string() << std::endl;
 					}
 				}
 			}

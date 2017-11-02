@@ -43,6 +43,7 @@ void resizeHandler(int sig);
 
 Display* display;
 SlaveDisplay* sdisplay;
+std::thread* th = nullptr;
 #endif
 
 std::mutex g_console_mutex;
@@ -100,22 +101,17 @@ OCR Engine modes:
 #if DISPLAY
 void segfault_action(int sig, siginfo_t *info, void *secret)
 {
-
-	delete display;
-	delete sdisplay;
-	/*void *array[10];
-	auto size = backtrace(array, 10);
-
-	fprintf(stderr, "Error: signal %d:\n", signal);
-	backtrace_symbols_fd(array, size, STDERR_FILENO);
-
-	exit(0);*/  
+	display->terminated(true);
+	if (th->joinable())
+		th->join();
+	if (sdisplay != nullptr)
+		delete sdisplay;
 	void *trace[16];
 	char **messages = (char **)NULL;
 	int i, trace_size = 0;
 	ucontext_t *uc = (ucontext_t *)secret;
 
-	auto file = fopen("TesseractAutomatorLog.log", "w");
+	auto file = fopen("/var/log/TesseractAutomatorLog.log", "w");
 	/* Do something useful with siginfo_t */
 	if (sig == SIGSEGV)
 	fprintf(file, "Got signal %d, faulty address is %p, "
@@ -323,7 +319,6 @@ void Slave(char** argv, po::variables_map& vm)
 
 	Docapost::IA::Tesseract::TesseractSlaveRunner tessSR{};
 #if DISPLAY
-	std::thread* th = nullptr;
 	if (!vm.count("silent"))
 	{
 		th = new std::thread([&]()

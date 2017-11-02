@@ -10,6 +10,7 @@
 
 void Display::Init(bool create)
 {
+	boost::lock_guard<std::mutex> lock(g_thread_mutex);
 	if (!create)
 	{
 		delwin(top);
@@ -242,7 +243,7 @@ void Display::OnCanceled(FileStatus* str)
 void Display::Run()
 {
 	int ch;
-	while (true)
+	while (!bTerminated)
 	{
 		if ((ch = getch()) == ERR) {
 			/* user hasn't responded

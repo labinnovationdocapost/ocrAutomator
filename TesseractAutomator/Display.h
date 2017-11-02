@@ -31,6 +31,7 @@ private:
 	bool isEnd = false;
 	void Init(bool create = true);
 	void OnEnd();
+	bool bTerminated = false;
 public:
 	explicit Display(Docapost::IA::Tesseract::TesseractRunner &tessR);
 	~Display();
@@ -46,6 +47,8 @@ public:
 
 	void ShowFile(FileStatus* str);
 	void OnCanceled(FileStatus* str);
+
+	void terminated(bool t) { bTerminated = t; }
 
 	void Run();
 };

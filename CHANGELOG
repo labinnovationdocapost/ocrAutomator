@@ -1,1 +1,3 @@
-v1.3.0
+v1.3.1
+Changement du moteur de parcour des PDF : de ImageMagick a PoDoFo
+Améliore la stabilité de l'affichage

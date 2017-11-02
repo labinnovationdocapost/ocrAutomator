@@ -154,9 +154,8 @@ void NetworkClient::BroadcastNetworkInfo(int port, std::string version)
 		if (ec)
 			return;
 		// Une fois un pair trouver
-		boost::asio::ip::udp::endpoint masterEndpoint;
-		std::vector<char> rcv_buffer(300);
-		udp_socket.async_receive_from(boost::asio::buffer(rcv_buffer, 300), masterEndpoint, [this, self, masterEndpoint, rcv_buffer](boost::system::error_code ec, std::size_t bytes_rcv)
+		//std::vector<char> rcv_buffer(300);
+		udp_socket.async_receive_from(boost::asio::buffer(data_, 1204), masterEndpoint, [this, self](boost::system::error_code ec, std::size_t bytes_rcv)
 		{
 			if (ec)
 			{
@@ -164,7 +163,7 @@ void NetworkClient::BroadcastNetworkInfo(int port, std::string version)
 			}
 			timer.cancel();
 			Docapost::IA::Tesseract::Proto::NetworkInfo ni;
-			ni.ParseFromArray(rcv_buffer.data(), bytes_rcv);
+			ni.ParseFromArray(data_, bytes_rcv);
 			// On vérifié ca version
 			if (ni.version() != VERSION)
 			{
@@ -192,7 +191,7 @@ void NetworkClient::BroadcastNetworkInfo(int port, std::string version)
 		});
 	});
 
-	timer.async_wait([this, port, version, self](boost::system::error_code ec) { std::cout << "Expire, retry" << ec << std::endl; if (!ec) { udp_socket.cancel(); BroadcastNetworkInfo(port, version); } });
+	timer.async_wait([this, port, version, self](boost::system::error_code ec) { if (!ec) { udp_socket.cancel(); BroadcastNetworkInfo(port, version); } });
 }
 
 void NetworkClient::SendDeclare(int thread, std::string version)

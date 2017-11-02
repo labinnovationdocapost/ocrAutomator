@@ -167,6 +167,9 @@ void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool
 	Docapost::IA::Tesseract::Proto::Synchro_Master* s = new Docapost::IA::Tesseract::Proto::Synchro_Master{};
 	s->set_totalthread(thread);
 	s->set_done(done);
+	s->set_skip(skip);
+	s->set_total(total);
+	s->set_isend(isEnd);
 
 	for(auto& file : files)
 	{
