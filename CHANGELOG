@@ -1,3 +1,5 @@
+v1.3.1.2
+Prise en charge des exception PoDoFo
 v1.3.1
 Changement du moteur de parcour des PDF : de ImageMagick a PoDoFo
 Améliore la stabilité de l'affichage

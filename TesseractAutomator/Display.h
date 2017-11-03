@@ -47,6 +47,7 @@ public:
 
 	void ShowFile(FileStatus* str);
 	void OnCanceled(FileStatus* str);
+	void AddFile(FileStatus* file);
 
 	void terminated(bool t) { bTerminated = t; }
 

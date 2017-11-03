@@ -43,6 +43,7 @@ void Display::Init(bool create)
 
 void Display::OnEnd()
 {
+	boost::lock_guard<std::mutex> lock(g_thread_mutex);
 	timeEnd = boost::posix_time::second_clock::local_time();
 	this->isEnd = true;
 
@@ -74,6 +75,7 @@ Display::Display(Docapost::IA::Tesseract::TesseractRunner& tessR) : tessR(tessR)
 
 Display::~Display()
 {
+	boost::lock_guard<std::mutex> lock(g_thread_mutex);
 	endwin();
 }
 
@@ -116,7 +118,9 @@ void Display::DrawBody(const std::vector<FileStatus*> files, FileSum& s) const
 	wrefresh(header);
 
 	wmove(win, 0, 0);
-	for (auto j = std::max(static_cast<int>(files.size()) - h, 0); j < files.size(); j++)
+	auto start = std::max(static_cast<int>(files.size()) - h, 0);
+	auto fileToPrint = files.size();
+	for (auto j = start; j < fileToPrint; j++)
 	{
 		if (files[j]->isEnd)
 		{
@@ -230,14 +234,21 @@ void Display::Resize()
 }
 
 
-void Display::ShowFile(FileStatus* str)
+void Display::ShowFile(FileStatus* file)
 {
-	files.insert(files.end(), str);
+	AddFile(file);
 }
 void Display::OnCanceled(FileStatus* str)
 {
+	boost::lock_guard<std::mutex> lock(g_thread_mutex);
 	files.erase(std::remove(files.begin(), files.end(), str), files.end());
 	werase(win);
+}
+
+void Display::AddFile(FileStatus* file)
+{
+	boost::lock_guard<std::mutex> lock(g_thread_mutex);
+	files.insert(files.end(), file);
 }
 
 void Display::Run()

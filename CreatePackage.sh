@@ -1,5 +1,5 @@
 
-VERSION=1.3.1
+VERSION=1.3.1.3
 
 mkdir -p "/tmp/Package/DEBIAN"
 mkdir -p "/tmp/Package/usr/bin"
@@ -11,7 +11,7 @@ Version: $VERSION
 Section: base
 Priority: optional
 Architecture: all
-Depends: libtesseract4 (>= 4), libncurses5 (>= 6.0), libexiv2-14 (>= 0.25), libprotobuf-lite9v5 (>= 2.6.1), libprotobuf-9v5 (>=2.6.1), libmagick++-6.q16-5v5 (>=6.8.9.9), libpodofo (>=0.9.3)
+Depends: libtesseract4 (>= 4), libncurses5 (>= 6.0), libexiv2-14 (>= 0.25), libprotobuf-lite9v5 (>= 2.6.1), libprotobuf9v5 (>=2.6.1), libmagick++-6.q16-5v5 (>=6.8.9.9)
 Maintainer: Innovation <cyril.tisserand@docapost.fr>
 Description: Automatise l'Ocr par Tesseract sur plusieur thread et dans plusieur modes différents
 Homepage: http://docapost.com" >> "/tmp/Package/DEBIAN/control"

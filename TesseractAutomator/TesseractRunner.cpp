@@ -22,6 +22,8 @@ Docapost::IA::Tesseract::TesseractRunner::TesseractRunner(tesseract::PageSegMode
 	lang(lang)
 {
 	setMsgSeverity(L_SEVERITY_NONE);
+	PoDoFo::PdfError::EnableDebug(false);
+	PoDoFo::PdfError::EnableLogging(false);
 
 	network = boost::make_shared<Network>(12000);
 	network->onSlaveConnect.connect(boost::bind(&TesseractRunner::OnSlaveConnectHandler, this, _1, _2, _3));
@@ -79,7 +81,7 @@ void Docapost::IA::Tesseract::TesseractRunner::OnSlaveSynchroHandler(NetworkSess
 				onStartProcessFile(file);
 			}
 		}
-		ns->SendSynchro(threads.size(), done, skip, total, isEnd ,fileToSend);
+		ns->SendSynchro(threads.size(), done, skip, total, isEnd, fileToSend);
 	}
 	catch (std::exception& e)
 	{
@@ -217,7 +219,8 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool 
 
 						if (ext == ".pdf")
 						{
-							PoDoFo::PdfMemDocument document{ path.string().c_str() };
+							PoDoFo::PdfMemDocument document;
+							document.Load(path.string().c_str());
 							//PoDoFo::PdfStreamedDocument document(path.string().c_str());
 							auto nbPages = document.GetPageCount();
 
@@ -290,9 +293,75 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool 
 							}
 						}
 					}
-					catch(std::exception& e)
+					catch (PoDoFo::PdfError& e)
 					{
-						std::cout << "Impossible de decoder le fichier " << path.string() << std::endl;
+						std::cerr << "Impossible de decoder le fichier " << path.string() << " fallback sur ImageMagic| " << e.ErrorMessage(e.GetError()) << std::endl;
+
+						try
+						{
+							Magick::ReadOptions options;
+							options.density(Magick::Geometry(10, 10));
+
+							std::list<Magick::Image> images;
+							Magick::readImages(&images, path.string(), options);
+
+							size_t i;
+							std::list<Magick::Image>::iterator image;
+							std::vector<FileStatus*>* siblings = new std::vector<FileStatus*>(images.size());
+							std::mutex* mutex_siblings = new std::mutex();
+							bool insert = false;
+							for (image = images.begin(), i = 0; image != images.end(); image++, i++)
+							{
+								auto output_file = (boost::format("%s/%s-%d.jpg") % path.parent_path().string() % fs::change_extension(path.filename(), "").string() % i).str();
+
+								bool toProcess = true;
+								if (resume)
+								{
+									toProcess = false;
+									if (outputTypes & TesseractOutputFlags::Text)
+									{
+										toProcess = toProcess || !FileExist(output_file);
+									}
+
+									if (outputTypes & TesseractOutputFlags::Exif)
+									{
+										toProcess = toProcess || !ExifExist(output_file);
+									}
+
+									if (!toProcess)
+									{
+										skip++;
+									}
+								}
+
+								if (toProcess)
+								{
+									total++;
+									auto file = new FileStatus(path.string(), fs::relative(path, input).string(), output_file);
+									file->filePosition = i;
+									(*siblings)[i] = file;
+									file->siblings = siblings;
+									file->mutex_siblings = mutex_siblings;
+									if (!insert)
+									{
+										insert = true;
+										AddFileBack(file);
+									}
+								}
+							}
+						}
+						catch (...)
+						{
+							auto eptr = std::current_exception();
+							auto n = eptr.__cxa_exception_type()->name();
+							std::cerr << "Impossible de decoder le fichier " << path.string() << " | " << n << std::endl;
+						}
+					}
+					catch (...)
+					{
+						auto eptr = std::current_exception();
+						auto n = eptr.__cxa_exception_type()->name();
+						std::cerr << "Impossible de decoder le fichier " << path.string() << " | " << n << std::endl;
 					}
 				}
 			}
@@ -353,7 +422,7 @@ bool Docapost::IA::Tesseract::TesseractRunner::GetTextFromTesseract(tesseract::T
 	text = string(outtext);
 
 	pixDestroy(&image);
-	delete outtext;
+	delete[] outtext;
 
 	return true;
 }
@@ -362,15 +431,15 @@ std::vector<l_uint8> * Docapost::IA::Tesseract::TesseractRunner::OpenFileForLept
 {
 	if (file->filePosition >= 0)
 	{
-		//std::lock_guard<std::mutex> lock(*file->mutex_siblings);
-		if(file->fileSize > 0)
+		std::lock_guard<std::mutex> lock(*file->mutex_siblings);
+		if (file->fileSize > 0)
 		{
 			return file->data;
 		}
 		Magick::ReadOptions options;
 		options.density(Magick::Geometry(250, 250));
 		std::list<Magick::Image> images;
-		
+
 		Magick::readImages(&images, file->name, options);
 
 		size_t i;
@@ -378,18 +447,16 @@ std::vector<l_uint8> * Docapost::IA::Tesseract::TesseractRunner::OpenFileForLept
 		for (image = images.begin(), i = 0; image != images.end(); image++, i++)
 		{
 			Magick::Blob blobOut;
-			//image.channel(MagickCore::AllChannels);
 			image->colorSpace(MagickCore::RGBColorspace);
 			image->quality(80);
 			image->density(Magick::Geometry(300, 300));
 			image->resolutionUnits(MagickCore::ResolutionType::PixelsPerInchResolution);
-			//image.resample(Magick::Geometry(300, 300));
 			image->magick("JPEG");
 			image->write(&blobOut);
 			auto data = (char*)blobOut.data();
-			(*file->siblings)[i]->data =  new std::vector<l_uint8>(data, data + blobOut.length());
+			(*file->siblings)[i]->data = new std::vector<l_uint8>(data, data + blobOut.length());
 			(*file->siblings)[i]->fileSize = (*file->siblings)[i]->data->size();
-			if(file != (*file->siblings)[i])
+			if (file != (*file->siblings)[i])
 			{
 				AddFile((*file->siblings)[i]);
 			}
@@ -399,16 +466,21 @@ std::vector<l_uint8> * Docapost::IA::Tesseract::TesseractRunner::OpenFileForLept
 	else
 	{
 		FILE* f = fopen(file->name.c_str(), "r");
+		if(f == nullptr)
+		{
+			std::cerr << "Impossible d'ouvrir le fichier " << file->name << std::endl;
+			return nullptr;
+		}
 
 		// Determine file size
 		fseek(f, 0, SEEK_END);
 		size_t size = ftell(f);
 
 		file->data = new std::vector<l_uint8>(size);
-		//l_uint8* data = new l_uint8[size];
 
 		rewind(f);
 		fread(file->data->data(), sizeof(l_uint8), size, f);
+		fclose(f);
 
 		file->fileSize = file->data->size();
 
@@ -489,9 +561,9 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 	}
 	api->SetPageSegMode(psm);
 
-	try
+	while (true)
 	{
-		while (true)
+		try
 		{
 			FileStatus * file = GetFile();
 			if (file == nullptr)
@@ -508,7 +580,11 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 			onStartProcessFile(file);
 			file->start = boost::posix_time::microsec_clock::local_time();
 
-			OpenFileForLeptonica(file);
+			if(nullptr == OpenFileForLeptonica(file))
+			{
+				AddFileBack(file);
+				continue;
+			}
 
 			std::string outText;
 			if (!GetTextFromTesseract(api, file->data, outText))
@@ -537,13 +613,32 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 				break;
 			}
 		}
+		catch (const std::exception& e)
+		{
+			std::cerr << "Thread - " << id << " " << e.what();
+		}
+		catch (...)
+		{
+			auto eptr = std::current_exception();
+			auto n = eptr.__cxa_exception_type()->name();
+			std::cerr << "Thread - " << id << " | " << n << std::endl;
+		}
+	}
 
+	try
+	{
 		api->End();
 		delete api;
 	}
 	catch (const std::exception& e)
 	{
-		std::cout << "Thread - " << id << " " << e.what();
+		std::cerr << "Thread - " << id << " " << e.what();
+	}
+	catch (...)
+	{
+		auto eptr = std::current_exception();
+		auto n = eptr.__cxa_exception_type()->name();
+		std::cerr << "Thread - " << id << " | " << n << std::endl;
 	}
 
 	threads.erase(id);

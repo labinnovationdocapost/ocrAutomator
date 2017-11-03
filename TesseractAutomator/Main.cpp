@@ -366,7 +366,15 @@ int main(int argc, char* argv[])
 
 	sigaction(SIGSEGV, &sa, nullptr);
 
-	freopen("/dev/null", "a", stderr);
+	freopen("/var/log/TesseractAutomatorStdErr.log", "w", stderr);
+
+	std::set_terminate([]()
+	{
+		auto eptr = std::current_exception();
+		auto n = eptr.__cxa_exception_type()->name();
+		std::cerr << "Unhandled exception " << n << std::endl;;
+		std::abort();
+	});
 #endif
 
 	// oblige le buffer desortie a etre thread safe
