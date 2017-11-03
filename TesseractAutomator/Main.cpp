@@ -11,6 +11,8 @@
 #include <csignal>
 #include "Version.h"
 #include "TesseractSlaveRunner.h"
+#include <google/protobuf/extension_set.h>
+#include <google/protobuf/extension_set.h>
 using std::string;
 
 #include <tesseract/baseapi.h>
@@ -114,11 +116,11 @@ void segfault_action(int sig, siginfo_t *info, void *secret)
 	auto file = fopen("/var/log/TesseractAutomatorLog.log", "w");
 	/* Do something useful with siginfo_t */
 	if (sig == SIGSEGV)
-	fprintf(file, "Got signal %d, faulty address is %p, "
-		"from %p\n", sig, info->si_addr,
-		uc->uc_mcontext.gregs[REG_RIP]);
+		fprintf(file, "Got signal %d, faulty address is %p, "
+			"from %p\n", sig, info->si_addr,
+			uc->uc_mcontext.gregs[REG_RIP]);
 	else
-	fprintf(file, "Got signal %d\n", sig);
+		fprintf(file, "Got signal %d\n", sig);
 
 	trace_size = backtrace(trace, 16);
 	/* overwrite sigaction with caller's address */
@@ -127,7 +129,7 @@ void segfault_action(int sig, siginfo_t *info, void *secret)
 	messages = backtrace_symbols(trace, trace_size);
 	/* skip first stack frame (points here) */
 	fprintf(file, "[bt] Execution path:\n");
-	for (i = 1; i<trace_size; ++i)
+	for (i = 1; i < trace_size; ++i)
 	{
 		fprintf(file, "[bt] %s\n", messages[i]);
 
@@ -244,7 +246,7 @@ void Master(char** argv, po::variables_map& vm)
 
 	if (vm.count("prefixe"))
 	{
-		tessR.SetSeparator(vm["prefixe"].as<std::string>());
+		tessR.Separator(vm["prefixe"].as<std::string>());
 	}
 
 #if DISPLAY
@@ -291,14 +293,14 @@ void Master(char** argv, po::variables_map& vm)
 		}
 	}
 #else
-	tessR.Wait();
+	mTesseractRunner.Wait();
 #endif
 
-	auto processTime = tessR.GetEndTime() - tessR.GetStartTime();
+	auto processTime = tessR.EndTime() - tessR.StartTime();
 
-	std::cout << "Total Files : " << tessR.GetNbFiles() << "\n";
-	std::cout << "Start       : " << tessR.GetStartTime() << "\n";
-	std::cout << "End         : " << tessR.GetEndTime() << "\n";
+	std::cout << "Total Files : " << tessR.Total() << "\n";
+	std::cout << "Start       : " << tessR.StartTime() << "\n";
+	std::cout << "End         : " << tessR.EndTime() << "\n";
 	std::cout << "Duration    : " << processTime << "\n";
 }
 
@@ -350,7 +352,7 @@ void Slave(char** argv, po::variables_map& vm)
 	}
 #else
 
-	tessSR.Wait(); .Wait();
+	tessSR.Wait();.Wait();
 #endif
 }
 
@@ -384,24 +386,35 @@ int main(int argc, char* argv[])
 	boost::program_options::positional_options_description pd;
 	pd.add("input", -1);
 
+	po::options_description globalDesc;
+	globalDesc.add_options()
+		("version,v", "Affiche le numero de version de l'application")
+		("help,h", "");
+
+	po::options_description shareDesc;
+	shareDesc.add_options()
+		("parallel,p", value<int>()->value_name("NUM")->default_value(2), "Nombre de threads en parrallele")
+		("silent,s", "Ne pas afficher l'interface"); 
+
 	po::options_description desc;
 	desc.add_options()
 		("psm", value<int>()->default_value(3)->value_name("NUM"), "Page Segmentation Mode")
 		("oem", value<int>()->default_value(3)->value_name("NUM"), "Ocr Engine Mode")
 		("lang,l", value <std::string>()->default_value("fra")->value_name("LANG"), "Langue utilise pour l'OCR")
-		("help,h", "")
-		("parallel,p", value<int>()->value_name("NUM")->default_value(2), "Nombre de threads en parrallele")
 		("output,o", value<std::string>()->value_name("DOSSIER")->default_value(boost::filesystem::current_path().string()), "Dossier de sortie (defaut: dossier actuel)")
 		("continue,c", "Ne pas ecraser les fichiers existant")
-		("silent,s", "Ne pas afficher l'interface")
 		("exif,e", value<std::string>()->value_name("DOSSIER")->default_value("")->implicit_value(""), "Copier l'image dans le fichier de sortie et écrire le resulat dans les Exif. Si non sépcifié le paramètre --output est utilisé")
 		("text,t", value<std::string>()->value_name("DOSSIER")->default_value("")->implicit_value(""), "Ecrire le resultat dans un fichier texte (.txt) dans le dossier de sortie. Si non sépcifié le paramètre --output est utilisé")
 		("prefixe,f", value<std::string>()->value_name("SEPARATOR")->default_value("__")->implicit_value("__"), "Ajout le chemin relatif a [input] en prefixe du fichier.Defaut: __")
-		("version,v", "Affiche le numero de version de l'application")
-		("slave,a", "NOT IMPLEMENTED YET")
 		("input,i", value<std::string>()->value_name("DOSSIER"), "");
 
-	
+	po::options_description slaveDesc;
+	slaveDesc.add_options()
+		("slave,a", "Le programme agira comme un noeu de calcul et cherchera a ce connecter a un noeud maitre disponible pour récupérer des images a traiter");
+
+	po::options_description cmdline_options;
+	cmdline_options.add(globalDesc).add(desc).add(slaveDesc).add(shareDesc);
+
 	po::variables_map vm;
 	try
 	{
@@ -412,7 +425,7 @@ int main(int argc, char* argv[])
 			boost::program_options::command_line_style::allow_sticky |
 			boost::program_options::command_line_style::case_insensitive |
 			boost::program_options::command_line_style::unix_style)
-			.options(desc).positional(pd).run(), vm);
+			.options(cmdline_options).positional(pd).run(), vm);
 		po::notify(vm);
 	}
 	catch (std::exception& e)
@@ -462,7 +475,7 @@ int main(int argc, char* argv[])
 #if DISPLAY
 void resizeHandler(int sig)
 {
-	if(display != nullptr)
+	if (display != nullptr)
 		display->Resize();
 	if (sdisplay != nullptr)
 		sdisplay->Resize();

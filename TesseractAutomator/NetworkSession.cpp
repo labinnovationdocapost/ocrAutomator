@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <boost/date_time.hpp>
 
-NetworkSession::NetworkSession(ip::tcp::socket socket, boost::uuids::uuid id) : socket(std::move(socket)), id(id), strand(socket.get_io_service())
+NetworkSession::NetworkSession(ip::tcp::socket socket, boost::uuids::uuid id) : mSocket(std::move(socket)), mId(id), mStrand(socket.get_io_service())
 {
 }
 
@@ -32,7 +32,7 @@ void NetworkSession::ReceiveData(int length)
 {
 	auto self(shared_from_this());
 	std::shared_ptr<std::vector<char>> buffer = std::make_shared<std::vector<char>>(length);
-	boost::asio::async_read(socket, boost::asio::buffer(*buffer, length), boost::asio::transfer_exactly(length), [this, self, buffer](boost::system::error_code ec, std::size_t length)
+	boost::asio::async_read(mSocket, boost::asio::buffer(*buffer, length), boost::asio::transfer_exactly(length), [this, self, buffer](boost::system::error_code ec, std::size_t length)
 	{
 		if (!ec)
 		{
@@ -40,8 +40,8 @@ void NetworkSession::ReceiveData(int length)
 			m.ParseFromArray(buffer->data(), length);
 			if(m.has_declare())
 			{
-				hostname = m.declare().hostname();
-				onSlaveConnect(this, m.declare().thread(), hostname);
+				mHostname = m.declare().hostname();
+				onSlaveConnect(this, m.declare().thread(), mHostname);
 			}
 			else if(m.has_synchro())
 			{
@@ -50,7 +50,7 @@ void NetworkSession::ReceiveData(int length)
 				{
 					if(d.has_result())
 					{
-						file_send.erase(d.uuid());
+						mFileSend.erase(d.uuid());
 						dict.push_back(std::make_tuple(d.uuid(), d.threadid(), boost::posix_time::from_time_t(d.start()), boost::posix_time::from_time_t(d.end()), boost::posix_time::time_duration(0,0,0,d.ellapsed()), d.result()));
 					}
 				}
@@ -61,8 +61,8 @@ void NetworkSession::ReceiveData(int length)
 		}
 		else
 		{
-			socket.close();
-			onSlaveDisconnect(this, file_send);
+			mSocket.close();
+			onSlaveDisconnect(this, mFileSend);
 
 		}
 	});
@@ -70,16 +70,16 @@ void NetworkSession::ReceiveData(int length)
 void NetworkSession::ReceiveDataHeader()
 {
 	auto self(shared_from_this());
-	boost::asio::async_read(socket, boost::asio::buffer(data_, max_length), boost::asio::transfer_exactly(4), [this, self](boost::system::error_code ec, std::size_t length)
+	boost::asio::async_read(mSocket, boost::asio::buffer(mDefaultBuffer, max_length), boost::asio::transfer_exactly(4), [this, self](boost::system::error_code ec, std::size_t length)
 	{
 		if (!ec)
 		{
-			ReceiveData(readHeader(data_));
+			ReceiveData(readHeader(mDefaultBuffer));
 		}
 		else
 		{
-			socket.close();
-			onSlaveDisconnect(this, file_send);
+			mSocket.close();
+			onSlaveDisconnect(this, mFileSend);
 
 		}
 	});
@@ -89,8 +89,8 @@ void NetworkSession::ReceiveDataHeader()
 // DO NOT USE WITHOUT STRAND
 void NetworkSession::WriteToStream(std::shared_ptr<std::vector<char>> data)
 {
-	writeQueue.push(data);
-	if (writeQueue.size() > 1) {
+	mWriteQueue.push(data);
+	if (mWriteQueue.size() > 1) {
 		// outstanding async_write
 		return;
 	}
@@ -101,11 +101,11 @@ void NetworkSession::WriteToStream(std::shared_ptr<std::vector<char>> data)
 // DO NOT USE WITHOUT DIRECTLY, USE WriteToStream(data) INSTEAD
 void NetworkSession::WriteNextItemToStream()
 {
-	const auto buffer = writeQueue.front();
+	const auto buffer = mWriteQueue.front();
 	boost::asio::async_write(
-		socket,
+		mSocket,
 		boost::asio::buffer(*buffer, buffer->size()),
-		strand.wrap(
+		mStrand.wrap(
 			boost::bind(
 				&NetworkSession::WriteHandler,
 				this,
@@ -118,13 +118,13 @@ void NetworkSession::WriteNextItemToStream()
 
 void NetworkSession::WriteHandler(const boost::system::error_code& error, const size_t bytesTransferred)
 {
-	writeQueue.pop();
+	mWriteQueue.pop();
 	if (error)
 	{
-		socket.close();
-		onSlaveDisconnect(this, file_send);
+		mSocket.close();
+		onSlaveDisconnect(this, mFileSend);
 	}
-	if (!writeQueue.empty()) {
+	if (!mWriteQueue.empty()) {
 		// more messages to send
 		this->WriteNextItemToStream();
 	}
@@ -151,7 +151,7 @@ void NetworkSession::SendStatus(int done, int skip, int total, int psm, int oem,
 	coded_output.WriteLittleEndian32(m.ByteSize());
 	m.SerializePartialToCodedStream(&coded_output);
 
-	strand.post(
+	mStrand.post(
 		boost::bind(
 			&NetworkSession::WriteToStream,
 			this,
@@ -176,7 +176,7 @@ void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool
 		auto f = s->add_data();
 		f->set_uuid(file.first);
 		f->set_file(file.second->data(), file.second->size());
-		file_send[file.first] = false;
+		mFileSend[file.first] = false;
 		//delete file.second;
 	}
 
@@ -190,7 +190,7 @@ void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool
 	coded_output.WriteLittleEndian32(m.ByteSize());
 	m.SerializePartialToCodedStream(&coded_output);
 
-	strand.dispatch(
+	mStrand.dispatch(
 		boost::bind(
 			&NetworkSession::WriteToStream,
 			this,

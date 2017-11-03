@@ -93,13 +93,13 @@ void SlaveDisplay::DrawHeader() const
 	{
 		mvwprintw(top, 0, 0, "Remote: Not found");
 	}
-	if (tessR.GetThreadToStop() > 0)
-		mvwprintw(top, 1, 0, "Threads: %d (-%d) | Page Segmentation Mode: %d | Ocr Engine Mode: %d\n", tessR.GetNbThread(), tessR.GetThreadToStop(), tessR.GetPSM(), tessR.GetOEM());
+	if (tessR.NbThreadToStop() > 0)
+		mvwprintw(top, 1, 0, "Threads: %d (-%d) | Page Segmentation Mode: %d | Ocr Engine Mode: %d\n", tessR.NbThreads(), tessR.NbThreadToStop(), tessR.Psm(), tessR.Oem());
 	else
-		mvwprintw(top, 1, 0, "Threads: %d | Page Segmentation Mode: %d | Ocr Engine Mode: %d\n", tessR.GetNbThread(), tessR.GetPSM(), tessR.GetOEM());
+		mvwprintw(top, 1, 0, "Threads: %d | Page Segmentation Mode: %d | Ocr Engine Mode: %d\n", tessR.NbThreads(), tessR.Psm(), tessR.Oem());
 
 
-	mvwprintw(top, 3, 0, "Files Total: %d | Files Skip: %d\n", tessR.GetNbFiles(), tessR.GetNbSkipFiles());
+	mvwprintw(top, 3, 0, "Files Total: %d | Files Skip: %d\n", tessR.Total(), tessR.Skip());
 	wrefresh(top);
 }
 
@@ -128,7 +128,7 @@ void SlaveDisplay::DrawBody(const std::vector<SlaveFileStatus*> files) const
 
 void SlaveDisplay::DrawFooter(const std::vector<SlaveFileStatus*> cfiles) const
 {
-	mvwprintw(bottom, 0, 0, "files: %d/%d\n", tessR.GetDone(), tessR.GetNbFiles());
+	mvwprintw(bottom, 0, 0, "files: %d/%d\n", tessR.Done(), tessR.Total());
 
 	wrefresh(bottom);
 }

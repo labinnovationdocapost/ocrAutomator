@@ -50,6 +50,7 @@
     <ClInclude Include="Display.h" />
     <ClInclude Include="FileStatus.h" />
     <ClInclude Include="FileSum.h" />
+    <ClInclude Include="BaseTesseractRunner.h" />
     <ClInclude Include="NetworkClient.h" />
     <ClInclude Include="NetworkSession.h" />
     <ClInclude Include="Network.h" />

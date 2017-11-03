@@ -23,24 +23,23 @@ namespace ip = boost::asio::ip;
 class NetworkSession : public std::enable_shared_from_this<NetworkSession>
 {
 private:
-	ip::tcp::socket socket;
-
 	enum { max_length = 1024 };
-	char data_[max_length];
+	char mDefaultBuffer[max_length];
+	std::string mHostname;
 
-	void ReceiveData(int length);
-	void ReceiveDataHeader();
+	ip::tcp::socket mSocket;
 
-	std::string hostname;
+	boost::unordered_map<std::string, bool> mFileSend;
+	boost::uuids::uuid mId;
 
-	boost::unordered_map<std::string, bool> file_send;
-	boost::uuids::uuid id;
+	std::queue<std::shared_ptr<std::vector<char>>> mWriteQueue; 
+	boost::asio::io_service::strand mStrand;
 
-	std::queue<std::shared_ptr<std::vector<char>>> writeQueue; 
-	boost::asio::io_service::strand strand;
 	void WriteToStream(std::shared_ptr<std::vector<char>>);
 	void WriteNextItemToStream();
 	void WriteHandler(const boost::system::error_code& error,const size_t bytesTransferred);
+	void ReceiveData(int length);
+	void ReceiveDataHeader();
 public:
 	boost::signals2::signal<void(NetworkSession*, int, int, std::vector<std::tuple<std::string, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>&)> onSlaveSynchro;
 	boost::signals2::signal<void(NetworkSession*, int, std::string)> onSlaveConnect;
@@ -51,9 +50,11 @@ public:
 	void Stop();
 	void SendStatus(int done, int skip, int total, int psm, int oem, std::string lang);
 	void SendSynchro(int thread, int done, int skip, int total, bool isEnd, boost::unordered_map<std::string, std::vector<unsigned char>*> files);
-	boost::uuids::uuid& GetId() { return id; }
-	boost::unordered_map<std::string, bool> GetFileState() const { return file_send; }
-	std::string GetHostname() const { return hostname; }
+
+	boost::uuids::uuid& Id() { return mId; }
+	boost::unordered_map<std::string, bool> FileState() const { return mFileSend; }
+	std::string Hostname() const { return mHostname; }
+
 	~NetworkSession();
 };
 

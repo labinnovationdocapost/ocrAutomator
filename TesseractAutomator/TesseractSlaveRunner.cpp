@@ -2,7 +2,6 @@
 #include <leptonica/allheaders.h>
 #include "Version.h"
 
-std::atomic_int Docapost::IA::Tesseract::TesseractSlaveRunner::next_id{ 0 };
 
 Docapost::IA::Tesseract::TesseractSlaveRunner::TesseractSlaveRunner() :
 	threadToRun(0)
@@ -29,7 +28,7 @@ Docapost::IA::Tesseract::TesseractSlaveRunner::TesseractSlaveRunner() :
 
 void Docapost::IA::Tesseract::TesseractSlaveRunner::OnMasterConnectedHandler()
 {
-	network->SendDeclare(threads.size(), VERSION); 
+	network->SendDeclare(mThreads.size(), VERSION); 
 }
 void Docapost::IA::Tesseract::TesseractSlaveRunner::OnMasterDisconnectHandler()
 {
@@ -39,12 +38,12 @@ void Docapost::IA::Tesseract::TesseractSlaveRunner::OnMasterDisconnectHandler()
 }
 void Docapost::IA::Tesseract::TesseractSlaveRunner::OnMasterStatusChangedHandler(int threadToRun, int done, int skip, int total, int psm, int oem, std::string lang)
 {
-	this->done = done;
-	this->skip = skip;
-	this->total = total;
-	this->psm = static_cast<tesseract::PageSegMode>(psm);
-	this->oem = static_cast<tesseract::OcrEngineMode>(oem);
-	this->lang = lang;
+	this->mDone = done;
+	this->mSkip = skip;
+	this->mTotal = total;
+	this->mPsm = static_cast<tesseract::PageSegMode>(psm);
+	this->mOem = static_cast<tesseract::OcrEngineMode>(oem);
+	this->mLang = lang;
 
 	/*std::cout << "Status :" << std::endl
 		<< "\tDone: " << done
@@ -55,29 +54,29 @@ void Docapost::IA::Tesseract::TesseractSlaveRunner::OnMasterStatusChangedHandler
 		<< "\tLang: " << lang
 		<< std::endl;*/
 
-	g_stack_mutex.lock();
-	auto file_buffer = files.size();
-	g_stack_mutex.unlock();
+	mStackMutex.lock();
+	auto file_buffer = mFiles.size();
+	mStackMutex.unlock();
 	
 	this->threadToRun += threadToRun;
 
 	for (; this->threadToRun > 0; --this->threadToRun)
 	{
-		int id = next_id++;
-		threads[id] = new std::thread(&TesseractSlaveRunner::ThreadLoop, this, id);
+		int id = mNextId++;
+		mThreads[id] = new std::thread(&TesseractSlaveRunner::ThreadLoop, this, id);
 	}
 
 	//std::cout << "Nb File ask : " << std::max(0, static_cast<int>(threads.size() * 2 - file_buffer));
-	network->SendSynchro(threads.size(), -1, std::max(0, static_cast<int>(threads.size() * 2 - file_buffer)),std::vector<SlaveFileStatus*>());
+	network->SendSynchro(mThreads.size(), -1, std::max(0, static_cast<int>(mThreads.size() * 2 - file_buffer)),std::vector<SlaveFileStatus*>());
 
 	//std::cout << "connected" << std::endl;
 }
 void Docapost::IA::Tesseract::TesseractSlaveRunner::OnMasterSynchroHandler(int thread, int done, int skip, int total, bool end, boost::unordered_map<std::string, std::vector<unsigned char>*> files)
 {
-	this->skip = skip;
-	this->total = total;
-	this->done = done;
-	this->isEnd = end;
+	this->mSkip = skip;
+	this->mTotal = total;
+	this->mDone = done;
+	this->mIsEnd = end;
 	//std::cout << "Synchro : " << files.size() << std::endl;
 	for(auto& file : files)
 	{
@@ -88,18 +87,18 @@ void Docapost::IA::Tesseract::TesseractSlaveRunner::OnMasterSynchroHandler(int t
 		onStartProcessFile(f);
 	}
 
-	g_stack_mutex.lock();
+	mStackMutex.lock();
 	auto file_buffer = files.size();
-	g_stack_mutex.unlock();
+	mStackMutex.unlock();
 
-	if(done == total && isEnd)
+	if(done == total && mIsEnd)
 	{
 		onProcessEnd();
 	}
 	else if(files.size() == 0 && file_buffer == 0 && network->GetSynchroWaiting() == 0)
 	{
 		//std::this_thread::sleep_for(std::chrono::milliseconds(300));
-		network->SendSynchroIfNone(threads.size(), -1, std::max(0, static_cast<int>(threads.size() * 2 - file_buffer)), std::vector<SlaveFileStatus*>());
+		network->SendSynchroIfNone(mThreads.size(), -1, std::max(0, static_cast<int>(mThreads.size() * 2 - file_buffer)), std::vector<SlaveFileStatus*>());
 	}
 }
 
@@ -133,13 +132,13 @@ void Docapost::IA::Tesseract::TesseractSlaveRunner::ThreadLoop(int id)
 	api->SetVariable("out", "quiet");
 	int res;
 
-	if ((res = api->Init(nullptr, lang.c_str(), oem))) {
+	if ((res = api->Init(nullptr, mLang.c_str(), mOem))) {
 		std::stringstream cstring;
 		cstring << "Thread " << id << " - " << "Could not initialize tesseract\n";
 		std::cerr << cstring.str();
 		return;
 	}
-	api->SetPageSegMode(psm);
+	api->SetPageSegMode(mPsm);
 
 	try
 	{
@@ -148,7 +147,7 @@ void Docapost::IA::Tesseract::TesseractSlaveRunner::ThreadLoop(int id)
 			SlaveFileStatus * file = GetFile();
 			if(file == nullptr)
 			{
-				network->SendSynchroIfNone(threads.size(), -1, std::max(0, static_cast<int>(threads.size() * 2)), std::vector<SlaveFileStatus*>());
+				network->SendSynchroIfNone(mThreads.size(), -1, std::max(0, static_cast<int>(mThreads.size() * 2)), std::vector<SlaveFileStatus*>());
 				std::this_thread::sleep_for(std::chrono::milliseconds(300));
 				continue; 
 			}
@@ -168,7 +167,7 @@ void Docapost::IA::Tesseract::TesseractSlaveRunner::ThreadLoop(int id)
 			}
 			//std::cout << "End Tesseractisation : " << file->uuid << std::endl;
 
-			done++;
+			mDone++;
 
 			file->end = boost::posix_time::microsec_clock::local_time();
 			file->ellapsed = file->end - file->start;
@@ -177,16 +176,16 @@ void Docapost::IA::Tesseract::TesseractSlaveRunner::ThreadLoop(int id)
 			auto list = std::vector<SlaveFileStatus*>();
 			list.push_back(file);
 
-			boost::lock_guard<std::mutex> lock(g_thread_mutex);
-			if (threadToStop > 0)
+			boost::lock_guard<std::mutex> lock(mThreadMutex);
+			if (mNbThreadToStop > 0)
 			{
-				--threadToStop;
-				threads.erase(id);
+				--mNbThreadToStop;
+				mThreads.erase(id);
 
-				network->SendSynchro(threads.size(), id, 1, list);
+				network->SendSynchro(mThreads.size(), id, 1, list);
 				break;
 			}
-			network->SendSynchro(threads.size(), id, 1, list);
+			network->SendSynchro(mThreads.size(), id, 1, list);
 		}
 
 		api->End();
@@ -197,41 +196,20 @@ void Docapost::IA::Tesseract::TesseractSlaveRunner::ThreadLoop(int id)
 		//std::cout << "Thread - " << id << " " << e.what();
 	}
 
-	threads.erase(id);
-	boost::lock_guard<std::mutex> lock(g_thread_mutex);
-	if (threads.size() == 0)
+	mThreads.erase(id);
+	boost::lock_guard<std::mutex> lock(mThreadMutex);
+	if (mThreads.size() == 0)
 	{
-		network->SendSynchro(threads.size(), id, 1, std::vector<SlaveFileStatus*>());
-		end = boost::posix_time::second_clock::local_time();
+		network->SendSynchro(mThreads.size(), id, 1, std::vector<SlaveFileStatus*>());
+		mEnd = boost::posix_time::second_clock::local_time();
 		onProcessEnd();
-	}
-}
-
-
-SlaveFileStatus* Docapost::IA::Tesseract::TesseractSlaveRunner::GetFile()
-{
-	while (true)
-	{
-		g_stack_mutex.lock();
-		if (files.empty())
-		{
-			g_stack_mutex.unlock();
-			return nullptr;
-		}
-
-		auto f = files.front();
-
-		files.pop();
-
-		g_stack_mutex.unlock();
-		return f;
 	}
 }
 
 std::thread* Docapost::IA::Tesseract::TesseractSlaveRunner::Run(int nbThread)
 {
-	//g_thread_mutex.lock();
-	start = boost::posix_time::second_clock::local_time();
+	//mThreadMutex.lock();
+	mStart = boost::posix_time::second_clock::local_time();
 
 	this->threadToRun = nbThread;
 	return new std::thread([this]()
@@ -241,38 +219,13 @@ std::thread* Docapost::IA::Tesseract::TesseractSlaveRunner::Run(int nbThread)
 
 	/*std::cout << "waiting connection" << std::endl;
 	std::thread([this]() {
-		g_thread_mutex.lock();
+		mThreadMutex.lock();
 	}).join();*/
 }
 
-void Docapost::IA::Tesseract::TesseractSlaveRunner::AddFile(SlaveFileStatus* file)
-{
-	g_stack_mutex.lock();
-	files.push(file);
 
-	g_stack_mutex.unlock();
-}
-void Docapost::IA::Tesseract::TesseractSlaveRunner::Wait()
-{
-	for (auto& th : threads)
-		th.second->join();
-}
 
 Docapost::IA::Tesseract::TesseractSlaveRunner::~TesseractSlaveRunner()
 {
 	network.reset();
-}
-
-void Docapost::IA::Tesseract::TesseractSlaveRunner::AddThread()
-{
-	int id = next_id++;
-	threads[id] = new std::thread(&TesseractSlaveRunner::ThreadLoop, this, id);
-}
-
-void Docapost::IA::Tesseract::TesseractSlaveRunner::RemoveThread()
-{
-	boost::lock_guard<std::mutex> lock(g_thread_mutex);
-
-	if (threads.size() > threadToStop + 1)
-		threadToStop++;
 }

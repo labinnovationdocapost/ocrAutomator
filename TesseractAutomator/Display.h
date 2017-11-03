@@ -12,26 +12,27 @@ using std::string;
 class Display
 {
 private:
-	WINDOW * win;
-	WINDOW * top;
-	WINDOW * header;
-	WINDOW * bottom;
-	WINDOW * ctrl;
-	int h, w;
-	std::vector<FileStatus*> files{};
+	WINDOW * mMainWindow;
+	WINDOW * mTopWindow;
+	WINDOW * mHeaderWindow;
+	WINDOW * mFooterWindow;
+	WINDOW * mControlWindow;
+	int mScreenHeight, mScreenWidth;
+	std::vector<FileStatus*> mFiles{};
 
-	int currentView = 0;
-	int totalView = 2;
+	int mCurrentView = 0;
+	int mTotalView = 2;
 
-	std::mutex g_thread_mutex;
+	std::mutex mThreadMutex;
 
-	Docapost::IA::Tesseract::TesseractRunner& tessR;
+	Docapost::IA::Tesseract::TesseractRunner& mTesseractRunner;
 
-	boost::posix_time::ptime timeEnd;
-	bool isEnd = false;
+	boost::posix_time::ptime mTimeEnd;
+	bool mIsEnd = false;
+	bool mIsTerminated = false;
+
 	void Init(bool create = true);
 	void OnEnd();
-	bool bTerminated = false;
 public:
 	explicit Display(Docapost::IA::Tesseract::TesseractRunner &tessR);
 	~Display();
@@ -49,7 +50,7 @@ public:
 	void OnCanceled(FileStatus* str);
 	void AddFile(FileStatus* file);
 
-	void terminated(bool t) { bTerminated = t; }
+	void terminated(bool t) { mIsTerminated = t; }
 
 	void Run();
 };

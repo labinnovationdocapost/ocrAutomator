@@ -1,8 +1,6 @@
 #pragma once
 
-#if __cplusplus <= 199711L
-#error This library needs at least a C++11 compliant compiler
-#endif
+#include "BaseTesseractRunner.h"
 
 #include <cstdio>
 
@@ -50,43 +48,32 @@ namespace Docapost {
 				return a = a | b;
 			}
 
-			class TesseractRunner {
+			class TesseractRunner : public BaseTesseractRunner<FileStatus> {
 			private:
-				const std::string softName = "Docapost Tesseract Automator";
+				boost::uuids::basic_random_generator<boost::mt19937> mGen = boost::uuids::basic_random_generator<boost::mt19937>();
 
-				static std::atomic_int next_id;
-
-				std::deque<FileStatus*> files;
-				std::mutex g_stack_mutex;
-				std::mutex g_thread_mutex;
-				std::mutex g_network_mutex;
-				std::map<int, std::thread*> threads;
-
-				int threadToStop = 0;
-
-				TesseractOutputFlags outputTypes;
-
-				fs::path input;
-				boost::unordered_map<TesseractOutputFlags, fs::path> outputs;
-
-				int total;
-				int skip;
-				int done;
-
-				bool isEnd = false;
-
-				tesseract::PageSegMode psm;
-				tesseract::OcrEngineMode oem;
-				std::string lang;
-				std::string separator = "__";
-				boost::posix_time::ptime start;
-				boost::posix_time::ptime end;
+				std::mutex mNetworkMutex;
 
 
-				void ThreadLoop(int id);
-				void AddFile(FileStatus* file);
-				void AddFileBack(FileStatus* file);
-				FileStatus* GetFile();
+				boost::unordered_map<TesseractOutputFlags, fs::path> mOutputs;
+				boost::unordered_map<std::string, int> mSlaves;
+				boost::unordered_map<std::string, FileStatus*> mFileSend;
+
+
+				TesseractOutputFlags mOutputTypes;
+
+				fs::path mInput;
+
+
+
+				std::string mSeparator = "__";
+
+				boost::shared_ptr<Network> mNetwork;
+
+				std::thread* mNetworkThread;
+
+				void ThreadLoop(int id) override;
+
 				void _AddFolder(fs::path folder, bool resume);
 				bool FileExist(fs::path path)  const;
 				bool ExifExist(fs::path path)  const;
@@ -94,36 +81,22 @@ namespace Docapost {
 				fs::path ConstructNewTextFilePath(fs::path path) const;
 
 				bool GetTextFromTesseract(tesseract::TessBaseAPI* api, std::vector<unsigned char>* image, std::string& text);
-				std::vector<unsigned char>* OpenFileForLeptonica(FileStatus* file);
 				void CreateOutput(FileStatus* file, std::string outText);
+				std::vector<unsigned char>* OpenFileForLeptonica(FileStatus* file);
 
-				boost::unordered_map<std::string, FileStatus*> fileSend;
 
-				boost::uuids::basic_random_generator<boost::mt19937> gen = boost::uuids::basic_random_generator<boost::mt19937>();
-				boost::shared_ptr<Network> network;
-
-				boost::unordered_map<std::string, int> slaves;
-
-				std::thread* networkThread;
+				void OnSlaveConnectHandler(NetworkSession* ns, int thread, std::string hostname);
+				void OnSlaveDisconnectHandler(NetworkSession* ns, boost::unordered_map<std::string, bool>& noUsed);
+				void OnSlaveSynchroHandler(NetworkSession* ns, int thread, int required, std::vector<std::tuple<std::string, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>& results);
 			public:
 				explicit TesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang = "fra", TesseractOutputFlags type = TesseractOutputFlags::None);
 				TesseractRunner(std::string lang = "fra") : TesseractRunner(tesseract::PSM_OSD_ONLY, tesseract::OcrEngineMode::OEM_TESSERACT_ONLY, lang) {}
 				explicit TesseractRunner(tesseract::PageSegMode psm, std::string lang = "fra") : TesseractRunner(psm, tesseract::OcrEngineMode::OEM_TESSERACT_ONLY, lang) {}
 				explicit TesseractRunner(tesseract::OcrEngineMode ocr, std::string lang = "fra") : TesseractRunner(tesseract::PSM_OSD_ONLY, ocr, lang) {}
 
-				void OnSlaveConnectHandler(NetworkSession* ns, int thread, std::string hostname);
-				void OnSlaveDisconnectHandler(NetworkSession* ns, boost::unordered_map<std::string, bool>& noUsed);
-				void OnSlaveSynchroHandler(NetworkSession* ns, int thread, int required, std::vector<std::tuple<std::string, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>& results);
-
 				void AddFolder(fs::path folder, bool resume = false);
-				void Run(int nbThread);
-				void AddThread();
-				void RemoveThread();
-				void Wait();
-
+				std::thread* Run(int nbThread) override;
 				void SetOutput(boost::unordered_map<TesseractOutputFlags, fs::path> folders);
-
-				void DisplayFiles() const;
 
 				std::set<std::string> extensions = { ".tif", ".tiff", ".png", ".jpg", ".jpeg", ".pdf" };
 
@@ -131,33 +104,21 @@ namespace Docapost {
 				boost::signals2::signal<void(FileStatus*)> onStartProcessFile;
 				boost::signals2::signal<void()> onProcessEnd;
 
-				void SetSeparator(std::string separator) { this->separator = separator; }
-				std::string GetSeparator() const { return separator; }
-				TesseractOutputFlags GetOutputTypes() const { return outputTypes; }
-				int GetNbFiles() const { return total; }
-				int GetDone() const { return done; }
-				int GetNbSkipFiles() const { return skip; }
-				fs::path GetInput() const { return input; }
-				boost::unordered_map<TesseractOutputFlags, fs::path> GetOutput() const { return outputs; }
-				tesseract::PageSegMode GetPSM() const { return psm; }
-				tesseract::OcrEngineMode GetOEM() const { return oem; }
-				std::size_t GetNbThread() {
-					boost::lock_guard<std::mutex> lock(g_thread_mutex);
-					return threads.size();
-				}
-				boost::posix_time::ptime GetStartTime() const { return start; }
-				boost::posix_time::ptime GetEndTime() const { return end; }
-				int GetThreadToStop() const { return threadToStop; }
-				int GetRemoteThread() const
+				void Separator(std::string separator) { this->mSeparator = separator; }
+				std::string Separator() const { return mSeparator; }
+				TesseractOutputFlags OutputTypes() const { return mOutputTypes; }
+				fs::path Input() const { return mInput; }
+				boost::unordered_map<TesseractOutputFlags, fs::path> Output() const { return mOutputs; }
+				int TotalRemoteThreads() const
 				{
 					int total = 0;
-					for (auto& slave : slaves)
+					for (auto& slave : mSlaves)
 						total += slave.second;
 					return total;
 				}
-				boost::unordered_map<std::string, int> GetSlaves() const {
-					return slaves;
-				}
+
+				boost::unordered_map<std::string, int> Slaves() const { return mSlaves; }
+
 				~TesseractRunner();
 			};
 		}

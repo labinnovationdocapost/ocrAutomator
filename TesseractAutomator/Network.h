@@ -25,15 +25,15 @@ class Network
 {
 private:
 	enum { max_length = 1024 };
-	char data_[max_length];
+	char mDefaultBuffer[max_length];
 
-	boost::asio::io_service service;
+	boost::asio::io_service mService;
 
-	ip::udp::socket udp_socket;
-	ip::tcp::socket tcp_socket;
-	ip::tcp::acceptor tcp_acceptor;
-	ip::udp::endpoint udp_sender_endpoint;
-	ip::tcp::endpoint tcp_sender_endpoint;
+	ip::udp::socket mUdpSocket;
+	ip::tcp::socket mTcpSocket;
+	ip::tcp::acceptor mTcpAcceptor;
+	ip::udp::endpoint mUdpSenderEndpoint;
+	ip::tcp::endpoint mTcpSenderEndpoint;
 
 	std::thread broadcast;
 
@@ -44,10 +44,10 @@ private:
 	void RespondBroadcast();
 
 
-	int port;
+	int mPort;
 
-	boost::unordered_map<std::string, NetworkSession*> connections;
-	boost::uuids::basic_random_generator<boost::mt19937> gen = boost::uuids::basic_random_generator<boost::mt19937>();
+	boost::unordered_map<std::string, NetworkSession*> mConnections;
+	boost::uuids::basic_random_generator<boost::mt19937> mGen = boost::uuids::basic_random_generator<boost::mt19937>();
 
 public:
 	boost::signals2::signal<void(NetworkSession*, int, int, std::vector<std::tuple<std::string, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>&)> onSlaveSynchro;
@@ -58,7 +58,7 @@ public:
 	void InitComm();
 	void Start();
 	void Stop();
-	Network(short port);
+	explicit Network(short port);
 	~Network();
 };
 
