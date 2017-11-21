@@ -1,3 +1,7 @@
+v1.3.3
+Rectification d'un bug lors de la reprise (-c) entrainant un segfault
+v1.3.2
+Rectification de bugs du à des accès concurrents
 v1.3.1.2
 Prise en charge des exception PoDoFo
 v1.3.1

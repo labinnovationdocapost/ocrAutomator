@@ -220,6 +220,7 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool 
 
 							std::vector<FileStatus*>* siblings = new std::vector<FileStatus*>(nbPages);
 							std::mutex* mutex_siblings = new std::mutex();
+							bool added = false;
 							for (int i = 0; i < nbPages; i++)
 							{
 								auto output_file = (boost::format("%s/%s-%d.jpg") % path.parent_path().string() % fs::change_extension(path.filename(), "").string() % i).str();
@@ -252,8 +253,9 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool 
 									(*siblings)[i] = file;
 									file->siblings = siblings;
 									file->mutex_siblings = mutex_siblings;
-									if (i == 0)
+									if (added == false)
 									{
+										added = true;
 										AddFileBack(file);
 									}
 								}
@@ -343,6 +345,11 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool 
 									}
 								}
 							}
+							if(insert == false)
+							{
+								delete mutex_siblings;
+								delete siblings;
+							}
 						}
 						catch (...)
 						{
@@ -427,6 +434,8 @@ std::vector<l_uint8> * Docapost::IA::Tesseract::TesseractRunner::OpenFileForLept
 		std::list<Magick::Image>::iterator image;
 		for (image = images.begin(), i = 0; image != images.end(); image++, i++)
 		{
+			if ((*file->siblings)[i] == nullptr)
+				continue;
 			Magick::Blob blobOut;
 			image->colorSpace(MagickCore::RGBColorspace);
 			image->quality(80);
