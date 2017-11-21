@@ -7,9 +7,10 @@
 #include <Magick++.h>
 #include <boost/format.hpp>
 #include <podofo/podofo.h>
+#include "Error.h"
 
 
-Docapost::IA::Tesseract::TesseractRunner::TesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang, Docapost::IA::Tesseract::TesseractOutputFlags types) : 
+Docapost::IA::Tesseract::TesseractRunner::TesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang, Docapost::IA::Tesseract::TesseractOutputFlags types) :
 	BaseTesseractRunner(psm, oem, lang),
 	mOutputTypes(types)
 {
@@ -28,6 +29,7 @@ Docapost::IA::Tesseract::TesseractRunner::TesseractRunner(tesseract::PageSegMode
 	mNetwork->InitComm();
 	mNetworkThread = new std::thread([this]()
 	{
+		CatchAllErrorSignals();
 		mNetwork->Start();
 	});
 }
@@ -345,7 +347,7 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool 
 									}
 								}
 							}
-							if(insert == false)
+							if (insert == false)
 							{
 								delete mutex_siblings;
 								delete siblings;
@@ -373,6 +375,7 @@ void Docapost::IA::Tesseract::TesseractRunner::AddFolder(fs::path folder, bool r
 {
 	new std::thread([this, folder, resume]()
 	{
+		CatchAllErrorSignals();
 		if (mFiles.size() > 0)
 			return;
 		mInput = folder;
@@ -538,6 +541,7 @@ void Docapost::IA::Tesseract::TesseractRunner::CreateOutput(FileStatus* file, st
 
 void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 {
+	CatchAllErrorSignals();
 	auto api = new tesseract::TessBaseAPI();
 	api->SetVariable("debug_file", "/dev/null");
 	api->SetVariable("out", "quiet");
@@ -558,7 +562,17 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 			FileStatus * file = GetFile();
 			if (file == nullptr)
 			{
-				if (mFileSend.size() == 0 && mIsEnd)
+				{
+					boost::lock_guard<std::mutex> lock(mThreadMutex);
+					if (mNbThreadToStop > 0)
+					{
+						--mNbThreadToStop;
+						//mThreads.erase(id);
+
+						break;
+					}
+				}
+				if (mDone == mTotal && mFileSend.size() == 0 && mIsEnd)
 				{
 					break;
 				}

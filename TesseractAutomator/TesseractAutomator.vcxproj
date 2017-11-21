@@ -28,6 +28,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Display.cpp" />
+    <ClCompile Include="Error.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="NetworkClient.cpp" />
     <ClCompile Include="NetworkSession.cpp" />
@@ -48,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Display.h" />
+    <ClInclude Include="Error.h" />
     <ClInclude Include="FileStatus.h" />
     <ClInclude Include="FileSum.h" />
     <ClInclude Include="BaseTesseractRunner.h" />

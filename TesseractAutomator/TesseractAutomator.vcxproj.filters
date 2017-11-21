@@ -55,6 +55,9 @@
     <ClCompile Include="NetworkSession.cpp">
       <Filter>Source Code\Master</Filter>
     </ClCompile>
+    <ClCompile Include="Error.cpp">
+      <Filter>Source Code\Base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Protobuf\Status.pb.h">
@@ -121,6 +124,9 @@
       <Filter>Headers\Master</Filter>
     </ClInclude>
     <ClInclude Include="Protobuf_all.h">
+      <Filter>Headers\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Error.h">
       <Filter>Headers\Base</Filter>
     </ClInclude>
   </ItemGroup>

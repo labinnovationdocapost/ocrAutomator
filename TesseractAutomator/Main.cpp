@@ -13,6 +13,7 @@
 #include "TesseractSlaveRunner.h"
 #include <google/protobuf/extension_set.h>
 #include <google/protobuf/extension_set.h>
+#include "Error.h"
 using std::string;
 
 #include <tesseract/baseapi.h>
@@ -25,7 +26,6 @@ using std::string;
 #include <boost/unordered_map.hpp>
 #include <execinfo.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <unistd.h>
 
 #define __USE_GNU
@@ -45,9 +45,10 @@ void resizeHandler(int sig);
 
 Display* display;
 SlaveDisplay* sdisplay;
-std::thread* th = nullptr;
+
 #endif
 
+std::thread* th = nullptr;
 std::mutex g_console_mutex;
 
 //./TesseractAutomator -i "/mnt/e/LinuxHeader/rpa2" -p 3 --PSM 1 --OEM 3 -l fra -e /mnt/e/RPA/OutputE -t /mnt/e/RPA/OutputT -f
@@ -100,66 +101,6 @@ OCR Engine modes:
 )V0G0N";
 }
 
-#if DISPLAY
-void segfault_action(int sig, siginfo_t *info, void *secret)
-{
-	display->terminated(true);
-	if (th->joinable())
-		th->join();
-	if (sdisplay != nullptr)
-		delete sdisplay;
-	void *trace[16];
-	char **messages = (char **)NULL;
-	int i, trace_size = 0;
-	ucontext_t *uc = (ucontext_t *)secret;
-
-	auto file = fopen("/var/log/TesseractAutomatorLog.log", "w");
-	/* Do something useful with siginfo_t */
-	if (sig == SIGSEGV)
-		fprintf(file, "Got signal %d, faulty address is %p, "
-			"from %p\n", sig, info->si_addr,
-			uc->uc_mcontext.gregs[REG_RIP]);
-	else
-		fprintf(file, "Got signal %d\n", sig);
-
-	trace_size = backtrace(trace, 16);
-	/* overwrite sigaction with caller's address */
-	trace[1] = (void *)uc->uc_mcontext.gregs[REG_RIP];
-
-	messages = backtrace_symbols(trace, trace_size);
-	/* skip first stack frame (points here) */
-	fprintf(file, "[bt] Execution path:\n");
-	for (i = 1; i < trace_size; ++i)
-	{
-		fprintf(file, "[bt] %s\n", messages[i]);
-
-		/* find first occurence of '(' or ' ' in message[i] and assume
-		* everything before that is the file name. (Don't go beyond 0 though
-		* (string terminator)*/
-		size_t p = 0;
-		while (messages[i][p] != '(' && messages[i][p] != ' '
-			&& messages[i][p] != 0)
-			++p;
-
-		char syscom[512];
-		sprintf(syscom, "addr2line %p -e %.*s", trace[i], p, messages[i]);
-		//last parameter is the filename of the symbol
-		FILE* ptr;
-		char buf[BUFSIZ];
-
-		fprintf(file, "%s\n", syscom);
-		if ((ptr = popen(syscom, "r")) != NULL) {
-			while (fgets(buf, BUFSIZ, ptr) != NULL)
-			{
-
-				fprintf(file, "%s", buf);
-			}
-			pclose(ptr);
-		}
-	}
-	exit(0);
-}
-#endif
 
 void Master(char** argv, po::variables_map& vm)
 {
@@ -255,6 +196,7 @@ void Master(char** argv, po::variables_map& vm)
 	{
 		th = new std::thread([&]()
 		{
+			CatchAllErrorSignals();
 			display = new Display(tessR);
 
 			signal(SIGWINCH, resizeHandler);
@@ -325,6 +267,7 @@ void Slave(char** argv, po::variables_map& vm)
 	{
 		th = new std::thread([&]()
 		{
+			CatchAllErrorSignals();
 			sdisplay = new SlaveDisplay(tessSR);
 
 			signal(SIGWINCH, resizeHandler);
@@ -359,24 +302,8 @@ void Slave(char** argv, po::variables_map& vm)
 int main(int argc, char* argv[])
 {
 #if DISPLAY
-	struct sigaction sa;
-
-	memset(&sa, 0, sizeof(struct sigaction));
-	sigemptyset(&sa.sa_mask);
-	sa.sa_sigaction = segfault_action;
-	sa.sa_flags = SA_SIGINFO | SA_RESTART;
-
-	sigaction(SIGSEGV, &sa, nullptr);
-
-	freopen("/var/log/TesseractAutomatorStdErr.log", "w", stderr);
-
-	std::set_terminate([]()
-	{
-		auto eptr = std::current_exception();
-		auto n = eptr.__cxa_exception_type()->name();
-		std::cerr << "Unhandled exception " << n << std::endl;;
-		std::abort();
-	});
+	CatchAllErrorSignals();
+	CatchAllExceptions();
 #endif
 
 	// oblige le buffer desortie a etre thread safe

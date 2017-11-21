@@ -1,6 +1,7 @@
 #include "TesseractSlaveRunner.h"
 #include <leptonica/allheaders.h>
 #include "Version.h"
+#include "Error.h"
 
 
 Docapost::IA::Tesseract::TesseractSlaveRunner::TesseractSlaveRunner() :
@@ -127,6 +128,7 @@ bool Docapost::IA::Tesseract::TesseractSlaveRunner::GetTextFromTesseract(tessera
 
 void Docapost::IA::Tesseract::TesseractSlaveRunner::ThreadLoop(int id)
 {
+	CatchAllErrorSignals();
 	auto api = new tesseract::TessBaseAPI();
 	api->SetVariable("debug_file", "/dev/null");
 	api->SetVariable("out", "quiet");
@@ -214,6 +216,7 @@ std::thread* Docapost::IA::Tesseract::TesseractSlaveRunner::Run(int nbThread)
 	this->threadToRun = nbThread;
 	return new std::thread([this]()
 	{
+		CatchAllErrorSignals();
 		network->Start(12000);
 	});
 
