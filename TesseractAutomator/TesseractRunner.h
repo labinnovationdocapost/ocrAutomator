@@ -84,6 +84,8 @@ namespace Docapost {
 				void CreateOutput(FileStatus* file, std::string outText);
 				std::vector<unsigned char>* OpenFileForLeptonica(FileStatus* file);
 
+				void TerminateThread(int id);
+
 
 				void OnSlaveConnectHandler(NetworkSession* ns, int thread, std::string hostname);
 				void OnSlaveDisconnectHandler(NetworkSession* ns, boost::unordered_map<std::string, bool>& noUsed);

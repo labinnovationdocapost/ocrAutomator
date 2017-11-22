@@ -12,6 +12,7 @@
 #include <thread>
 #include <map>
 #include <thread>
+#include <condition_variable>
 #include <boost/date_time.hpp>
 #include <boost/signals2.hpp>
 #include <boost/thread.hpp>
@@ -43,6 +44,8 @@ namespace Docapost {
 				int mDone = 0;
 
 				bool mIsEnd = false;
+				std::condition_variable mIsWorkDone;
+				std::mutex mIsWorkDoneMutex;
 
 				tesseract::PageSegMode mPsm = tesseract::PageSegMode::PSM_AUTO;
 				tesseract::OcrEngineMode mOem = tesseract::OcrEngineMode::OEM_DEFAULT;
@@ -96,8 +99,8 @@ namespace Docapost {
 				virtual std::thread* Run(int nbThread) = 0;
 				void Wait()
 				{
-					for (auto& th : mThreads)
-						th.second->join();
+					std::unique_lock<std::mutex> lk(mIsWorkDoneMutex);
+					mIsWorkDone.wait(lk);
 				}
 				void AddThread()
 				{

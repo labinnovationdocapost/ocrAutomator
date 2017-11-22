@@ -1,3 +1,7 @@
+v1.3.5
+Meilleur néttoyage de la mémoire
+v1.3.4
+récupération de tous les signaux SIGSEGV émit a destination des threads 
 v1.3.3
 Rectification d'un bug lors de la reprise (-c) entrainant un segfault
 v1.3.2

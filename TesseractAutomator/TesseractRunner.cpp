@@ -210,18 +210,20 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool 
 				auto ext = path.extension().string();
 				if (extensions.count(ext))
 				{
-					try
-					{
 
-						if (ext == ".pdf")
+					if (ext == ".pdf")
+					{
+						std::vector<FileStatus*>* siblings = nullptr;
+						std::mutex* mutex_siblings = new std::mutex();
+						try
 						{
 							PoDoFo::PdfMemDocument document;
 							document.Load(path.string().c_str());
 							//PoDoFo::PdfStreamedDocument document(path.string().c_str());
 							auto nbPages = document.GetPageCount();
 
-							std::vector<FileStatus*>* siblings = new std::vector<FileStatus*>(nbPages);
-							std::mutex* mutex_siblings = new std::mutex();
+							siblings = new std::vector<FileStatus*>(nbPages);
+
 							bool added = false;
 							for (int i = 0; i < nbPages; i++)
 							{
@@ -262,95 +264,81 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool 
 									}
 								}
 							}
-						}
-						else
-						{
-							bool toProcess = true;
-							if (resume)
-							{
-								toProcess = false;
-								if (mOutputTypes & TesseractOutputFlags::Text)
-								{
-									toProcess = toProcess || !FileExist(path);
-								}
-
-								if (mOutputTypes & TesseractOutputFlags::Exif)
-								{
-									toProcess = toProcess || !ExifExist(path);
-								}
-
-								if (!toProcess)
-								{
-									mSkip++;
-								}
-							}
-							if (toProcess)
-							{
-								mTotal++;
-								AddFileBack(new FileStatus(path.string(), fs::relative(path, mInput).string()));
-							}
-						}
-					}
-					catch (PoDoFo::PdfError& e)
-					{
-						std::cerr << "Impossible de decoder le fichier " << path.string() << " fallback sur ImageMagic| " << e.ErrorMessage(e.GetError()) << std::endl;
-
-						try
-						{
-							Magick::ReadOptions options;
-							options.density(Magick::Geometry(10, 10));
-
-							std::list<Magick::Image> images;
-							Magick::readImages(&images, path.string(), options);
-
-							size_t i;
-							std::list<Magick::Image>::iterator image;
-							std::vector<FileStatus*>* siblings = new std::vector<FileStatus*>(images.size());
-							std::mutex* mutex_siblings = new std::mutex();
-							bool insert = false;
-							for (image = images.begin(), i = 0; image != images.end(); image++, i++)
-							{
-								auto output_file = (boost::format("%s/%s-%d.jpg") % path.parent_path().string() % fs::change_extension(path.filename(), "").string() % i).str();
-
-								bool toProcess = true;
-								if (resume)
-								{
-									toProcess = false;
-									if (mOutputTypes & TesseractOutputFlags::Text)
-									{
-										toProcess = toProcess || !FileExist(output_file);
-									}
-
-									if (mOutputTypes & TesseractOutputFlags::Exif)
-									{
-										toProcess = toProcess || !ExifExist(output_file);
-									}
-
-									if (!toProcess)
-									{
-										mSkip++;
-									}
-								}
-
-								if (toProcess)
-								{
-									mTotal++;
-									auto file = new FileStatus(path.string(), fs::relative(path, mInput).string(), output_file);
-									file->filePosition = i;
-									(*siblings)[i] = file;
-									file->siblings = siblings;
-									file->mutex_siblings = mutex_siblings;
-									if (!insert)
-									{
-										insert = true;
-										AddFileBack(file);
-									}
-								}
-							}
-							if (insert == false)
+							if (added == false)
 							{
 								delete mutex_siblings;
 								delete siblings;
+							}
+						}
+						catch (PoDoFo::PdfError& e)
+						{
+							std::cerr << "Impossible de decoder le fichier " << path.string() << " fallback sur ImageMagic| " << e.ErrorMessage(e.GetError()) << std::endl;
+
+							if (siblings != nullptr)
+								delete siblings;
+
+							try
+							{
+								Magick::ReadOptions options;
+								options.density(Magick::Geometry(10, 10));
+
+								std::list<Magick::Image> images;
+								Magick::readImages(&images, path.string(), options);
+
+								size_t i;
+								std::list<Magick::Image>::iterator image;
+								siblings = new std::vector<FileStatus*>(images.size());
+								bool insert = false;
+								for (image = images.begin(), i = 0; image != images.end(); image++, i++)
+								{
+									auto output_file = (boost::format("%s/%s-%d.jpg") % path.parent_path().string() % fs::change_extension(path.filename(), "").string() % i).str();
+
+									bool toProcess = true;
+									if (resume)
+									{
+										toProcess = false;
+										if (mOutputTypes & TesseractOutputFlags::Text)
+										{
+											toProcess = toProcess || !FileExist(output_file);
+										}
+
+										if (mOutputTypes & TesseractOutputFlags::Exif)
+										{
+											toProcess = toProcess || !ExifExist(output_file);
+										}
+
+										if (!toProcess)
+										{
+											mSkip++;
+										}
+									}
+
+									if (toProcess)
+									{
+										mTotal++;
+										auto file = new FileStatus(path.string(), fs::relative(path, mInput).string(), output_file);
+										file->filePosition = i;
+										(*siblings)[i] = file;
+										file->siblings = siblings;
+										file->mutex_siblings = mutex_siblings;
+										if (!insert)
+										{
+											insert = true;
+											AddFileBack(file);
+										}
+									}
+								}
+								if (insert == false)
+								{
+									delete mutex_siblings;
+									delete siblings;
+								}
+							}
+							catch (...)
+							{
+								auto eptr = std::current_exception();
+								auto n = eptr.__cxa_exception_type()->name();
+								std::cerr << "Impossible de decoder le fichier " << path.string() << " | " << n << std::endl;
 							}
 						}
 						catch (...)
@@ -360,11 +348,32 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool 
 							std::cerr << "Impossible de decoder le fichier " << path.string() << " | " << n << std::endl;
 						}
 					}
-					catch (...)
+					else
 					{
-						auto eptr = std::current_exception();
-						auto n = eptr.__cxa_exception_type()->name();
-						std::cerr << "Impossible de decoder le fichier " << path.string() << " | " << n << std::endl;
+						bool toProcess = true;
+						if (resume)
+						{
+							toProcess = false;
+							if (mOutputTypes & TesseractOutputFlags::Text)
+							{
+								toProcess = toProcess || !FileExist(path);
+							}
+
+							if (mOutputTypes & TesseractOutputFlags::Exif)
+							{
+								toProcess = toProcess || !ExifExist(path);
+							}
+
+							if (!toProcess)
+							{
+								mSkip++;
+							}
+						}
+						if (toProcess)
+						{
+							mTotal++;
+							AddFileBack(new FileStatus(path.string(), fs::relative(path, mInput).string()));
+						}
 					}
 				}
 			}
@@ -373,7 +382,7 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool 
 }
 void Docapost::IA::Tesseract::TesseractRunner::AddFolder(fs::path folder, bool resume)
 {
-	new std::thread([this, folder, resume]()
+	std::thread([this, folder, resume]()
 	{
 		CatchAllErrorSignals();
 		if (mFiles.size() > 0)
@@ -381,7 +390,7 @@ void Docapost::IA::Tesseract::TesseractRunner::AddFolder(fs::path folder, bool r
 		mInput = folder;
 		_AddFolder(folder, resume);
 		mIsEnd = true;
-	});
+	}).detach();
 }
 
 std::thread* Docapost::IA::Tesseract::TesseractRunner::Run(int nbThread)
@@ -647,9 +656,19 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 		std::cerr << "Thread - " << id << " | " << n << std::endl;
 	}
 
-	std::cerr << "Thread remove from list " << id << std::endl;
-	mThreads.erase(id);
+	TerminateThread(id);
+}
+
+void Docapost::IA::Tesseract::TesseractRunner::TerminateThread(int id)
+{
 	boost::lock_guard<std::mutex> lock(mThreadMutex);
+
+	mThreads[id]->detach();
+	delete mThreads[id];
+	mThreads.erase(id);
+
+	std::cerr << "Thread remove from list " << id << std::endl;
+
 	if (mThreads.size() == 0)
 	{
 		while (mFileSend.size() > 0)
@@ -659,7 +678,11 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 		mEnd = boost::posix_time::second_clock::local_time();
 		mNetwork->Stop();
 		mNetworkThread->join();
+		delete mNetworkThread;
 		onProcessEnd();
+
+		std::unique_lock<std::mutex> lk(mIsWorkDoneMutex);
+		mIsWorkDone.notify_all();
 	}
 }
 

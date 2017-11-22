@@ -217,8 +217,6 @@ void Master(char** argv, po::variables_map& vm)
 
 	tessR.AddFolder(vm["input"].as<std::string>(), resume);
 
-
-	auto startProcess = boost::posix_time::second_clock::local_time();
 	tessR.Run(nb_process);
 
 #if DISPLAY
@@ -308,7 +306,6 @@ int main(int argc, char* argv[])
 
 	// oblige le buffer desortie a etre thread safe
 	std::ios_base::sync_with_stdio(true);
-	int nb_process;
 
 	boost::program_options::positional_options_description pd;
 	pd.add("input", -1);
