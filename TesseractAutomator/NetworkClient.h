@@ -18,7 +18,7 @@
 #include <boost/signals2.hpp>
 #include <google/protobuf/stubs/atomicops.h>
 #include "Protobuf_all.h"
-#include "FileStatus.h"
+#include "SlaveFileStatus.h"
 #include <mutex>
 #include <queue>
 

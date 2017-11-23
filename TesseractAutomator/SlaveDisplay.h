@@ -3,7 +3,7 @@
 #include <string>
 #include <ncurses.h>
 #include <vector>
-#include "FileStatus.h"
+#include "SlaveFileStatus.h"
 using std::string;
 #include "TesseractSlaveRunner.h"
 #include "FileSum.h"

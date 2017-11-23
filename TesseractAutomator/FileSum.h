@@ -4,7 +4,7 @@
 struct FileSum
 {
 	FileSum() : count(0) {};
-	void operator()(AFileStatus* fs)
+	void operator()(BaseFileStatus* fs)
 	{
 		if (fs->isEnd)
 		{

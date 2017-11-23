@@ -1,6 +1,7 @@
 #pragma once
 #include "BaseTesseractRunner.h"
 #include "NetworkClient.h"
+#include "SlaveFileStatus.h"
 
 namespace Docapost {
 	namespace IA {

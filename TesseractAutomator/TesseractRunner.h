@@ -75,9 +75,36 @@ namespace Docapost {
 				void ThreadLoop(int id) override;
 
 				void _AddFolder(fs::path folder, bool resume);
+				/**
+				 * \brief Determine si un fichier texte de sortie existe
+				 * \param path Chemin du document original
+				 * \return True si un fichier texte existe
+				 */
 				bool FileExist(fs::path path)  const;
+				/**
+				 * \brief Determine si un exif de sortie existe
+				 * \param path Chemin du document original
+				 * \return True si l'Exif existe
+				 */
 				bool ExifExist(fs::path path)  const;
+				/**
+				 * \brief créer le chemin d'origine pour une page d'un document pdf
+				 * \param path chemin du pdf original
+				 * \param i numéro de la page (Zero-based numbering)
+				 * \return le chemin d'origine décrivant le pdf + numéro de page
+				 */
+				string CreatePdfOutputPath(fs::path path, int i);
+				/**
+				 * \brief Créer le chemin de sortie (texte) pour le fichier spécifié
+				 * \param path Chemin vers le fichier original
+				 * \return Chemin vers le fichier de sortie
+				 */
 				fs::path ConstructNewExifFilePath(fs::path path) const;
+				/**
+				 * \brief Créer le chemin de sortie (exif) pour le fichier spécifié
+				 * \param path Chemin vers le fichier original
+				 * \return Chemin vers le fichier de sortie
+				 */
 				fs::path ConstructNewTextFilePath(fs::path path) const;
 
 				bool GetTextFromTesseract(tesseract::TessBaseAPI* api, std::vector<unsigned char>* image, std::string& text);

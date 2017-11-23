@@ -50,6 +50,7 @@
   <ItemGroup>
     <ClInclude Include="Display.h" />
     <ClInclude Include="Error.h" />
+    <ClInclude Include="BaseFileStatus.h" />
     <ClInclude Include="FileStatus.h" />
     <ClInclude Include="FileSum.h" />
     <ClInclude Include="BaseTesseractRunner.h" />
@@ -68,6 +69,7 @@
     <ClInclude Include="Protobuf\Synchro_Slave.pb.h" />
     <ClInclude Include="Protobuf_all.h" />
     <ClInclude Include="SlaveDisplay.h" />
+    <ClInclude Include="SlaveFileStatus.h" />
     <ClInclude Include="TesseractRunner.h" />
     <ClInclude Include="TesseractSlaveRunner.h" />
     <ClInclude Include="Version.h" />

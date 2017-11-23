@@ -105,9 +105,6 @@
     <ClInclude Include="Version.h">
       <Filter>Headers\Base</Filter>
     </ClInclude>
-    <ClInclude Include="FileStatus.h">
-      <Filter>Headers\Base</Filter>
-    </ClInclude>
     <ClInclude Include="TesseractRunner.h">
       <Filter>Headers\Master</Filter>
     </ClInclude>
@@ -128,6 +125,15 @@
     </ClInclude>
     <ClInclude Include="Error.h">
       <Filter>Headers\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseFileStatus.h">
+      <Filter>Headers\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="FileStatus.h">
+      <Filter>Headers\Master</Filter>
+    </ClInclude>
+    <ClInclude Include="SlaveFileStatus.h">
+      <Filter>Headers\Slave</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

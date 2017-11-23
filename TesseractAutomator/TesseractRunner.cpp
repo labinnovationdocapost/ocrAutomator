@@ -189,6 +189,11 @@ bool Docapost::IA::Tesseract::TesseractRunner::ExifExist(fs::path path) const
 	return false;
 }
 
+string Docapost::IA::Tesseract::TesseractRunner::CreatePdfOutputPath(fs::path path, int i)
+{
+	return (boost::format("%s/%s-%d.jpg") % path.parent_path().string() % fs::change_extension(path.filename(), "").string() % i).str();
+}
+
 void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool resume)
 {
 	if (!fs::is_directory(folder))
@@ -227,7 +232,7 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool 
 							bool added = false;
 							for (int i = 0; i < nbPages; i++)
 							{
-								auto output_file = (boost::format("%s/%s-%d.jpg") % path.parent_path().string() % fs::change_extension(path.filename(), "").string() % i).str();
+								auto output_file = CreatePdfOutputPath(path, i);
 
 								bool toProcess = true;
 								if (resume)
@@ -338,14 +343,14 @@ void Docapost::IA::Tesseract::TesseractRunner::_AddFolder(fs::path folder, bool 
 							{
 								auto eptr = std::current_exception();
 								auto n = eptr.__cxa_exception_type()->name();
-								std::cerr << "Impossible de decoder le fichier " << path.string() << " | " << n << std::endl;
+								std::cerr << "Impossible de decoder le fichier, le fichier ne sera pas inclue pour traitement " << path.string() << " | " << n << std::endl;
 							}
 						}
 						catch (...)
 						{
 							auto eptr = std::current_exception();
 							auto n = eptr.__cxa_exception_type()->name();
-							std::cerr << "Impossible de decoder le fichier " << path.string() << " | " << n << std::endl;
+							std::cerr << "Impossible de decoder le fichier, le fichier ne sera pas inclue pour traitement " << path.string() << " | " << n << std::endl;
 						}
 					}
 					else
@@ -431,39 +436,49 @@ std::vector<l_uint8> * Docapost::IA::Tesseract::TesseractRunner::OpenFileForLept
 {
 	if (file->filePosition >= 0)
 	{
-		std::lock_guard<std::mutex> lock(*file->mutex_siblings);
-		if (file->fileSize > 0)
+		try
 		{
+			std::lock_guard<std::mutex> lock(*file->mutex_siblings);
+			if (file->fileSize > 0)
+			{
+				return file->data;
+			}
+			Magick::ReadOptions options;
+			options.density(Magick::Geometry(250, 250));
+			std::list<Magick::Image> images;
+
+			Magick::readImages(&images, file->name, options);
+
+			size_t i;
+			std::list<Magick::Image>::iterator image;
+			for (image = images.begin(), i = 0; image != images.end(); image++, i++)
+			{
+				if ((*file->siblings)[i] == nullptr)
+					continue;
+				Magick::Blob blobOut;
+				image->colorSpace(MagickCore::RGBColorspace);
+				image->quality(80);
+				image->density(Magick::Geometry(300, 300));
+				image->resolutionUnits(MagickCore::ResolutionType::PixelsPerInchResolution);
+				image->magick("JPEG");
+				image->write(&blobOut);
+				auto data = (char*)blobOut.data();
+				(*file->siblings)[i]->data = new std::vector<l_uint8>(data, data + blobOut.length());
+				(*file->siblings)[i]->fileSize = (*file->siblings)[i]->data->size();
+				if (file != (*file->siblings)[i])
+				{
+					AddFile((*file->siblings)[i]);
+				}
+			}
 			return file->data;
 		}
-		Magick::ReadOptions options;
-		options.density(Magick::Geometry(250, 250));
-		std::list<Magick::Image> images;
-
-		Magick::readImages(&images, file->name, options);
-
-		size_t i;
-		std::list<Magick::Image>::iterator image;
-		for (image = images.begin(), i = 0; image != images.end(); image++, i++)
+		catch (...)
 		{
-			if ((*file->siblings)[i] == nullptr)
-				continue;
-			Magick::Blob blobOut;
-			image->colorSpace(MagickCore::RGBColorspace);
-			image->quality(80);
-			image->density(Magick::Geometry(300, 300));
-			image->resolutionUnits(MagickCore::ResolutionType::PixelsPerInchResolution);
-			image->magick("JPEG");
-			image->write(&blobOut);
-			auto data = (char*)blobOut.data();
-			(*file->siblings)[i]->data = new std::vector<l_uint8>(data, data + blobOut.length());
-			(*file->siblings)[i]->fileSize = (*file->siblings)[i]->data->size();
-			if (file != (*file->siblings)[i])
-			{
-				AddFile((*file->siblings)[i]);
-			}
+			auto eptr = std::current_exception();
+			auto n = eptr.__cxa_exception_type()->name();
+			std::cerr << "Impossible de decoder le fichier " << file->name << " | " << n << std::endl;
+			return nullptr;
 		}
-		return file->data;
 	}
 	else
 	{
@@ -599,14 +614,64 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 				continue;
 			}
 
-			std::string outText;
-			if (!GetTextFromTesseract(api, file->data, outText))
+			if (!GetTextFromTesseract(api, file->data, file->result))
 			{
 				AddFileBack(file);
 				continue;
 			}
 
-			CreateOutput(file, outText);
+			CreateOutput(file, file->result);
+
+			if (file->filePosition >= 0)
+			{
+				std::lock_guard<std::mutex>(*file->mutex_siblings);
+				file->isCompleted = true;
+				bool completed = true;
+				for (int i = 0; i < file->siblings->size(); i++)
+				{
+					auto item = (*file->siblings)[i];
+					if (item != nullptr)
+					{
+						if(!item->isCompleted)
+						{
+							completed = false;
+							break;
+						}
+					}
+				}
+
+				if(completed)
+				{
+					auto new_path = ConstructNewTextFilePath(file->name);
+					std::ofstream stream{ new_path.string(), std::ios::out | std::ios::trunc };
+
+					for (int i = 0; i < file->siblings->size(); i++)
+					{
+						auto item = (*file->siblings)[i];
+						if (item != nullptr)
+						{
+							stream << item->result << std::endl;
+						}
+						else
+						{
+							auto pdf_path = CreatePdfOutputPath(file->name, i);
+							auto output_file = ConstructNewTextFilePath(pdf_path);
+							if(!fs::exists(output_file))
+							{
+								stream.close();
+								fs::remove(new_path);
+								break;
+							}
+							std::ifstream ifile(output_file.string(), std::ios::in);
+							stream << ifile.rdbuf() << std::endl;
+						}
+					}
+				}
+			}
+			else
+			{
+				file->isCompleted = true;
+			}
 
 			delete file->data;
 
