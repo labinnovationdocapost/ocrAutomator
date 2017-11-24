@@ -10,7 +10,7 @@
 #include "Error.h"
 
 
-Docapost::IA::Tesseract::TesseractRunner::TesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang, Docapost::IA::Tesseract::TesseractOutputFlags types) :
+Docapost::IA::Tesseract::TesseractRunner::TesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang, Docapost::IA::Tesseract::TesseractOutputFlags types, int port) :
 	BaseTesseractRunner(psm, oem, lang),
 	mOutputTypes(types)
 {
@@ -18,20 +18,41 @@ Docapost::IA::Tesseract::TesseractRunner::TesseractRunner(tesseract::PageSegMode
 	PoDoFo::PdfError::EnableDebug(false);
 	PoDoFo::PdfError::EnableLogging(false);
 
-	mNetwork = boost::make_shared<Network>(12000);
-	mNetwork->onSlaveConnect.connect(boost::bind(&TesseractRunner::OnSlaveConnectHandler, this, _1, _2, _3));
-
-	mNetwork->onSlaveSynchro.connect(boost::bind(&TesseractRunner::OnSlaveSynchroHandler, this, _1, _2, _3, _4));
-
-	mNetwork->onSlaveDisconnect.connect(boost::bind(&TesseractRunner::OnSlaveDisconnectHandler, this, _1, _2));
-
-	mNetwork->InitBroadcastReceiver();
-	mNetwork->InitComm();
-	mNetworkThread = new std::thread([this]()
+	std::cerr << "Lancement du réseau sur le port " << port << std::endl;
+	while (port < 65565)
 	{
-		CatchAllErrorSignals();
-		mNetwork->Start();
-	});
+		try
+		{
+			mNetwork = boost::make_shared<Network>(port);
+			mNetwork->onSlaveConnect.connect(boost::bind(&TesseractRunner::OnSlaveConnectHandler, this, _1, _2, _3));
+
+			mNetwork->onSlaveSynchro.connect(boost::bind(&TesseractRunner::OnSlaveSynchroHandler, this, _1, _2, _3, _4));
+
+			mNetwork->onSlaveDisconnect.connect(boost::bind(&TesseractRunner::OnSlaveDisconnectHandler, this, _1, _2));
+
+			mNetwork->InitBroadcastReceiver();
+			mNetwork->InitComm();
+			mNetworkThread = new std::thread([this]()
+			{
+				CatchAllErrorSignals();
+				mNetwork->Start();
+			});
+			break;
+		}
+		catch (...)
+		{
+			std::cerr << "/!\ Lancement du réseau impossible sur le port " << port << std::endl;
+
+			if (mNetwork != nullptr)
+				mNetwork->Stop();
+			if (mNetworkThread != nullptr && mNetworkThread->joinable())
+			{
+				mNetworkThread->join();
+				delete mNetworkThread;
+			}
+			port++;
+		}
+	}
 }
 
 void Docapost::IA::Tesseract::TesseractRunner::OnSlaveConnectHandler(NetworkSession* ns, int thread, std::string hostname)
@@ -632,7 +653,7 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 					auto item = (*file->siblings)[i];
 					if (item != nullptr)
 					{
-						if(!item->isCompleted)
+						if (!item->isCompleted)
 						{
 							completed = false;
 							break;
@@ -640,7 +661,7 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 					}
 				}
 
-				if(completed)
+				if (completed)
 				{
 					auto new_path = ConstructNewTextFilePath(file->name);
 					std::ofstream stream{ new_path.string(), std::ios::out | std::ios::trunc };
@@ -656,7 +677,7 @@ void Docapost::IA::Tesseract::TesseractRunner::ThreadLoop(int id)
 						{
 							auto pdf_path = CreatePdfOutputPath(file->name, i);
 							auto output_file = ConstructNewTextFilePath(pdf_path);
-							if(!fs::exists(output_file))
+							if (!fs::exists(output_file))
 							{
 								stream.close();
 								fs::remove(new_path);

@@ -12,49 +12,49 @@ void SlaveDisplay::Init(bool create)
 {
 	if (!create)
 	{
-		delwin(top);
-		delwin(header);
-		delwin(win);
-		delwin(bottom);
-		delwin(ctrl);
+		delwin(mTopWindow);
+		delwin(mHeaderWindow);
+		delwin(mMainWindow);
+		delwin(mFooterWindow);
+		delwin(mControlWindow);
 		endwin();
 		refresh();
 		clear();
 		refresh();
 	}
-	getmaxyx(stdscr, h, w);
-	top = newwin(HTOP, w, 0, 0);
-	header = newwin(HHEADER, w, HTOP, 0);
-	win = newwin(HWIN(h), w, HTOP + HHEADER, 0);
-	bottom = newwin(HBOTTOM, w, h - HCTRL - 1, 0);
-	ctrl = newwin(HCTRL, w, h - 1, 0);
+	getmaxyx(stdscr, mScreenHeight, mScreenWidth);
+	mTopWindow = newwin(HTOP, mScreenWidth, 0, 0);
+	mHeaderWindow = newwin(HHEADER, mScreenWidth, HTOP, 0);
+	mMainWindow = newwin(HWIN(mScreenHeight), mScreenWidth, HTOP + HHEADER, 0);
+	mFooterWindow = newwin(HBOTTOM, mScreenWidth, mScreenHeight - HCTRL - 1, 0);
+	mControlWindow = newwin(HCTRL, mScreenWidth, mScreenHeight - 1, 0);
 
-	scrollok(win, true);
-	wbkgd(header, COLOR_PAIR(1));
-	wbkgd(ctrl, COLOR_PAIR(4));
-	if (isEnd)
-		wbkgd(bottom, COLOR_PAIR(3));
+	scrollok(mMainWindow, true);
+	wbkgd(mHeaderWindow, COLOR_PAIR(1));
+	wbkgd(mControlWindow, COLOR_PAIR(4));
+	if (mIsEnd)
+		wbkgd(mFooterWindow, COLOR_PAIR(3));
 	else
-		wbkgd(bottom, COLOR_PAIR(2));
+		wbkgd(mFooterWindow, COLOR_PAIR(2));
 
 	refresh();
 }
 
 void SlaveDisplay::OnEnd()
 {
-	timeEnd = boost::posix_time::second_clock::local_time();
-	this->isEnd = true;
+	mTimeEnd = boost::posix_time::second_clock::local_time();
+	this->mIsEnd = true;
 
-	wbkgd(bottom, COLOR_PAIR(3));
+	wbkgd(mFooterWindow, COLOR_PAIR(3));
 	refresh();
 }
 
-SlaveDisplay::SlaveDisplay(Docapost::IA::Tesseract::TesseractSlaveRunner& tessR) : tessR(tessR)
+SlaveDisplay::SlaveDisplay(Docapost::IA::Tesseract::TesseractSlaveRunner& tessR) : mTesseractRunner(tessR)
 {
 	initscr();
 	noecho();
-	keypad(stdscr, TRUE);
-	nodelay(stdscr, TRUE);
+	keypad(stdscr, true);
+	nodelay(stdscr, true);
 	curs_set(0);
 
 	start_color();
@@ -78,78 +78,78 @@ SlaveDisplay::~SlaveDisplay()
 
 void SlaveDisplay::DrawHeader() const
 {
-	if (tessR.remote_isconnected())
+	if (mTesseractRunner.remote_isconnected())
 	{
 		try
 		{
-			mvwprintw(top, 0, 0, "Remote: %s\n", tessR.remote_address().c_str());
+			mvwprintw(mTopWindow, 0, 0, "Remote: %s\n", mTesseractRunner.remote_address().c_str());
 		}
 		catch (std::exception e)
 		{
-			mvwprintw(top, 0, 0, "Remote: Not found");
+			mvwprintw(mTopWindow, 0, 0, "Remote: Not found");
 		}
 	}
 	else
 	{
-		mvwprintw(top, 0, 0, "Remote: Not found");
+		mvwprintw(mTopWindow, 0, 0, "Remote: Not found");
 	}
-	if (tessR.NbThreadToStop() > 0)
-		mvwprintw(top, 1, 0, "Threads: %d (-%d) | Page Segmentation Mode: %d | Ocr Engine Mode: %d\n", tessR.NbThreads(), tessR.NbThreadToStop(), tessR.Psm(), tessR.Oem());
+	if (mTesseractRunner.NbThreadToStop() > 0)
+		mvwprintw(mTopWindow, 1, 0, "Threads: %d (-%d) | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.NbThreadToStop(), mTesseractRunner.Psm(), mTesseractRunner.Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
 	else
-		mvwprintw(top, 1, 0, "Threads: %d | Page Segmentation Mode: %d | Ocr Engine Mode: %d\n", tessR.NbThreads(), tessR.Psm(), tessR.Oem());
+		mvwprintw(mTopWindow, 1, 0, "Threads: %d | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.Psm(), mTesseractRunner.Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
 
 
-	mvwprintw(top, 3, 0, "Files Total: %d | Files Skip: %d\n", tessR.Total(), tessR.Skip());
-	wrefresh(top);
+	mvwprintw(mTopWindow, 3, 0, "Files Total: %d | Files Skip: %d\n", mTesseractRunner.Total(), mTesseractRunner.Skip());
+	wrefresh(mTopWindow);
 }
 
 void SlaveDisplay::DrawBody(const std::vector<SlaveFileStatus*> files) const
 {
-	mvwprintw(header, 0, 0, "%-15s %-6s %s\n", "Ellapsed", "Thread", "Origin");
-	wrefresh(header);
+	mvwprintw(mHeaderWindow, 0, 0, "%-15s %-6s %s\n", "Ellapsed", "Thread", "Origin");
+	wrefresh(mHeaderWindow);
 
-	wmove(win, 0, 0);
-	for (auto j = std::max(static_cast<int>(files.size()) - h, 0); j < files.size(); j++)
+	wmove(mMainWindow, 0, 0);
+	for (auto j = std::max(static_cast<int>(files.size()) - mScreenHeight, 0); j < files.size(); j++)
 	{
 		if (files[j]->isEnd)
 		{
 			std::stringstream cstring;
 			cstring << "" << files[j]->ellapsed;
 			//wprintw(win, "%-15s %-6d %s -> %s\n", cstring.str().c_str(), files[j]->thread, files[j]->relative_name.c_str(), boost::algorithm::join(files[j]->relative_output, " | ").c_str());
-			wprintw(win, "%-15s %-6d %-36s %d\n", cstring.str().c_str(), files[j]->thread, files[j]->uuid.c_str(), files[j]->fileSize);
+			wprintw(mMainWindow, "%-15s %-6d %-36s %d\n", cstring.str().c_str(), files[j]->thread, files[j]->uuid.c_str(), files[j]->fileSize);
 		}
 		else
 		{
-			wprintw(win, "%-15s %-6d %-36s %d\n", "", files[j]->thread, files[j]->uuid.c_str(), files[j]->fileSize);
+			wprintw(mMainWindow, "%-15s %-6d %-36s %d\n", "", files[j]->thread, files[j]->uuid.c_str(), files[j]->fileSize);
 		}
 	}
-	wrefresh(win);
+	wrefresh(mMainWindow);
 }
 
 void SlaveDisplay::DrawFooter(const std::vector<SlaveFileStatus*> cfiles) const
 {
-	mvwprintw(bottom, 0, 0, "files: %d/%d\n", tessR.Done(), tessR.Total());
+	mvwprintw(mFooterWindow, 0, 0, "files: %d/%d\n", mTesseractRunner.Done(), mTesseractRunner.Total());
 
-	wrefresh(bottom);
+	wrefresh(mFooterWindow);
 }
 
 void SlaveDisplay::DrawCommand() const
 {
-	if (!isEnd)
-		mvwprintw(ctrl, 0, 0, "[CTRL+C] Abandon | [+]/[-] Increase/Decrease Thread\n");
+	if (!mIsEnd)
+		mvwprintw(mControlWindow, 0, 0, "[CTRL+C] Abandon | [+]/[-] Increase/Decrease Thread\n");
 	else
-		mvwprintw(ctrl, 0, 0, "[ENTER] Exit\n");
-	wrefresh(ctrl);
+		mvwprintw(mControlWindow, 0, 0, "[ENTER] Exit\n");
+	wrefresh(mControlWindow);
 }
 
 void SlaveDisplay::Draw()
 {
-	boost::lock_guard<std::mutex> lock(g_thread_mutex);
+	boost::lock_guard<std::mutex> lock(mThreadMutex);
 	DrawHeader();
 
-	DrawBody(files);
+	DrawBody(mFiles);
 
-	DrawFooter(files);
+	DrawFooter(mFiles);
 
 	DrawCommand();
 }
@@ -163,7 +163,7 @@ void SlaveDisplay::Resize()
 
 void SlaveDisplay::ShowFile(SlaveFileStatus* str)
 {
-	files.insert(files.end(), str);
+	mFiles.insert(mFiles.end(), str);
 }
 
 void SlaveDisplay::Run()
@@ -180,11 +180,11 @@ void SlaveDisplay::Run()
 		else {
 			if (ch == '+')
 			{
-				tessR.AddThread();
+				mTesseractRunner.AddThread();
 			}
 			else if (ch == '-')
 			{
-				tessR.RemoveThread();
+				mTesseractRunner.RemoveThread();
 			}
 			/*else if (ch == 'v')
 			{
@@ -192,7 +192,7 @@ void SlaveDisplay::Run()
 				werase(win);
 				Draw();
 			}*/
-			else if ((ch == KEY_ENTER || ch == '\n') && isEnd)
+			else if ((ch == KEY_ENTER || ch == '\n') && mIsEnd)
 			{
 				break;
 			}

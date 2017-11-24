@@ -183,7 +183,7 @@ void Master(char** argv, po::variables_map& vm)
 	Docapost::IA::Tesseract::TesseractRunner tessR(
 		static_cast<tesseract::PageSegMode>(vm["psm"].as<int>()),
 		static_cast<tesseract::OcrEngineMode>(vm["oem"].as<int>()),
-		vm["lang"].as<std::string>(), types);
+		vm["lang"].as<std::string>(), types, vm["port"].as<int>());
 
 	if (vm.count("prefixe"))
 	{
@@ -207,11 +207,6 @@ void Master(char** argv, po::variables_map& vm)
 	}
 #endif
 
-
-	/*Network nt{ 12000 };
-	nt.InitBroadcastReceiver();
-	nt.InitComm();
-	nt.Start();*/
 
 	tessR.SetOutput(map);
 
@@ -259,7 +254,7 @@ void Slave(char** argv, po::variables_map& vm)
 		}
 	}
 
-	Docapost::IA::Tesseract::TesseractSlaveRunner tessSR{};
+	Docapost::IA::Tesseract::TesseractSlaveRunner tessSR{ vm["port"].as<int>()};
 #if DISPLAY
 	if (!vm.count("silent"))
 	{
@@ -318,7 +313,8 @@ int main(int argc, char* argv[])
 	po::options_description shareDesc;
 	shareDesc.add_options()
 		("parallel,p", value<int>()->value_name("NUM")->default_value(2), "Nombre de threads en parrallele")
-		("silent,s", "Ne pas afficher l'interface"); 
+		("silent,s", "Ne pas afficher l'interface")
+		("port", value<int>()->value_name("PORT")->default_value(12000), "Utiliser le port réseau définit pour toute communication");
 
 	po::options_description desc;
 	desc.add_options()

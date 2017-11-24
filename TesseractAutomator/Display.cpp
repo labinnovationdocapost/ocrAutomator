@@ -91,9 +91,9 @@ void Display::DrawHeader() const
 		mvwprintw(mTopWindow, 0, 0, "Input : %s | Exif Output: %s | Text Output : %s\n", mTesseractRunner.Input().c_str(), mTesseractRunner.Output()[Docapost::IA::Tesseract::TesseractOutputFlags::Exif].string().c_str(), mTesseractRunner.Output()[Docapost::IA::Tesseract::TesseractOutputFlags::Text].string().c_str());
 	}
 	if (mTesseractRunner.NbThreadToStop() > 0)
-		mvwprintw(mTopWindow, 1, 0, "Threads Local/Remote: %d (-%d)/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d\n", mTesseractRunner.NbThreads(), mTesseractRunner.NbThreadToStop(), mTesseractRunner.TotalRemoteThreads(), mTesseractRunner.Psm(), mTesseractRunner.Oem());
+		mvwprintw(mTopWindow, 1, 0, "Threads Local/Remote: %d (-%d)/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.NbThreadToStop(), mTesseractRunner.TotalRemoteThreads(), mTesseractRunner.Psm(), mTesseractRunner.Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
 	else
-		mvwprintw(mTopWindow, 1, 0, "Threads Local/Remote: %d/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d\n", mTesseractRunner.NbThreads(), mTesseractRunner.TotalRemoteThreads(), mTesseractRunner.Psm(), mTesseractRunner.Oem());
+		mvwprintw(mTopWindow, 1, 0, "Threads Local/Remote: %d/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.TotalRemoteThreads(), mTesseractRunner.Psm(), mTesseractRunner.Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
 
 	if (mIsEnd)
 	{

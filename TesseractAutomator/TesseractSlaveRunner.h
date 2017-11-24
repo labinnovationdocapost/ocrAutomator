@@ -12,7 +12,7 @@ namespace Docapost {
 
 				std::atomic<int> threadToRun;
 								
-				std::shared_ptr<NetworkClient> network;
+				std::shared_ptr<NetworkClient> mNetwork;
 
 				bool GetTextFromTesseract(tesseract::TessBaseAPI* api, std::vector<unsigned char>* image, std::string& text);
 				void ThreadLoop(int id) override;
@@ -25,13 +25,21 @@ namespace Docapost {
 				boost::signals2::signal<void(SlaveFileStatus*)> onStartProcessFile;
 				boost::signals2::signal<void()> onProcessEnd;
 
-				TesseractSlaveRunner();
+				TesseractSlaveRunner(int port = 12000);
 				~TesseractSlaveRunner();
 
+				bool NetworkEnable() const { return mNetwork != nullptr;  }
+				int Port() const
+				{
+					if (NetworkEnable())
+						return mNetwork->Port();
+					else
+						return 0;
+				}
 				std::thread* Run(int nbThread) override;
 
-				std::string remote_address() const { return network->GetRemoteAddress(); }
-				bool remote_isconnected() const { return network->IsOpen(); }
+				std::string remote_address() const { return mNetwork->GetRemoteAddress(); }
+				bool remote_isconnected() const { return mNetwork != nullptr && mNetwork->IsOpen(); }
 			};
 		}
 	}

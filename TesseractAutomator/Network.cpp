@@ -69,7 +69,12 @@ void Network::InitComm()
 				this->mConnections.erase(id);
 				this->onSlaveDisconnect(ns, noUsed);
 			});
-			obj->Start();
+
+			// On a besoin de faire tourner la communication dans un nouveau thread pour pouvoir accepter d'autre client
+			std::thread([obj]()
+			{
+				obj->Start();
+			}).detach();
 		}
 
 		InitComm();
@@ -78,7 +83,7 @@ void Network::InitComm()
 
 void Network::Start()
 {
-	std::lock_guard<std::mutex> lock(g_state);
+	std::lock_guard<std::mutex> lock(mStateMutex);
 	mService.run();
 }
 void Network::Stop()
@@ -92,7 +97,7 @@ void Network::Stop()
 	mUdpSocket.close();
 	mTcpAcceptor.close();
 	mService.stop();
-	std::lock_guard<std::mutex> lock(g_state);
+	std::lock_guard<std::mutex> lock(mStateMutex);
 }
 
 Network::Network(short port) : 

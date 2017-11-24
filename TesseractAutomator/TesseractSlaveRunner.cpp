@@ -4,37 +4,33 @@
 #include "Error.h"
 
 
-Docapost::IA::Tesseract::TesseractSlaveRunner::TesseractSlaveRunner() :
+Docapost::IA::Tesseract::TesseractSlaveRunner::TesseractSlaveRunner(int port) :
 	threadToRun(0)
 {
 	setMsgSeverity(L_SEVERITY_NONE);
 	int i = 0;
-	while(true)
+	try
 	{
-		try
-		{
-			network = std::make_shared<NetworkClient>(12000 + i++);
-			break;
-		}
-		catch(std::exception& e)
-		{
-			
-		}
+		mNetwork = std::make_shared<NetworkClient>(port);
+		mNetwork->onMasterConnected.connect(boost::bind(&TesseractSlaveRunner::OnMasterConnectedHandler, this));
+		mNetwork->onMasterDisconnect.connect(boost::bind(&TesseractSlaveRunner::OnMasterDisconnectHandler, this));
+		mNetwork->onMasterStatusChanged.connect(boost::bind(&TesseractSlaveRunner::OnMasterStatusChangedHandler, this, _1, _2, _3, _4, _5, _6, _7));
+		mNetwork->onMasterSynchro.connect(boost::bind(&TesseractSlaveRunner::OnMasterSynchroHandler, this, _1, _2, _3, _4, _5, _6));
 	}
-	network->onMasterConnected.connect(boost::bind(&TesseractSlaveRunner::OnMasterConnectedHandler, this));
-	network->onMasterDisconnect.connect(boost::bind(&TesseractSlaveRunner::OnMasterDisconnectHandler, this));
-	network->onMasterStatusChanged.connect(boost::bind(&TesseractSlaveRunner::OnMasterStatusChangedHandler, this, _1, _2, _3, _4, _5, _6, _7));
-	network->onMasterSynchro.connect(boost::bind(&TesseractSlaveRunner::OnMasterSynchroHandler, this, _1, _2, _3, _4, _5, _6));
+	catch(std::exception& e)
+	{
+		std::cout << "/!\\ Lancement du réseau impossible sur le port " << port << std::endl;
+	}
 }
 
 void Docapost::IA::Tesseract::TesseractSlaveRunner::OnMasterConnectedHandler()
 {
-	network->SendDeclare(mThreads.size(), VERSION); 
+	mNetwork->SendDeclare(mThreads.size(), VERSION); 
 }
 void Docapost::IA::Tesseract::TesseractSlaveRunner::OnMasterDisconnectHandler()
 {
 	//std::cout << "Flux reseau coupe, interuption du programme" << std::endl;
-	network->Stop();
+	mNetwork->Stop();
 	onProcessEnd();
 }
 void Docapost::IA::Tesseract::TesseractSlaveRunner::OnMasterStatusChangedHandler(int threadToRun, int done, int skip, int total, int psm, int oem, std::string lang)
@@ -68,7 +64,7 @@ void Docapost::IA::Tesseract::TesseractSlaveRunner::OnMasterStatusChangedHandler
 	}
 
 	//std::cout << "Nb File ask : " << std::max(0, static_cast<int>(threads.size() * 2 - file_buffer));
-	network->SendSynchro(mThreads.size(), -1, std::max(0, static_cast<int>(mThreads.size() * 2 - file_buffer)),std::vector<SlaveFileStatus*>());
+	mNetwork->SendSynchro(mThreads.size(), -1, std::max(0, static_cast<int>(mThreads.size() * 2 - file_buffer)),std::vector<SlaveFileStatus*>());
 
 	//std::cout << "connected" << std::endl;
 }
@@ -96,10 +92,10 @@ void Docapost::IA::Tesseract::TesseractSlaveRunner::OnMasterSynchroHandler(int t
 	{
 		onProcessEnd();
 	}
-	else if(files.size() == 0 && file_buffer == 0 && network->GetSynchroWaiting() == 0)
+	else if(files.size() == 0 && file_buffer == 0 && mNetwork->GetSynchroWaiting() == 0)
 	{
 		//std::this_thread::sleep_for(std::chrono::milliseconds(300));
-		network->SendSynchroIfNone(mThreads.size(), -1, std::max(0, static_cast<int>(mThreads.size() * 2 - file_buffer)), std::vector<SlaveFileStatus*>());
+		mNetwork->SendSynchroIfNone(mThreads.size(), -1, std::max(0, static_cast<int>(mThreads.size() * 2 - file_buffer)), std::vector<SlaveFileStatus*>());
 	}
 }
 
@@ -144,12 +140,12 @@ void Docapost::IA::Tesseract::TesseractSlaveRunner::ThreadLoop(int id)
 
 	try
 	{
-		while (network->IsOpen())
+		while (mNetwork != nullptr && mNetwork->IsOpen())
 		{
 			SlaveFileStatus * file = GetFile();
 			if(file == nullptr)
 			{
-				network->SendSynchroIfNone(mThreads.size(), -1, std::max(0, static_cast<int>(mThreads.size() * 2)), std::vector<SlaveFileStatus*>());
+				mNetwork->SendSynchroIfNone(mThreads.size(), -1, std::max(0, static_cast<int>(mThreads.size() * 2)), std::vector<SlaveFileStatus*>());
 				std::this_thread::sleep_for(std::chrono::milliseconds(300));
 				continue; 
 			}
@@ -184,10 +180,10 @@ void Docapost::IA::Tesseract::TesseractSlaveRunner::ThreadLoop(int id)
 				--mNbThreadToStop;
 				mThreads.erase(id);
 
-				network->SendSynchro(mThreads.size(), id, 1, list);
+				mNetwork->SendSynchro(mThreads.size(), id, 1, list);
 				break;
 			}
-			network->SendSynchro(mThreads.size(), id, 1, list);
+			mNetwork->SendSynchro(mThreads.size(), id, 1, list);
 		}
 
 		api->End();
@@ -202,7 +198,7 @@ void Docapost::IA::Tesseract::TesseractSlaveRunner::ThreadLoop(int id)
 	boost::lock_guard<std::mutex> lock(mThreadMutex);
 	if (mThreads.size() == 0)
 	{
-		network->SendSynchro(mThreads.size(), id, 1, std::vector<SlaveFileStatus*>());
+		mNetwork->SendSynchro(mThreads.size(), id, 1, std::vector<SlaveFileStatus*>());
 		mEnd = boost::posix_time::second_clock::local_time();
 		onProcessEnd();
 	}
@@ -217,7 +213,7 @@ std::thread* Docapost::IA::Tesseract::TesseractSlaveRunner::Run(int nbThread)
 	return new std::thread([this]()
 	{
 		CatchAllErrorSignals();
-		network->Start(12000);
+		if (mNetwork != nullptr) mNetwork->Start();
 	});
 
 	/*std::cout << "waiting connection" << std::endl;
@@ -230,5 +226,5 @@ std::thread* Docapost::IA::Tesseract::TesseractSlaveRunner::Run(int nbThread)
 
 Docapost::IA::Tesseract::TesseractSlaveRunner::~TesseractSlaveRunner()
 {
-	network.reset();
+	if (mNetwork != nullptr) mNetwork.reset();
 }

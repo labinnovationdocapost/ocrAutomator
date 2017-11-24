@@ -4,13 +4,13 @@
 #include "Version.h"
 
 NetworkClient::NetworkClient(int port) :
-	synchroWaiting(0),
-	service(),
-	udp_socket(service, ip::udp::endpoint(ip::udp::v4(), port + 20)),
-	tcp_socket(service, ip::tcp::endpoint(ip::tcp::v4(), port + 20)),
-	port(port),
-	strand(service),
-	timer(service)
+	mSynchroWaiting(0),
+	mService(),
+	mUdpSocket(mService, ip::udp::endpoint(ip::udp::v4(), port + 20)),
+	mTcpSocket(mService, ip::tcp::endpoint(ip::tcp::v4(), port + 20)),
+	mPort(port),
+	mStrand(mService),
+	mTimer(mService)
 {
 	/*udp_socket.set_option(ip::udp::socket::reuse_address(true));
 	udp_socket.set_option(boost::asio::socket_base::broadcast(true));*/
@@ -25,27 +25,27 @@ google::protobuf::uint32 NetworkClient::readHeader(char *buf)
 	return size;
 }
 
-void NetworkClient::Start(int port)
+void NetworkClient::Start()
 {
 	auto self(shared_from_this());
-	BroadcastNetworkInfo(port, VERSION);
-	service.run();
+	BroadcastNetworkInfo(mPort, VERSION);
+	mService.run();
 }
 
 
 void NetworkClient::ReceiveDataHeader()
 {
 	auto self(shared_from_this());
-	boost::asio::async_read(tcp_socket, boost::asio::buffer(data_, max_length), boost::asio::transfer_exactly(4), [this, self](boost::system::error_code ec, std::size_t length)
+	boost::asio::async_read(mTcpSocket, boost::asio::buffer(mData, max_length), boost::asio::transfer_exactly(4), [this, self](boost::system::error_code ec, std::size_t length)
 	{
 		if (ec)
 		{
-			tcp_socket.close();
+			mTcpSocket.close();
 			onMasterDisconnect();
 			return;
 		}
 
-		ReceiveData(readHeader(data_));
+		ReceiveData(readHeader(mData));
 	});
 }
 
@@ -53,7 +53,7 @@ void NetworkClient::ReceiveData(int length)
 {
 	auto self(shared_from_this());
 	std::shared_ptr<std::vector<char>> buffer = std::make_shared<std::vector<char>>(length);
-	boost::asio::async_read(tcp_socket, boost::asio::buffer(*buffer, length), boost::asio::transfer_exactly(length), [this, self, buffer](boost::system::error_code ec, std::size_t length)
+	boost::asio::async_read(mTcpSocket, boost::asio::buffer(*buffer, length), boost::asio::transfer_exactly(length), [this, self, buffer](boost::system::error_code ec, std::size_t length)
 	{
 		if (!ec)
 		{
@@ -80,7 +80,7 @@ void NetworkClient::ReceiveData(int length)
 		}
 		else
 		{
-			tcp_socket.close();
+			mTcpSocket.close();
 			onMasterDisconnect();
 
 		}
@@ -90,8 +90,8 @@ void NetworkClient::ReceiveData(int length)
 // DO NOT USE WITHOUT STRAND
 void NetworkClient::WriteToStream(std::shared_ptr<std::vector<char>> data)
 {
-	writeQueue.push(data);
-	if (writeQueue.size() > 1) {
+	mWriteQueue.push(data);
+	if (mWriteQueue.size() > 1) {
 		// outstanding async_write
 		return;
 	}
@@ -102,11 +102,11 @@ void NetworkClient::WriteToStream(std::shared_ptr<std::vector<char>> data)
 // DO NOT USE WITHOUT DIRECTLY, USE WriteToStream(data) INSTEAD
 void NetworkClient::WriteNextItemToStream()
 {
-	const auto buffer = writeQueue.front();
+	const auto buffer = mWriteQueue.front();
 	boost::asio::async_write(
-		tcp_socket,
+		mTcpSocket,
 		boost::asio::buffer(*buffer, buffer->size()),
-		strand.wrap(
+		mStrand.wrap(
 			boost::bind(
 				&NetworkClient::WriteHandler,
 				this,
@@ -119,13 +119,13 @@ void NetworkClient::WriteNextItemToStream()
 
 void NetworkClient::WriteHandler(const boost::system::error_code& error, const size_t bytesTransferred)
 {
-	writeQueue.pop();
+	mWriteQueue.pop();
 	if (error)
 	{
-		tcp_socket.close();
+		mTcpSocket.close();
 		onMasterConnected();
 	}
-	if (!writeQueue.empty()) {
+	if (!mWriteQueue.empty()) {
 		// more messages to send
 		this->WriteNextItemToStream();
 	}
@@ -147,41 +147,43 @@ void NetworkClient::BroadcastNetworkInfo(int port, std::string version)
 	// Broacast du message en UDP pour trouver les pairs
 	boost::asio::ip::udp::endpoint senderEndpoint(boost::asio::ip::address_v4::broadcast(), port);
 
-	timer.expires_from_now(boost::posix_time::seconds(5));
+	mTimer.expires_from_now(boost::posix_time::seconds(5));
 
-	udp_socket.async_send_to(boost::asio::buffer(*buffer, coded_output.ByteCount()), senderEndpoint, [this, self](boost::system::error_code ec, std::size_t bytes_transferred)
+	std::cerr << "Sending broadcast, Version : " << ni.version() << " Port : " << ni.port() << std::endl;
+	mUdpSocket.async_send_to(boost::asio::buffer(*buffer, coded_output.ByteCount()), senderEndpoint, [this, self](boost::system::error_code ec, std::size_t bytes_transferred)
 	{
 		if (ec)
 			return;
 		// Une fois un pair trouver
 		//std::vector<char> rcv_buffer(300);
-		udp_socket.async_receive_from(boost::asio::buffer(data_, 1204), masterEndpoint, [this, self](boost::system::error_code ec, std::size_t bytes_rcv)
+		mUdpSocket.async_receive_from(boost::asio::buffer(mData, 1204), mMasterEndpoint, [this, self](boost::system::error_code ec, std::size_t bytes_rcv)
 		{
 			if (ec)
 			{
 				return;
 			}
-			timer.cancel();
+
+			mTimer.cancel();
 			Docapost::IA::Tesseract::Proto::NetworkInfo ni;
-			ni.ParseFromArray(data_, bytes_rcv);
+			ni.ParseFromArray(mData, bytes_rcv);
 			// On vérifié ca version
 			if (ni.version() != VERSION)
 			{
-				std::cout << "Version mismatch, Expected : " << VERSION << " Received : " << ni.version() << std::endl;
+				std::cerr << "Version mismatch, Expected : " << VERSION << " Received : " << ni.version() << std::endl;
 			}
 
-			auto ip = masterEndpoint.address().to_string();
+			auto ip = mMasterEndpoint.address().to_string();
 
 			for (int i = 0; i < 3; i++)
 				try
 			{
 				// Et on ce connect en TCP a celui-ci
-				tcp_socket.connect(ip::tcp::endpoint(masterEndpoint.address(), ni.port()));
+				mTcpSocket.connect(ip::tcp::endpoint(mMasterEndpoint.address(), ni.port()));
 				break;
 			}
 			catch (std::exception& e)
 			{
-				tcp_socket.close();
+				mTcpSocket.close();
 				std::this_thread::sleep_for(std::chrono::milliseconds(300));
 			}
 
@@ -191,7 +193,7 @@ void NetworkClient::BroadcastNetworkInfo(int port, std::string version)
 		});
 	});
 
-	timer.async_wait([this, port, version, self](boost::system::error_code ec) { if (!ec) { udp_socket.cancel(); BroadcastNetworkInfo(port, version); } });
+	mTimer.async_wait([this, port, version, self](boost::system::error_code ec) { if (!ec) { mUdpSocket.cancel(); BroadcastNetworkInfo(port, version); } });
 }
 
 void NetworkClient::SendDeclare(int thread, std::string version)
@@ -213,16 +215,7 @@ void NetworkClient::SendDeclare(int thread, std::string version)
 	coded_output.WriteLittleEndian32(m.ByteSize());
 	m.SerializeToCodedStream(&coded_output);
 
-	/*boost::asio::async_write(tcp_socket, boost::asio::buffer(*buffer, coded_output.ByteCount()), [this, self](boost::system::error_code ec, std::size_t bytes_transferred)
-	{
-		if (ec)
-		{
-			tcp_socket.close();
-			onMasterDisconnect();
-			return;
-		}
-	});*/
-	strand.post(
+	mStrand.post(
 		boost::bind(
 			&NetworkClient::WriteToStream,
 			this,
@@ -234,7 +227,7 @@ void NetworkClient::SendDeclare(int thread, std::string version)
 void NetworkClient::SendSynchro(int thread, int threadId, int req, std::vector<SlaveFileStatus*> files)
 {
 	auto self(shared_from_this());
-	++synchroWaiting;
+	++mSynchroWaiting;
 
 	Docapost::IA::Tesseract::Proto::Synchro_Slave* s = new Docapost::IA::Tesseract::Proto::Synchro_Slave{};
 	s->set_threadrunning(thread);
@@ -260,16 +253,8 @@ void NetworkClient::SendSynchro(int thread, int threadId, int req, std::vector<S
 	google::protobuf::io::CodedOutputStream coded_output(&aos);
 	coded_output.WriteLittleEndian32(m.ByteSize());
 	m.SerializeToCodedStream(&coded_output);
-
-	/*boost::asio::async_write(tcp_socket, boost::asio::buffer(*buffer, coded_output.ByteCount()), [this, self](boost::system::error_code ec, std::size_t length)
-	{
-		if (ec)
-		{
-			std::cout << "error : " << ec.value() << std::endl;
-		}
-	});*/
-
-	strand.post(
+	
+	mStrand.post(
 		boost::bind(
 			&NetworkClient::WriteToStream,
 			this,
@@ -280,43 +265,36 @@ void NetworkClient::SendSynchro(int thread, int threadId, int req, std::vector<S
 
 void NetworkClient::SendSynchroIfNone(int thread, int threadId, int req, std::vector<SlaveFileStatus*> files)
 {
-	g_thread_mutex.lock();
-	if (synchroWaiting == 0)
+	mThreadMutex.lock();
+	if (mSynchroWaiting == 0)
 	{
 		SendSynchro(thread, threadId, req, files);
-		g_thread_mutex.unlock();
+		mThreadMutex.unlock();
 	}
 	else
 	{
-		g_thread_mutex.unlock();
+		mThreadMutex.unlock();
 	}
 }
 
 void NetworkClient::Stop()
 {
-	service.stop();
+	mService.stop();
 }
 
 NetworkClient::~NetworkClient()
 {
-	std::cout << "exit 1" << std::endl;
-	if (udp_socket.is_open())
+	if (mUdpSocket.is_open())
 	{
-		std::cout << "exit 1.1" << std::endl;
-		udp_socket.close();
+		mUdpSocket.close();
 	}
-	std::cout << "exit 2" << std::endl;
-	if (tcp_socket.is_open())
+	if (mTcpSocket.is_open())
 	{
-		std::cout << "exit 2.0" << std::endl;
-		tcp_socket.shutdown(boost::asio::socket_base::shutdown_type::shutdown_both);
-		std::cout << "exit 2.1" << std::endl;
-		tcp_socket.close();
+		mTcpSocket.shutdown(boost::asio::socket_base::shutdown_type::shutdown_both);
+		mTcpSocket.close();
 	}
-	std::cout << "exit 3" << std::endl;
-	if (!service.stopped())
+	if (!mService.stopped())
 	{
-		std::cout << "exit 3.0" << std::endl;
-		service.stop();
+		mService.stop();
 	}
 }

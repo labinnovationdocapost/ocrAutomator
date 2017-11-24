@@ -27,19 +27,19 @@ namespace ip = boost::asio::ip;
 class NetworkClient : public std::enable_shared_from_this<NetworkClient>
 {
 private:
-	std::atomic<int> synchroWaiting;
-	std::mutex g_thread_mutex;
+	std::atomic<int> mSynchroWaiting;
+	std::mutex mThreadMutex;
 
-	boost::asio::io_service service;
+	boost::asio::io_service mService;
 
-	ip::udp::socket udp_socket;
-	ip::tcp::socket tcp_socket;
-	ip::udp::endpoint udp_sender_endpoint;
-	ip::tcp::endpoint tcp_sender_endpoint;
-	int port;
+	ip::udp::socket mUdpSocket;
+	ip::tcp::socket mTcpSocket;
+	ip::udp::endpoint mUdpSenderEndpoint;
+	ip::tcp::endpoint mTcpSenderEndpoint;
+	int mPort;
 
 	enum { max_length = 1024 };
-	char data_[max_length];
+	char mData[max_length];
 
 	void ReceiveData(int length);
 	void WriteToStream(std::shared_ptr<std::vector<char>> data);
@@ -49,11 +49,11 @@ private:
 
 	boost::uuids::uuid id;
 
-	std::queue<std::shared_ptr<std::vector<char>>> writeQueue;
-	boost::asio::io_service::strand strand;
-	std::thread* mainThread;
-	boost::asio::deadline_timer timer;
-	boost::asio::ip::udp::endpoint masterEndpoint;
+	std::queue<std::shared_ptr<std::vector<char>>> mWriteQueue;
+	boost::asio::io_service::strand mStrand;
+	std::thread* mMainThread;
+	boost::asio::deadline_timer mTimer;
+	boost::asio::ip::udp::endpoint mMasterEndpoint;
 public:
 	boost::signals2::signal<void()> onMasterConnected;
 	boost::signals2::signal<void()> onMasterDisconnect;
@@ -64,15 +64,16 @@ public:
 
 	explicit NetworkClient(int port);
 	google::protobuf::uint32 readHeader(char* buf);
-	void Start(int thread);
+	void Start();
 	void BroadcastNetworkInfo(int port, std::string version);
 	void SendDeclare(int thread, std::string version);
 	void SendSynchro(int thread, int threadId, int req, std::vector<SlaveFileStatus*> files);
 	void SendSynchroIfNone(int thread, int threadId, int req, std::vector<SlaveFileStatus*> files);
 	boost::uuids::uuid& GetId() { return id; }
-	bool IsOpen() { return tcp_socket.is_open(); }
-	std::string GetRemoteAddress() { return tcp_socket.remote_endpoint().address().to_string(); }
-	int GetSynchroWaiting() { return synchroWaiting; }
+	bool IsOpen() const { return !mService.stopped() && mTcpSocket.is_open(); }
+	std::string GetRemoteAddress() const { return mTcpSocket.remote_endpoint().address().to_string(); }
+	int GetSynchroWaiting() const { return mSynchroWaiting; }
+	int Port() const { return mPort; }
 	void Stop();
 	~NetworkClient();
 };

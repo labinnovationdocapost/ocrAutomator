@@ -11,23 +11,23 @@ using std::string;
 class SlaveDisplay
 {
 private:
-	WINDOW * win;
-	WINDOW * top;
-	WINDOW * header;
-	WINDOW * bottom;
-	WINDOW * ctrl;
-	int h, w;
-	std::vector<SlaveFileStatus*> files{};
+	WINDOW * mMainWindow;
+	WINDOW * mTopWindow;
+	WINDOW * mHeaderWindow;
+	WINDOW * mFooterWindow;
+	WINDOW * mControlWindow;
+	int mScreenHeight, mScreenWidth;
+	std::vector<SlaveFileStatus*> mFiles{};
 
-	int currentView = 0;
-	int totalView = 1;
+	int mCurrentView = 0;
+	int mTotalView = 1;
 
-	std::mutex g_thread_mutex;
+	std::mutex mThreadMutex;
 
-	Docapost::IA::Tesseract::TesseractSlaveRunner& tessR;
+	Docapost::IA::Tesseract::TesseractSlaveRunner& mTesseractRunner;
 
-	boost::posix_time::ptime timeEnd;
-	bool isEnd = false;
+	boost::posix_time::ptime mTimeEnd;
+	bool mIsEnd = false;
 	void Init(bool create = true);
 	void OnEnd();
 public:

@@ -35,9 +35,9 @@ private:
 	ip::udp::endpoint mUdpSenderEndpoint;
 	ip::tcp::endpoint mTcpSenderEndpoint;
 
-	std::thread broadcast;
+	std::thread mThreadBroadcast;
 
-	std::mutex g_state;
+	std::mutex mStateMutex;
 
 	void BroadcastLoop();
 
@@ -53,6 +53,8 @@ public:
 	boost::signals2::signal<void(NetworkSession*, int, int, std::vector<std::tuple<std::string, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>&)> onSlaveSynchro;
 	boost::signals2::signal<void(NetworkSession*, int, std::string)> onSlaveConnect;
 	boost::signals2::signal<void(NetworkSession*, boost::unordered_map<std::string, bool>&)> onSlaveDisconnect;
+
+	int Port() { return mPort; }
 
 	void InitBroadcastReceiver();
 	void InitComm();

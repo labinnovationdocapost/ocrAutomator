@@ -118,7 +118,7 @@ namespace Docapost {
 				void OnSlaveDisconnectHandler(NetworkSession* ns, boost::unordered_map<std::string, bool>& noUsed);
 				void OnSlaveSynchroHandler(NetworkSession* ns, int thread, int required, std::vector<std::tuple<std::string, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>& results);
 			public:
-				explicit TesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang = "fra", TesseractOutputFlags type = TesseractOutputFlags::None);
+				explicit TesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang = "fra", TesseractOutputFlags type = TesseractOutputFlags::None, int port = 12000);
 				TesseractRunner(std::string lang = "fra") : TesseractRunner(tesseract::PSM_OSD_ONLY, tesseract::OcrEngineMode::OEM_TESSERACT_ONLY, lang) {}
 				explicit TesseractRunner(tesseract::PageSegMode psm, std::string lang = "fra") : TesseractRunner(psm, tesseract::OcrEngineMode::OEM_TESSERACT_ONLY, lang) {}
 				explicit TesseractRunner(tesseract::OcrEngineMode ocr, std::string lang = "fra") : TesseractRunner(tesseract::PSM_OSD_ONLY, ocr, lang) {}
@@ -133,6 +133,14 @@ namespace Docapost {
 				boost::signals2::signal<void(FileStatus*)> onStartProcessFile;
 				boost::signals2::signal<void()> onProcessEnd;
 
+				bool NetworkEnable() const { return mNetwork != nullptr || mNetworkThread != nullptr; }
+				int Port() const
+				{
+					if (NetworkEnable()) 
+						return mNetwork->Port(); 
+					else 
+						return 0;
+				}
 				void Separator(std::string separator) { this->mSeparator = separator; }
 				std::string Separator() const { return mSeparator; }
 				TesseractOutputFlags OutputTypes() const { return mOutputTypes; }
