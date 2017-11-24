@@ -1,3 +1,7 @@
+v1.3.7
+Stabilisation du réseau
+Lancement multiple de l'application sur une même machine
+Gestion dezs conflit de port TCP/UDP
 v1.3.6
 création d'un fichier texte contenant la concatenation de l'OCR de toutes les pages d'un PDF
 v1.3.5
