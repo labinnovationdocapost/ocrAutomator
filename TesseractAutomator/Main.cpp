@@ -54,15 +54,18 @@ std::mutex g_console_mutex;
 //./TesseractAutomator -i "/mnt/e/LinuxHeader/rpa2" -p 3 --PSM 1 --OEM 3 -l fra -e /mnt/e/RPA/OutputE -t /mnt/e/RPA/OutputT -f
 //-i /mnt/e/LinuxHeader/rpa2/ -p 1 --PSM 1 --OEM 3 -l fra -o /mnt/e/LinuxHeader/rpa3/ -e -t /root/outputT/ -s
 
-void ShowHelp(char** argv, po::options_description& desc)
+void ShowHelp(char** argv, std::vector<std::pair<string, po::options_description&>>& descs)
 {
 	std::cout << "Usage:\n";
 	std::cout << argv[0] << " --help\n";
 	std::cout << argv[0] << " [options...] /folder/of/images\n";
 	std::cout << argv[0] << " [options...] --input /folder/of/images [options...]\n";
 
-	std::cout << "\nOptions:\n";
-	std::cout << desc << std::endl;
+	for (auto desc : descs)
+	{
+		std::cout << "\n"<< desc.first <<":\n";
+		std::cout << desc.second << std::endl;
+	}
 
 	std::cout << R"V0G0N(
 Information sur --exif et --text
@@ -254,7 +257,7 @@ void Slave(char** argv, po::variables_map& vm)
 		}
 	}
 
-	Docapost::IA::Tesseract::TesseractSlaveRunner tessSR{ vm["port"].as<int>()};
+	Docapost::IA::Tesseract::TesseractSlaveRunner tessSR{ vm["port"].as<int>() };
 #if DISPLAY
 	if (!vm.count("silent"))
 	{
@@ -288,7 +291,7 @@ void Slave(char** argv, po::variables_map& vm)
 	}
 #else
 
-	tessSR.Wait();.Wait();
+	tessSR.Wait(); .Wait();
 #endif
 }
 
@@ -308,13 +311,13 @@ int main(int argc, char* argv[])
 	po::options_description globalDesc;
 	globalDesc.add_options()
 		("version,v", "Affiche le numero de version de l'application")
-		("help,h", "");
+		("help,h", "Affiche l'aide");
 
 	po::options_description shareDesc;
 	shareDesc.add_options()
 		("parallel,p", value<int>()->value_name("NUM")->default_value(2), "Nombre de threads en parrallele")
 		("silent,s", "Ne pas afficher l'interface")
-		("port", value<int>()->value_name("PORT")->default_value(12000), "Utiliser le port réseau définit pour toute communication");
+		("port", value<int>()->value_name("PORT")->default_value(12000), "Utiliser le port reseau definit pour toute communication");
 
 	po::options_description desc;
 	desc.add_options()
@@ -322,15 +325,15 @@ int main(int argc, char* argv[])
 		("oem", value<int>()->default_value(3)->value_name("NUM"), "Ocr Engine Mode")
 		("lang,l", value <std::string>()->default_value("fra")->value_name("LANG"), "Langue utilise pour l'OCR")
 		("output,o", value<std::string>()->value_name("DOSSIER")->default_value(boost::filesystem::current_path().string()), "Dossier de sortie (defaut: dossier actuel)")
-		("continue,c", "Ne pas ecraser les fichiers existant")
+		("continue,c", "le fichier (ou la page pour le PDF) n'est pas traite si le fichier text et/ou l'exif existe deja")
 		("exif,e", value<std::string>()->value_name("DOSSIER")->default_value("")->implicit_value(""), "Copier l'image dans le fichier de sortie et écrire le resulat dans les Exif. Si non sépcifié le paramètre --output est utilisé")
 		("text,t", value<std::string>()->value_name("DOSSIER")->default_value("")->implicit_value(""), "Ecrire le resultat dans un fichier texte (.txt) dans le dossier de sortie. Si non sépcifié le paramètre --output est utilisé")
 		("prefixe,f", value<std::string>()->value_name("SEPARATOR")->default_value("__")->implicit_value("__"), "Ajout le chemin relatif a [input] en prefixe du fichier.Defaut: __")
-		("input,i", value<std::string>()->value_name("DOSSIER"), "");
+		("input,i", value<std::string>()->value_name("DOSSIER"), "Dossier d'entree a partir de laquelle seront listee les fichiers a traiter");
 
 	po::options_description slaveDesc;
 	slaveDesc.add_options()
-		("slave,a", "Le programme agira comme un noeu de calcul et cherchera a ce connecter a un noeud maitre disponible pour récupérer des images a traiter");
+		("slave,a", "Le programme agira comme un noeud de calcul et cherchera a ce connecter a un noeud maitre disponible pour récupérer des images a traiter");
 
 	po::options_description cmdline_options;
 	cmdline_options.add(globalDesc).add(desc).add(slaveDesc).add(shareDesc);
@@ -359,7 +362,8 @@ int main(int argc, char* argv[])
 
 
 	if (vm.count("help")) {
-		ShowHelp(argv, desc);
+		std::vector<std::pair<string, po::options_description&>>  opts = { {"Options",globalDesc}, { "Communes", shareDesc}, { "Master", desc },{ "Slave", slaveDesc} };
+		ShowHelp(argv, opts);
 		return 0;
 	}
 
