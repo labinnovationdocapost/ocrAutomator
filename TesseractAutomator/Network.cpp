@@ -1,6 +1,7 @@
 #include "Network.h"
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/smart_ptr/make_shared.hpp>
+#include "Error.h"
 
 namespace ip = boost::asio::ip;
 namespace proto = Docapost::IA::Tesseract::Proto;
@@ -32,7 +33,6 @@ void Network::RespondBroadcast()
 		boost::asio::buffer(mDefaultBuffer, s.ByteSize()), mUdpSenderEndpoint,
 		[this](boost::system::error_code /*ec*/, std::size_t /*bytes_sent*/)
 	{
-
 	});
 }
 
@@ -73,6 +73,7 @@ void Network::InitComm()
 			// On a besoin de faire tourner la communication dans un nouveau thread pour pouvoir accepter d'autre client
 			std::thread([obj]()
 			{
+				CatchAllErrorSignals();
 				obj->Start();
 			}).detach();
 		}
@@ -102,11 +103,12 @@ void Network::Stop()
 
 Network::Network(short port) : 
 mService(),
-mUdpSocket(mService, ip::udp::endpoint(ip::udp::v4(), port)),
+mUdpSocket(mService, ip::udp::endpoint(boost::asio::ip::address_v4::any(), port)),
 mTcpSocket(mService),
 mTcpAcceptor(mService, ip::tcp::endpoint(ip::tcp::v4(), port)),
 mPort(port)
 {
+	mUdpSocket.set_option(boost::asio::socket_base::broadcast(true));
 }
 
 Network::~Network()

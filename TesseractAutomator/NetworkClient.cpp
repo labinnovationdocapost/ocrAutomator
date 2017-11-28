@@ -2,6 +2,8 @@
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 #include <google/protobuf/io/coded_stream.h>
 #include "Version.h"
+#include <sys/capability.h>
+#include <sys/prctl.h>
 
 NetworkClient::NetworkClient(int port) :
 	mSynchroWaiting(0),
@@ -12,8 +14,7 @@ NetworkClient::NetworkClient(int port) :
 	mStrand(mService),
 	mTimer(mService)
 {
-	/*udp_socket.set_option(ip::udp::socket::reuse_address(true));
-	udp_socket.set_option(boost::asio::socket_base::broadcast(true));*/
+	mUdpSocket.set_option(boost::asio::socket_base::broadcast(true));
 }
 
 google::protobuf::uint32 NetworkClient::readHeader(char *buf)
@@ -73,9 +74,9 @@ void NetworkClient::ReceiveData(int length)
 						dict[d.uuid()] = new std::vector<unsigned char>(d.file().begin(), d.file().end());
 					}
 				}
-				onMasterSynchro(m.synchro().totalthread(), m.synchro().skip(), m.synchro().done(), m.synchro().isend(), m.synchro().done(), dict);
+				onMasterSynchro(m.synchro().totalthread(), m.synchro().done(), m.synchro().skip(), m.synchro().total(), m.synchro().isend(), dict);
+				mSynchroWaiting -= dict.size();
 			}
-			//SendStatus(10, 20, 15, 1, 3, "fra");
 			ReceiveDataHeader();
 		}
 		else
@@ -153,7 +154,10 @@ void NetworkClient::BroadcastNetworkInfo(int port, std::string version)
 	mUdpSocket.async_send_to(boost::asio::buffer(*buffer, coded_output.ByteCount()), senderEndpoint, [this, self](boost::system::error_code ec, std::size_t bytes_transferred)
 	{
 		if (ec)
+		{
+			std::cerr << "Error broadcast, " << ec.message() << std::endl;
 			return;
+		}
 		// Une fois un pair trouver
 		//std::vector<char> rcv_buffer(300);
 		mUdpSocket.async_receive_from(boost::asio::buffer(mData, 1204), mMasterEndpoint, [this, self](boost::system::error_code ec, std::size_t bytes_rcv)
@@ -227,7 +231,6 @@ void NetworkClient::SendDeclare(int thread, std::string version)
 void NetworkClient::SendSynchro(int thread, int threadId, int req, std::vector<SlaveFileStatus*> files)
 {
 	auto self(shared_from_this());
-	++mSynchroWaiting;
 
 	Docapost::IA::Tesseract::Proto::Synchro_Slave* s = new Docapost::IA::Tesseract::Proto::Synchro_Slave{};
 	s->set_threadrunning(thread);
@@ -241,7 +244,7 @@ void NetworkClient::SendSynchro(int thread, int threadId, int req, std::vector<S
 		f->set_start(boost::posix_time::to_time_t(file->start));
 		f->set_end(boost::posix_time::to_time_t(file->end));
 		f->set_ellapsed(file->ellapsed.ticks());
-		f->set_threadid(threadId);
+		f->set_threadid(file->thread);
 	}
 
 	Docapost::IA::Tesseract::Proto::Message_Slave m;
@@ -265,15 +268,19 @@ void NetworkClient::SendSynchro(int thread, int threadId, int req, std::vector<S
 
 void NetworkClient::SendSynchroIfNone(int thread, int threadId, int req, std::vector<SlaveFileStatus*> files)
 {
-	mThreadMutex.lock();
-	if (mSynchroWaiting == 0)
+	std::lock_guard<std::mutex> lock(mThreadMutex);
+	if (mSynchroWaiting < req)
 	{
-		SendSynchro(thread, threadId, req, files);
-		mThreadMutex.unlock();
-	}
-	else
-	{
-		mThreadMutex.unlock();
+		auto toAdd = req - mSynchroWaiting;
+		if(toAdd > 0)
+		{
+			mSynchroWaiting += toAdd;
+			SendSynchro(thread, threadId, toAdd, files);
+		}
+		else
+		{
+			SendSynchro(thread, threadId, 0, files);
+		}
 	}
 }
 

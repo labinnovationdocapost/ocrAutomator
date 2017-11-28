@@ -44,19 +44,22 @@
     <ClCompile Include="Protobuf\Synchro_Master.pb.cc" />
     <ClCompile Include="Protobuf\Synchro_Slave.pb.cc" />
     <ClCompile Include="SlaveDisplay.cpp" />
-    <ClCompile Include="TesseractRunner.cpp" />
-    <ClCompile Include="TesseractSlaveRunner.cpp" />
+    <ClCompile Include="MasterProcessingWorker.cpp" />
+    <ClCompile Include="SlaveProcessingWorker.cpp" />
+    <ClCompile Include="Tesseract.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BaseOcr.h" />
     <ClInclude Include="Display.h" />
     <ClInclude Include="Error.h" />
     <ClInclude Include="BaseFileStatus.h" />
-    <ClInclude Include="FileStatus.h" />
+    <ClInclude Include="MasterFileStatus.h" />
     <ClInclude Include="FileSum.h" />
-    <ClInclude Include="BaseTesseractRunner.h" />
+    <ClInclude Include="BaseProcessingWorker.h" />
     <ClInclude Include="NetworkClient.h" />
     <ClInclude Include="NetworkSession.h" />
     <ClInclude Include="Network.h" />
+    <ClInclude Include="OutputFlags.h" />
     <ClInclude Include="Protobuf\Broadcast.pb.h" />
     <ClInclude Include="Protobuf\Declare.pb.h" />
     <ClInclude Include="Protobuf\File.pb.h" />
@@ -70,8 +73,11 @@
     <ClInclude Include="Protobuf_all.h" />
     <ClInclude Include="SlaveDisplay.h" />
     <ClInclude Include="SlaveFileStatus.h" />
-    <ClInclude Include="TesseractRunner.h" />
-    <ClInclude Include="TesseractSlaveRunner.h" />
+    <ClInclude Include="MasterProcessingWorker.h" />
+    <ClInclude Include="SlaveProcessingWorker.h" />
+    <ClInclude Include="Tesseract.h" />
+    <ClInclude Include="TesseractFactory.h" />
+    <ClInclude Include="UninitializedOcrException.h" />
     <ClInclude Include="Version.h" />
   </ItemGroup>
   <ItemGroup>
@@ -130,15 +136,15 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>/root//boost_1_65_1;/usr/include/ImageMagick-6;/usr/include/x86_64-linux-gnu/ImageMagick-6;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/boost_1_65_1/;/usr/include/ImageMagick-6;/usr/include/x86_64-linux-gnu/ImageMagick-6;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Verbose>false</Verbose>
       <PreprocessorDefinitions>DISPLAY;MAGICKCORE_HDRI_ENABLE=0;MAGICKCORE_QUANTUM_DEPTH=16</PreprocessorDefinitions>
       <CppLanguageStandard>c++11</CppLanguageStandard>
       <CppAdditionalWarning>switch;no-deprecated-declarations;empty-body;return-type;parentheses;no-format;uninitialized;unreachable-code;unused-function;unused-value;unused-variable</CppAdditionalWarning>
     </ClCompile>
     <Link>
-      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses;exiv2;protobuf-lite;protobuf;Magick++-6.Q16;MagickCore-6.Q16;podofo;z;jpeg;fontconfig;freetype</LibraryDependencies>
-      <AdditionalLibraryDirectories>/root/boost_1_65_1/stage/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses;exiv2;protobuf-lite;protobuf;Magick++-6.Q16;MagickCore-6.Q16;podofo;z;jpeg;fontconfig;freetype;cap</LibraryDependencies>
+      <AdditionalLibraryDirectories>/boost_1_65_1/stage/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SharedLibrarySearchPath>%(SharedLibrarySearchPath)</SharedLibrarySearchPath>
       <VerboseOutput>false</VerboseOutput>
       <AdditionalDependencies>$(StlAdditionalDependencies);%(AdditionalDependencies)</AdditionalDependencies>
@@ -147,13 +153,13 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>/root//boost_1_65_1;/usr/include/ImageMagick-6;/usr/include/x86_64-linux-gnu/ImageMagick-6;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/boost_1_65_1/;/usr/include/ImageMagick-6;/usr/include/x86_64-linux-gnu/ImageMagick-6;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DISPLAY;NDEBUG;DISPLAY;MAGICKCORE_HDRI_ENABLE=0;MAGICKCORE_QUANTUM_DEPTH=16;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>FullDebug</DebugInformationFormat>
     </ClCompile>
     <Link>
       <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses;exiv2;protobuf-lite;protobuf;Magick++-6.Q16;MagickCore-6.Q16;podofo;z;jpeg;fontconfig;freetype</LibraryDependencies>
-      <AdditionalLibraryDirectories>/root/boost_1_65_1/stage/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>/boost_1_65_1/stage/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <VerboseOutput>true</VerboseOutput>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>-g -rdynamic %(AdditionalOptions)</AdditionalOptions>

@@ -17,17 +17,18 @@
 #include <boost/signals2.hpp>
 #include <boost/thread.hpp>
 using std::string;
-#include <tesseract/baseapi.h>
 
-#include "FileStatus.h"
+#include "BaseFileStatus.h"
+#include "BaseOcr.h"
 
 namespace Docapost {
 	namespace IA {
 		namespace Tesseract {
 			template<typename T>
-			class BaseTesseractRunner
+			class BaseProcessingWorker
 			{
 			protected:
+				OcrFactory& mOcrFactory;
 				std::atomic_int mNextId{0};
 
 				std::mutex mStackMutex;
@@ -47,15 +48,11 @@ namespace Docapost {
 				std::condition_variable mIsWorkDone;
 				std::mutex mIsWorkDoneMutex;
 
-				tesseract::PageSegMode mPsm = tesseract::PageSegMode::PSM_AUTO;
-				tesseract::OcrEngineMode mOem = tesseract::OcrEngineMode::OEM_DEFAULT;
-				std::string mLang;
 
 				boost::posix_time::ptime mStart;
 				boost::posix_time::ptime mEnd;
 
-				BaseTesseractRunner() {}
-				BaseTesseractRunner(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang) : mPsm(psm), mOem(oem), mLang(lang) {}
+				BaseProcessingWorker(OcrFactory& ocr) : mOcrFactory(ocr) {}
 
 				virtual void ThreadLoop(int id) = 0;
 				void AddFile(T* file)
@@ -83,13 +80,16 @@ namespace Docapost {
 					return f;
 				}
 			public:
-				virtual ~BaseTesseractRunner() = default;
+				virtual ~BaseProcessingWorker() = default;
 				int Total() const { return mTotal; }
 				int Done() const { return mDone; }
 				int Skip() const { return mSkip; }
 
-				tesseract::PageSegMode Psm() const { return mPsm; }
-				tesseract::OcrEngineMode Oem() const { return mOem; }
+				OcrFactory& ocrFactory() const
+				{
+					return mOcrFactory;
+				}
+
 				std::size_t NbThreads() { boost::lock_guard<std::mutex> lock(mThreadMutex); return mThreads.size(); }
 				boost::posix_time::ptime StartTime() const { return mStart; }
 				boost::posix_time::ptime EndTime() const { return mEnd; }
@@ -105,7 +105,7 @@ namespace Docapost {
 				void AddThread()
 				{
 					int id = mNextId++;
-					mThreads[id] = new std::thread(&BaseTesseractRunner<T>::ThreadLoop, this, id);
+					mThreads[id] = new std::thread(&BaseProcessingWorker<T>::ThreadLoop, this, id);
 				}
 				void RemoveThread()
 				{

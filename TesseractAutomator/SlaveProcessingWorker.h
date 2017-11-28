@@ -1,21 +1,32 @@
 #pragma once
-#include "BaseTesseractRunner.h"
+#include "BaseProcessingWorker.h"
 #include "NetworkClient.h"
 #include "SlaveFileStatus.h"
+#include <future>
 
 namespace Docapost {
 	namespace IA {
 		namespace Tesseract {
-			class TesseractSlaveRunner : public BaseTesseractRunner<SlaveFileStatus>
+			class SlaveProcessingWorker : public BaseProcessingWorker<SlaveFileStatus>
 			{
 			private:
 
 				std::atomic<int> threadToRun;
 								
 				std::shared_ptr<NetworkClient> mNetwork;
+				std::thread* mNetworkThread;
+				std::mutex mStackToSendMutex;
 
-				bool GetTextFromTesseract(tesseract::TessBaseAPI* api, std::vector<unsigned char>* image, std::string& text);
+				std::deque<SlaveFileStatus*> mFilesToSend;
+
+				void AddFileToSend(SlaveFileStatus* file);
+				SlaveFileStatus* GetFileToSend();
+
+				void NetwordLoop();
+
 				void ThreadLoop(int id) override;
+
+				void TerminateThread(int id);
 
 				void OnMasterConnectedHandler();
 				void OnMasterDisconnectHandler();
@@ -25,8 +36,8 @@ namespace Docapost {
 				boost::signals2::signal<void(SlaveFileStatus*)> onStartProcessFile;
 				boost::signals2::signal<void()> onProcessEnd;
 
-				TesseractSlaveRunner(int port = 12000);
-				~TesseractSlaveRunner();
+				SlaveProcessingWorker(OcrFactory& ocr, int port = 12000);
+				~SlaveProcessingWorker();
 
 				bool NetworkEnable() const { return mNetwork != nullptr;  }
 				int Port() const

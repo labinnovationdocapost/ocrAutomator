@@ -5,7 +5,7 @@
 #include <vector>
 #include "SlaveFileStatus.h"
 using std::string;
-#include "TesseractSlaveRunner.h"
+#include "SlaveProcessingWorker.h"
 #include "FileSum.h"
 
 class SlaveDisplay
@@ -24,14 +24,14 @@ private:
 
 	std::mutex mThreadMutex;
 
-	Docapost::IA::Tesseract::TesseractSlaveRunner& mTesseractRunner;
+	Docapost::IA::Tesseract::SlaveProcessingWorker& mTesseractRunner;
 
 	boost::posix_time::ptime mTimeEnd;
 	bool mIsEnd = false;
 	void Init(bool create = true);
 	void OnEnd();
 public:
-	explicit SlaveDisplay(Docapost::IA::Tesseract::TesseractSlaveRunner &tessR);
+	explicit SlaveDisplay(Docapost::IA::Tesseract::SlaveProcessingWorker &tessR);
 	~SlaveDisplay();
 
 	void DrawHeader() const;

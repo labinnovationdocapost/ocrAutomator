@@ -13,31 +13,69 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
 
 ## Configuration de Linux
 - Installer le package Tesseract 4.0 LSTM : https://launchpad.net/~alex-p/+archive/ubuntu/tesseract-ocr
-- Installer les package libtesseract-dev, libleptonica-dev, libncurses5-dev et libexiv2-dev
+- Installer les package libtesseract-dev, libtesseract-ocr-fra, libleptonica-dev, libncurses5-dev, libexiv2-dev, libmagick++-dev, libpodofo-dev et libprotobuf-dev `sudo apt install libtesseract-dev libtesseract-ocr-fra libleptonica-dev libncurses5-dev libexiv2-dev libmagick++-dev libprotobuf-dev`
 - Télécharger Boost : `wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.bz2` puis extraire dans `/root/boost_1_65_1` avec `tar --bzip2 -xf /path/to/boost_1_65_1.tar.bz2`.
 - puis suivre la procédure : (http://www.boost.org/doc/libs/1_65_1/more/getting_started/unix-variants.html)
 - Si vous souhaitez utiliser les lib static de Boost, enlever les .so générés précédemments
+- Télécharge Podofo : `wget http://sourceforge.net/projects/podofo/files/podofo/0.9.5/podofo-0.9.5.tar.gz/download -o podofo.tar.gz` puis extraire avec `tar -xf /path/to/podofo.tar.bz2`.
+- puis suivre la procédure : (http://podofo.sourceforge.net/download.html)
 
 ## Utilisation
 ```Usage:
 ./TesseractAutomator --help
 ./TesseractAutomator [options...] /folder/of/images
-./TesseractAutomator [options...] --folder /folder/of/images [options...]
+./TesseractAutomator [options...] --input /folder/of/images [options...]
 
 Options:
-  --psm NUM (=3)            Page Segmentation Mode
-  --oem NUM (=3)            Ocr Engine Mode
-  -l [ --lang ] LANG (=fra) Langue utilis pour l'OCR
-  -h [ --help ]
-  -p [ --parallel ] NUM     Nombre de threads en parralle
-  -o [ --output ] DOSSIER   Dossier de sortie (dfaut: dossier actuel)
-  -c [ --continue ]         Ne pas ecraser les fichiers existant
-  -n [ --nodisplay ]        Ne pas afficher l'interface
-  -e [ --exif ]             Copier l'image dans le fichier de sortie et crire
-                            le rsulat dans les Exif
-  -t [ --text ]             Ecrire le rsultat dans un fichier texte (.txt)
-                            dans le dossier de sortie
-  -f [ --folder ] DOSSIER
+  -v [ --version ]      Affiche le numero de version de l'application
+  -h [ --help ]         Affiche l'aide
+
+
+Communes:
+  -p [ --parallel ] NUM (=2) Nombre de threads en parrallele
+  -s [ --silent ]            Ne pas afficher l'interface
+  --port PORT (=12000)       Utiliser le port reseau definit pour toute
+                             communication
+
+
+Master:
+  --psm NUM (=3)                        Page Segmentation Mode
+  --oem NUM (=3)                        Ocr Engine Mode
+  -l [ --lang ] LANG (=fra)             Langue utilise pour l'OCR
+  -o [ --output ] DOSSIER (=/mnt/f/Docs/Visual Studio 2017/Projects/LinuxTesseract/TesseractAutomator/bin/x64/Release)
+                                        Dossier de sortie (defaut: dossier
+                                        actuel)
+  -c [ --continue ]                     le fichier (ou la page pour le PDF)
+                                        n'est pas traite si le fichier text
+                                        et/ou l'exif existe deja
+  -e [ --exif ] DOSSIER                 Copier l'image dans le fichier de
+                                        sortie et crire le resulat dans les
+                                        Exif. Si non spcifi le paramtre
+                                        --output est utilis
+  -t [ --text ] DOSSIER                 Ecrire le resultat dans un fichier
+                                        texte (.txt) dans le dossier de sortie.
+                                        Si non spcifi le paramtre --output
+                                        est utilis
+  -f [ --prefixe ] [=SEPARATOR(=__)] (=__)
+                                        Ajout le chemin relatif a [input] en
+                                        prefixe du fichier.Defaut: __
+  -i [ --input ] DOSSIER                Dossier d'entree a partir de laquelle
+                                        seront listee les fichiers a traiter
+
+
+Slave:
+  -a [ --slave ]        Le programme agira comme un noeud de calcul et
+                        cherchera a ce connecter a un noeud maitre disponible
+                        pour rcuprer des images a traiter
+
+
+Information sur --exif et --text
+Si aucun dossier n'est specifie le dossier utilise sera celui dfini par --output.
+Si --output n'est pas definit, le dossier de sortie sera le dossier courrant.
+Exemple:
+./TesseractAutomator --input /folder/of/images -et --output /output/folder
+./TesseractAutomator --input /folder/of/images -e --text /text/output/folder --output /output/folder
+./TesseractAutomator --input /folder/of/images --exif /image/output/folder --text /text/output/folder
 
 
 Page segmentation modes:

@@ -10,10 +10,11 @@
 #include <iomanip>
 #include <csignal>
 #include "Version.h"
-#include "TesseractSlaveRunner.h"
+#include "SlaveProcessingWorker.h"
 #include <google/protobuf/extension_set.h>
 #include <google/protobuf/extension_set.h>
 #include "Error.h"
+#include "TesseractFactory.h"
 using std::string;
 
 #include <tesseract/baseapi.h>
@@ -27,6 +28,8 @@ using std::string;
 #include <execinfo.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/capability.h>
+#include <sys/prctl.h>
 
 #define __USE_GNU
 #include <ucontext.h>
@@ -34,8 +37,9 @@ using std::string;
 namespace po = boost::program_options;
 using boost::program_options::value;
 
-#include "TesseractRunner.h"
+#include "MasterProcessingWorker.h"
 #include "Network.h"
+#include "BaseOcr.h"
 
 #if DISPLAY
 #include "Display.h"
@@ -105,6 +109,23 @@ OCR Engine modes:
 }
 
 
+/*void SetCapability()
+{
+	cap_value_t cap_values[] = { CAP_NET_BROADCAST };
+	cap_t caps;
+	int res = 0;
+	caps = cap_get_proc();
+	res = cap_set_flag(caps, CAP_PERMITTED, 2, cap_values, CAP_SET);
+	res = cap_set_proc(caps);
+	prctl(PR_SET_KEEPCAPS, 1, 0, 0, 0);
+	cap_free(caps);
+
+	caps = cap_get_proc();
+	res = cap_set_flag(caps, CAP_EFFECTIVE, 2, cap_values, CAP_SET);
+	res = cap_set_proc(caps);
+	cap_free(caps);
+}*/
+
 void Master(char** argv, po::variables_map& vm)
 {
 	int nb_process = 1;
@@ -143,50 +164,51 @@ void Master(char** argv, po::variables_map& vm)
 		resume = true;
 	}
 
-	boost::unordered_map <Docapost::IA::Tesseract::TesseractOutputFlags, fs::path> map;
-	Docapost::IA::Tesseract::TesseractOutputFlags types = Docapost::IA::Tesseract::TesseractOutputFlags::None;
+	boost::unordered_map <Docapost::IA::Tesseract::OutputFlags, fs::path> map;
+	Docapost::IA::Tesseract::OutputFlags types = Docapost::IA::Tesseract::OutputFlags::None;
 	if (vm.count("exif"))
 	{
-		types |= Docapost::IA::Tesseract::TesseractOutputFlags::Exif;
+		types |= Docapost::IA::Tesseract::OutputFlags::Exif;
 		if (vm["exif"].as<std::string>().empty())
 		{
-			map[Docapost::IA::Tesseract::TesseractOutputFlags::Exif] = vm["output"].as<std::string>();
+			map[Docapost::IA::Tesseract::OutputFlags::Exif] = vm["output"].as<std::string>();
 		}
 		else
 		{
-			map[Docapost::IA::Tesseract::TesseractOutputFlags::Exif] = vm["exif"].as<std::string>();
+			map[Docapost::IA::Tesseract::OutputFlags::Exif] = vm["exif"].as<std::string>();
 		}
 	}
 
 	if (vm.count("text"))
 	{
-		types |= Docapost::IA::Tesseract::TesseractOutputFlags::Text;
+		types |= Docapost::IA::Tesseract::OutputFlags::Text;
 		if (vm["text"].as<std::string>().empty())
 		{
-			map[Docapost::IA::Tesseract::TesseractOutputFlags::Text] = vm["output"].as<std::string>();
+			map[Docapost::IA::Tesseract::OutputFlags::Text] = vm["output"].as<std::string>();
 		}
 		else
 		{
-			map[Docapost::IA::Tesseract::TesseractOutputFlags::Text] = vm["text"].as<std::string>();
+			map[Docapost::IA::Tesseract::OutputFlags::Text] = vm["text"].as<std::string>();
 		}
 	}
 
-	if (types == Docapost::IA::Tesseract::TesseractOutputFlags::None)
+	if (types == Docapost::IA::Tesseract::OutputFlags::None)
 	{
-		types |= Docapost::IA::Tesseract::TesseractOutputFlags::Text;
-		map[Docapost::IA::Tesseract::TesseractOutputFlags::Text] = vm["output"].as<std::string>();
+		types |= Docapost::IA::Tesseract::OutputFlags::Text;
+		map[Docapost::IA::Tesseract::OutputFlags::Text] = vm["output"].as<std::string>();
 	}
 
 	if (vm.count("prefixe"))
 	{
-		types |= Docapost::IA::Tesseract::TesseractOutputFlags::Flattern;
+		types |= Docapost::IA::Tesseract::OutputFlags::Flattern;
 	}
 
+	Docapost::IA::Tesseract::TesseractFactory factory{};
+	factory.Lang(vm["lang"].as<std::string>());
+	factory.Oem(static_cast<tesseract::OcrEngineMode>(vm["oem"].as<int>()));
+	factory.Psm(static_cast<tesseract::PageSegMode>(vm["psm"].as<int>()));
 
-	Docapost::IA::Tesseract::TesseractRunner tessR(
-		static_cast<tesseract::PageSegMode>(vm["psm"].as<int>()),
-		static_cast<tesseract::OcrEngineMode>(vm["oem"].as<int>()),
-		vm["lang"].as<std::string>(), types, vm["port"].as<int>());
+	Docapost::IA::Tesseract::MasterProcessingWorker tessR(factory, types, vm["port"].as<int>());
 
 	if (vm.count("prefixe"))
 	{
@@ -257,7 +279,8 @@ void Slave(char** argv, po::variables_map& vm)
 		}
 	}
 
-	Docapost::IA::Tesseract::TesseractSlaveRunner tessSR{ vm["port"].as<int>() };
+	Docapost::IA::Tesseract::TesseractFactory factory{};
+	Docapost::IA::Tesseract::SlaveProcessingWorker tessSR{ factory, vm["port"].as<int>() };
 #if DISPLAY
 	if (!vm.count("silent"))
 	{
@@ -301,6 +324,7 @@ int main(int argc, char* argv[])
 	CatchAllErrorSignals();
 	CatchAllExceptions();
 #endif
+	//SetCapability();
 
 	// oblige le buffer desortie a etre thread safe
 	std::ios_base::sync_with_stdio(true);

@@ -34,17 +34,11 @@
     <ClCompile Include="NetworkClient.cpp">
       <Filter>Source Code\Slave</Filter>
     </ClCompile>
-    <ClCompile Include="TesseractSlaveRunner.cpp">
-      <Filter>Source Code\Slave</Filter>
-    </ClCompile>
     <ClCompile Include="SlaveDisplay.cpp">
       <Filter>Source Code\Slave</Filter>
     </ClCompile>
     <ClCompile Include="Main.cpp">
       <Filter>Source Code</Filter>
-    </ClCompile>
-    <ClCompile Include="TesseractRunner.cpp">
-      <Filter>Source Code\Master</Filter>
     </ClCompile>
     <ClCompile Include="Display.cpp">
       <Filter>Source Code\Master</Filter>
@@ -57,6 +51,15 @@
     </ClCompile>
     <ClCompile Include="Error.cpp">
       <Filter>Source Code\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="MasterProcessingWorker.cpp">
+      <Filter>Source Code\Master</Filter>
+    </ClCompile>
+    <ClCompile Include="SlaveProcessingWorker.cpp">
+      <Filter>Source Code\Slave</Filter>
+    </ClCompile>
+    <ClCompile Include="Tesseract.cpp">
+      <Filter>Source Code\Ocr\Tesseract</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -90,31 +93,19 @@
     <ClInclude Include="Protobuf\Broadcast.pb.h">
       <Filter>Proto\Headers</Filter>
     </ClInclude>
-    <ClInclude Include="TesseractSlaveRunner.h">
-      <Filter>Headers\Slave</Filter>
-    </ClInclude>
     <ClInclude Include="NetworkClient.h">
       <Filter>Headers\Slave</Filter>
     </ClInclude>
     <ClInclude Include="SlaveDisplay.h">
       <Filter>Headers\Slave</Filter>
     </ClInclude>
-    <ClInclude Include="BaseTesseractRunner.h">
-      <Filter>Headers\Base</Filter>
-    </ClInclude>
     <ClInclude Include="Version.h">
       <Filter>Headers\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="TesseractRunner.h">
-      <Filter>Headers\Master</Filter>
     </ClInclude>
     <ClInclude Include="NetworkSession.h">
       <Filter>Headers\Master</Filter>
     </ClInclude>
     <ClInclude Include="Network.h">
-      <Filter>Headers\Master</Filter>
-    </ClInclude>
-    <ClInclude Include="FileSum.h">
       <Filter>Headers\Master</Filter>
     </ClInclude>
     <ClInclude Include="Display.h">
@@ -129,11 +120,38 @@
     <ClInclude Include="BaseFileStatus.h">
       <Filter>Headers\Base</Filter>
     </ClInclude>
-    <ClInclude Include="FileStatus.h">
-      <Filter>Headers\Master</Filter>
-    </ClInclude>
     <ClInclude Include="SlaveFileStatus.h">
       <Filter>Headers\Slave</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseProcessingWorker.h">
+      <Filter>Headers\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MasterProcessingWorker.h">
+      <Filter>Headers\Master</Filter>
+    </ClInclude>
+    <ClInclude Include="OutputFlags.h">
+      <Filter>Headers\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="SlaveProcessingWorker.h">
+      <Filter>Headers\Slave</Filter>
+    </ClInclude>
+    <ClInclude Include="MasterFileStatus.h">
+      <Filter>Headers\Master</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSum.h">
+      <Filter>Headers\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Tesseract.h">
+      <Filter>Headers\Ocr\Tesseract</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseOcr.h">
+      <Filter>Headers\Ocr</Filter>
+    </ClInclude>
+    <ClInclude Include="TesseractFactory.h">
+      <Filter>Headers\Ocr\Tesseract</Filter>
+    </ClInclude>
+    <ClInclude Include="UninitializedOcrException.h">
+      <Filter>Headers\Ocr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -175,6 +193,18 @@
     </Filter>
     <Filter Include="Source Code\Master">
       <UniqueIdentifier>{6cefd9e5-4edd-4ee2-ba5d-36afdf25729b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Ocr">
+      <UniqueIdentifier>{720b02b6-f58b-4a27-b3ea-5ccc2b1ea7df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Ocr\Tesseract">
+      <UniqueIdentifier>{198cc9bb-0109-44af-9f70-2a6d64496a44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Code\Ocr">
+      <UniqueIdentifier>{f8a254dc-da06-4ae0-ad9a-0387658b3011}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Code\Ocr\Tesseract">
+      <UniqueIdentifier>{96d7a578-5bef-47a4-8e83-6375502a4619}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
