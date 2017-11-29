@@ -1,5 +1,5 @@
 #pragma once
-#include "FileStatus.h"
+#include "BaseFileStatus.h"
 
 struct FileSum
 {

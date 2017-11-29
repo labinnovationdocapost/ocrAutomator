@@ -1,4 +1,5 @@
 #include "SlaveDisplay.h"
+#include "TesseractFactory.h"
 
 #define COLOR_GREY 8
 
@@ -49,7 +50,7 @@ void SlaveDisplay::OnEnd()
 	refresh();
 }
 
-SlaveDisplay::SlaveDisplay(Docapost::IA::Tesseract::TesseractSlaveRunner& tessR) : mTesseractRunner(tessR)
+SlaveDisplay::SlaveDisplay(Docapost::IA::Tesseract::SlaveProcessingWorker& tessR) : mTesseractRunner(tessR)
 {
 	initscr();
 	noecho();
@@ -93,10 +94,15 @@ void SlaveDisplay::DrawHeader() const
 	{
 		mvwprintw(mTopWindow, 0, 0, "Remote: Not found");
 	}
-	if (mTesseractRunner.NbThreadToStop() > 0)
-		mvwprintw(mTopWindow, 1, 0, "Threads: %d (-%d) | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.NbThreadToStop(), mTesseractRunner.Psm(), mTesseractRunner.Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
-	else
-		mvwprintw(mTopWindow, 1, 0, "Threads: %d | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.Psm(), mTesseractRunner.Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
+	auto& ocrFactory = mTesseractRunner.ocrFactory();
+	auto tess = dynamic_cast<Docapost::IA::Tesseract::TesseractFactory*>(&ocrFactory);
+	if (tess != nullptr)
+	{
+		if (mTesseractRunner.NbThreadToStop() > 0)
+			mvwprintw(mTopWindow, 1, 0, "Threads: %d (-%d) | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.NbThreadToStop(), tess->Psm(), tess->Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
+		else
+			mvwprintw(mTopWindow, 1, 0, "Threads: %d | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), tess->Psm(), tess->Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
+	}
 
 
 	mvwprintw(mTopWindow, 3, 0, "Files Total: %d | Files Skip: %d\n", mTesseractRunner.Total(), mTesseractRunner.Skip());

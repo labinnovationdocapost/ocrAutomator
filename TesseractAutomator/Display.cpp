@@ -1,4 +1,5 @@
 #include "Display.h"
+#include "TesseractFactory.h"
 
 #define COLOR_GREY 8
 
@@ -51,7 +52,7 @@ void Display::OnEnd()
 	refresh();
 }
 
-Display::Display(Docapost::IA::Tesseract::TesseractRunner& tessR) : mTesseractRunner(tessR)
+Display::Display(Docapost::IA::Tesseract::MasterProcessingWorker& tessR) : mTesseractRunner(tessR)
 {
 	initscr();
 	noecho();
@@ -88,12 +89,17 @@ void Display::DrawHeader() const
 	}
 	else
 	{
-		mvwprintw(mTopWindow, 0, 0, "Input : %s | Exif Output: %s | Text Output : %s\n", mTesseractRunner.Input().c_str(), mTesseractRunner.Output()[Docapost::IA::Tesseract::TesseractOutputFlags::Exif].string().c_str(), mTesseractRunner.Output()[Docapost::IA::Tesseract::TesseractOutputFlags::Text].string().c_str());
+		mvwprintw(mTopWindow, 0, 0, "Input : %s | Exif Output: %s | Text Output : %s\n", mTesseractRunner.Input().c_str(), mTesseractRunner.Output()[Docapost::IA::Tesseract::OutputFlags::Exif].string().c_str(), mTesseractRunner.Output()[Docapost::IA::Tesseract::OutputFlags::Text].string().c_str());
 	}
+	auto& ocrFactory = mTesseractRunner.ocrFactory();
+	auto tess = dynamic_cast<Docapost::IA::Tesseract::TesseractFactory*>(&ocrFactory);
+	if(tess != nullptr)
+	{
 	if (mTesseractRunner.NbThreadToStop() > 0)
-		mvwprintw(mTopWindow, 1, 0, "Threads Local/Remote: %d (-%d)/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.NbThreadToStop(), mTesseractRunner.TotalRemoteThreads(), mTesseractRunner.Psm(), mTesseractRunner.Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
+		mvwprintw(mTopWindow, 1, 0, "Threads Local/Remote: %d (-%d)/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.NbThreadToStop(), mTesseractRunner.TotalRemoteThreads(), tess->Psm(), tess->Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
 	else
-		mvwprintw(mTopWindow, 1, 0, "Threads Local/Remote: %d/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.TotalRemoteThreads(), mTesseractRunner.Psm(), mTesseractRunner.Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
+		mvwprintw(mTopWindow, 1, 0, "Threads Local/Remote: %d/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.TotalRemoteThreads(), tess->Psm(), tess->Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
+	}
 
 	if (mIsEnd)
 	{
@@ -112,7 +118,7 @@ void Display::DrawHeader() const
 	wrefresh(mTopWindow);
 }
 
-void Display::DrawBody(const std::vector<FileStatus*> files, FileSum& s) const
+void Display::DrawBody(const std::vector<MasterFileStatus*> files, FileSum& s) const
 {
 	mvwprintw(mHeaderWindow, 0, 0, "%-15s %-6s %s\n", "Ellapsed", "Thread", "Origin");
 	wrefresh(mHeaderWindow);
@@ -139,7 +145,7 @@ void Display::DrawBody(const std::vector<FileStatus*> files, FileSum& s) const
 	wrefresh(mMainWindow);
 }
 
-void Display::DrawBodyNetwork(const std::vector<FileStatus*> files, FileSum& s) const
+void Display::DrawBodyNetwork(const std::vector<MasterFileStatus*> files, FileSum& s) const
 {
 	mvwprintw(mHeaderWindow, 0, 0, "%-20s %-6s\n", "Hostname", "Thread");
 	wrefresh(mTopWindow);
@@ -157,7 +163,7 @@ void Display::DrawBodyNetwork(const std::vector<FileStatus*> files, FileSum& s) 
 	wrefresh(mMainWindow);
 }
 
-void Display::DrawFooter(const std::vector<FileStatus*> cfiles, FileSum s) const
+void Display::DrawFooter(const std::vector<MasterFileStatus*> cfiles, FileSum s) const
 {
 	if (s.count > 0 && (mTesseractRunner.TotalRemoteThreads() + mTesseractRunner.NbThreads() > 0 || mIsEnd))
 	{
@@ -234,18 +240,18 @@ void Display::Resize()
 }
 
 
-void Display::ShowFile(FileStatus* file)
+void Display::ShowFile(MasterFileStatus* file)
 {
 	AddFile(file);
 }
-void Display::OnCanceled(FileStatus* str)
+void Display::OnCanceled(MasterFileStatus* str)
 {
 	boost::lock_guard<std::mutex> lock(mThreadMutex);
 	mFiles.erase(std::remove(mFiles.begin(), mFiles.end(), str), mFiles.end());
 	werase(mMainWindow);
 }
 
-void Display::AddFile(FileStatus* file)
+void Display::AddFile(MasterFileStatus* file)
 {
 	boost::lock_guard<std::mutex> lock(mThreadMutex);
 	mFiles.insert(mFiles.end(), file);
