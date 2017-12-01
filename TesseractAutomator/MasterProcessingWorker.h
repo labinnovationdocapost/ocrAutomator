@@ -13,6 +13,7 @@
 #include <boost/signals2.hpp>
 #include <boost/unordered_map.hpp>
 #include "OutputFlags.h"
+#include "SlaveState.h"
 using std::string;
 #include "Network.h"
 #include "MasterFileStatus.h"
@@ -33,7 +34,7 @@ namespace Docapost {
 
 
 				boost::unordered_map<OutputFlags, fs::path> mOutputs;
-				boost::unordered_map<std::string, int> mSlaves;
+				boost::unordered_map<std::string, std::shared_ptr<SlaveState>> mSlaves;
 				boost::unordered_map<std::string, MasterFileStatus*> mFileSend;
 
 
@@ -122,11 +123,11 @@ namespace Docapost {
 				{
 					int total = 0;
 					for (auto& slave : mSlaves)
-						total += slave.second;
+						total += slave.second->NbThread;
 					return total;
 				}
 
-				boost::unordered_map<std::string, int> Slaves() const { return mSlaves; }
+				boost::unordered_map<std::string, std::shared_ptr<SlaveState>> Slaves() const { return mSlaves; }
 
 				~MasterProcessingWorker();
 			};

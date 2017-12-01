@@ -158,7 +158,7 @@ void Display::DrawBodyNetwork(const std::vector<MasterFileStatus*> files, FileSu
 	wprintw(mMainWindow, "%-20s %-6d\n", "Master", mTesseractRunner.NbThreads());
 	for(auto& slave : mTesseractRunner.Slaves())
 	{
-		wprintw(mMainWindow, "%-20s %-6d\n", slave.first.c_str(), slave.second);
+		wprintw(mMainWindow, "%-20s %-6d\n", slave.first.c_str(), slave.second->NbThread);
 	}
 	wrefresh(mMainWindow);
 }

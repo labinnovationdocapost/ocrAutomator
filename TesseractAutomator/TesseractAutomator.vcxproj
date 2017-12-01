@@ -75,6 +75,7 @@
     <ClInclude Include="SlaveFileStatus.h" />
     <ClInclude Include="MasterProcessingWorker.h" />
     <ClInclude Include="SlaveProcessingWorker.h" />
+    <ClInclude Include="SlaveState.h" />
     <ClInclude Include="Tesseract.h" />
     <ClInclude Include="TesseractFactory.h" />
     <ClInclude Include="UninitializedOcrException.h" />

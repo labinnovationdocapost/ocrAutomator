@@ -50,7 +50,7 @@ public:
 	void Start();
 	void Stop();
 	void SendStatus(int done, int skip, int total, int psm, int oem, std::string lang);
-	void SendSynchro(int thread, int done, int skip, int total, bool isEnd, boost::unordered_map<std::string, std::vector<unsigned char>*> files);
+	void SendSynchro(int thread, int done, int skip, int total, bool isEnd, int pending, boost::unordered_map<std::string, std::vector<unsigned char>*> files);
 
 	boost::uuids::uuid& Id() { return mId; }
 	boost::unordered_map<std::string, bool> FileState() const { return mFileSend; }

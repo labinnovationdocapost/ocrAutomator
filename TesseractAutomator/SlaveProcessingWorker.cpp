@@ -19,7 +19,7 @@ Docapost::IA::Tesseract::SlaveProcessingWorker::SlaveProcessingWorker(OcrFactory
 		mNetwork->onMasterConnected.connect(boost::bind(&SlaveProcessingWorker::OnMasterConnectedHandler, this));
 		mNetwork->onMasterDisconnect.connect(boost::bind(&SlaveProcessingWorker::OnMasterDisconnectHandler, this));
 		mNetwork->onMasterStatusChanged.connect(boost::bind(&SlaveProcessingWorker::OnMasterStatusChangedHandler, this, _1, _2, _3, _4, _5, _6, _7));
-		mNetwork->onMasterSynchro.connect(boost::bind(&SlaveProcessingWorker::OnMasterSynchroHandler, this, _1, _2, _3, _4, _5, _6));
+		mNetwork->onMasterSynchro.connect(boost::bind(&SlaveProcessingWorker::OnMasterSynchroHandler, this, _1, _2, _3, _4, _5, _6, _7));
 	}
 	catch (std::exception& e)
 	{
@@ -66,12 +66,18 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterStatusChangedHandle
 	mNetworkThread = new std::thread(&SlaveProcessingWorker::NetwordLoop, this);
 
 }
-void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterSynchroHandler(int thread, int done, int skip, int total, bool end, boost::unordered_map<std::string, std::vector<unsigned char>*> files)
+void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterSynchroHandler(int thread, int done, int skip, int total, bool end, int pending, boost::unordered_map<std::string, std::vector<unsigned char>*> files)
 {
 	this->mSkip = skip;
 	this->mTotal = total;
 	this->mDone = done;
 	this->mIsEnd = end;
+
+	if (files.size() + pending != mPending)
+	{
+		std::cout << "Pending error : " << files.size() << " : " << pending << " | " << mPending << std::endl;
+	}
+
 	for (auto& file : files)
 	{
 		auto f = new SlaveFileStatus(file.first, file.second);
@@ -79,13 +85,14 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterSynchroHandler(int 
 		AddFile(f);
 		onStartProcessFile(f);
 	}
-	mRequestPending = false;
 
 	if (done == total && mIsEnd)
 	{
 		onProcessEnd();
 	}
 
+
+	mPending = pending;
 }
 
 void Docapost::IA::Tesseract::SlaveProcessingWorker::AddFileToSend(SlaveFileStatus* file)
@@ -122,12 +129,9 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::NetwordLoop()
 			toSend.push_back(file);
 		}
 
-		if (!mRequestPending)
-		{
-			mRequestPending = true;
-			auto ask = std::max(0, static_cast<int>(mThreads.size() - mFiles.size()));
-			mNetwork->SendSynchro(mThreads.size(), -1, ask, toSend);
-		}
+		auto ask = std::max(0, static_cast<int>(mThreads.size() * 2 - mFiles.size() - mPending));
+		mPending += ask;
+		mNetwork->SendSynchro(mThreads.size(), -1, ask, toSend);
 
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));

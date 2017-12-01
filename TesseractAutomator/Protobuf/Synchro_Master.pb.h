@@ -129,10 +129,17 @@ class Synchro_Master : public ::google::protobuf::Message {
   inline bool isend() const;
   inline void set_isend(bool value);
 
-  // repeated .Docapost.IA.Tesseract.Proto.File Data = 6;
+  // required int32 Pending = 6;
+  inline bool has_pending() const;
+  inline void clear_pending();
+  static const int kPendingFieldNumber = 6;
+  inline ::google::protobuf::int32 pending() const;
+  inline void set_pending(::google::protobuf::int32 value);
+
+  // repeated .Docapost.IA.Tesseract.Proto.File Data = 7;
   inline int data_size() const;
   inline void clear_data();
-  static const int kDataFieldNumber = 6;
+  static const int kDataFieldNumber = 7;
   inline const ::Docapost::IA::Tesseract::Proto::File& data(int index) const;
   inline ::Docapost::IA::Tesseract::Proto::File* mutable_data(int index);
   inline ::Docapost::IA::Tesseract::Proto::File* add_data();
@@ -153,6 +160,8 @@ class Synchro_Master : public ::google::protobuf::Message {
   inline void clear_has_total();
   inline void set_has_isend();
   inline void clear_has_isend();
+  inline void set_has_pending();
+  inline void clear_has_pending();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -162,8 +171,9 @@ class Synchro_Master : public ::google::protobuf::Message {
   ::google::protobuf::int32 done_;
   ::google::protobuf::int32 skip_;
   ::google::protobuf::int32 total_;
-  ::google::protobuf::RepeatedPtrField< ::Docapost::IA::Tesseract::Proto::File > data_;
   bool isend_;
+  ::google::protobuf::int32 pending_;
+  ::google::protobuf::RepeatedPtrField< ::Docapost::IA::Tesseract::Proto::File > data_;
   friend void  protobuf_AddDesc_Synchro_5fMaster_2eproto();
   friend void protobuf_AssignDesc_Synchro_5fMaster_2eproto();
   friend void protobuf_ShutdownFile_Synchro_5fMaster_2eproto();
@@ -298,7 +308,31 @@ inline void Synchro_Master::set_isend(bool value) {
   // @@protoc_insertion_point(field_set:Docapost.IA.Tesseract.Proto.Synchro_Master.isEnd)
 }
 
-// repeated .Docapost.IA.Tesseract.Proto.File Data = 6;
+// required int32 Pending = 6;
+inline bool Synchro_Master::has_pending() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void Synchro_Master::set_has_pending() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void Synchro_Master::clear_has_pending() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void Synchro_Master::clear_pending() {
+  pending_ = 0;
+  clear_has_pending();
+}
+inline ::google::protobuf::int32 Synchro_Master::pending() const {
+  // @@protoc_insertion_point(field_get:Docapost.IA.Tesseract.Proto.Synchro_Master.Pending)
+  return pending_;
+}
+inline void Synchro_Master::set_pending(::google::protobuf::int32 value) {
+  set_has_pending();
+  pending_ = value;
+  // @@protoc_insertion_point(field_set:Docapost.IA.Tesseract.Proto.Synchro_Master.Pending)
+}
+
+// repeated .Docapost.IA.Tesseract.Proto.File Data = 7;
 inline int Synchro_Master::data_size() const {
   return data_.size();
 }

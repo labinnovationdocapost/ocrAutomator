@@ -37,12 +37,13 @@ void protobuf_AssignDesc_Synchro_5fMaster_2eproto() {
       "Synchro_Master.proto");
   GOOGLE_CHECK(file != NULL);
   Synchro_Master_descriptor_ = file->message_type(0);
-  static const int Synchro_Master_offsets_[6] = {
+  static const int Synchro_Master_offsets_[7] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Synchro_Master, totalthread_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Synchro_Master, done_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Synchro_Master, skip_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Synchro_Master, total_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Synchro_Master, isend_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Synchro_Master, pending_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Synchro_Master, data_),
   };
   Synchro_Master_reflection_ =
@@ -88,11 +89,11 @@ void protobuf_AddDesc_Synchro_5fMaster_2eproto() {
   ::Docapost::IA::Tesseract::Proto::protobuf_AddDesc_File_2eproto();
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
     "\n\024Synchro_Master.proto\022\033Docapost.IA.Tess"
-    "eract.Proto\032\nFile.proto\"\220\001\n\016Synchro_Mast"
+    "eract.Proto\032\nFile.proto\"\241\001\n\016Synchro_Mast"
     "er\022\023\n\013TotalThread\030\001 \002(\005\022\014\n\004done\030\002 \002(\005\022\014\n"
     "\004skip\030\003 \002(\005\022\r\n\005total\030\004 \002(\005\022\r\n\005isEnd\030\005 \002("
-    "\010\022/\n\004Data\030\006 \003(\0132!.Docapost.IA.Tesseract."
-    "Proto.File", 210);
+    "\010\022\017\n\007Pending\030\006 \002(\005\022/\n\004Data\030\007 \003(\0132!.Docap"
+    "ost.IA.Tesseract.Proto.File", 227);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "Synchro_Master.proto", &protobuf_RegisterTypes);
   Synchro_Master::default_instance_ = new Synchro_Master();
@@ -115,6 +116,7 @@ const int Synchro_Master::kDoneFieldNumber;
 const int Synchro_Master::kSkipFieldNumber;
 const int Synchro_Master::kTotalFieldNumber;
 const int Synchro_Master::kIsEndFieldNumber;
+const int Synchro_Master::kPendingFieldNumber;
 const int Synchro_Master::kDataFieldNumber;
 #endif  // !_MSC_VER
 
@@ -141,6 +143,7 @@ void Synchro_Master::SharedCtor() {
   skip_ = 0;
   total_ = 0;
   isend_ = false;
+  pending_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -186,9 +189,8 @@ void Synchro_Master::Clear() {
     ::memset(&first, 0, n);                                \
   } while (0)
 
-  if (_has_bits_[0 / 32] & 31) {
-    ZR_(totalthread_, total_);
-    isend_ = false;
+  if (_has_bits_[0 / 32] & 63) {
+    ZR_(totalthread_, pending_);
   }
 
 #undef OFFSET_OF_FIELD_
@@ -279,20 +281,35 @@ bool Synchro_Master::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(50)) goto parse_Data;
+        if (input->ExpectTag(48)) goto parse_Pending;
         break;
       }
 
-      // repeated .Docapost.IA.Tesseract.Proto.File Data = 6;
+      // required int32 Pending = 6;
       case 6: {
-        if (tag == 50) {
+        if (tag == 48) {
+         parse_Pending:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &pending_)));
+          set_has_pending();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(58)) goto parse_Data;
+        break;
+      }
+
+      // repeated .Docapost.IA.Tesseract.Proto.File Data = 7;
+      case 7: {
+        if (tag == 58) {
          parse_Data:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                 input, add_data()));
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(50)) goto parse_Data;
+        if (input->ExpectTag(58)) goto parse_Data;
         if (input->ExpectAtEnd()) goto success;
         break;
       }
@@ -347,10 +364,15 @@ void Synchro_Master::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteBool(5, this->isend(), output);
   }
 
-  // repeated .Docapost.IA.Tesseract.Proto.File Data = 6;
+  // required int32 Pending = 6;
+  if (has_pending()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(6, this->pending(), output);
+  }
+
+  // repeated .Docapost.IA.Tesseract.Proto.File Data = 7;
   for (int i = 0; i < this->data_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      6, this->data(i), output);
+      7, this->data(i), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -388,11 +410,16 @@ void Synchro_Master::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(5, this->isend(), target);
   }
 
-  // repeated .Docapost.IA.Tesseract.Proto.File Data = 6;
+  // required int32 Pending = 6;
+  if (has_pending()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(6, this->pending(), target);
+  }
+
+  // repeated .Docapost.IA.Tesseract.Proto.File Data = 7;
   for (int i = 0; i < this->data_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
-        6, this->data(i), target);
+        7, this->data(i), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -440,8 +467,15 @@ int Synchro_Master::ByteSize() const {
       total_size += 1 + 1;
     }
 
+    // required int32 Pending = 6;
+    if (has_pending()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->pending());
+    }
+
   }
-  // repeated .Docapost.IA.Tesseract.Proto.File Data = 6;
+  // repeated .Docapost.IA.Tesseract.Proto.File Data = 7;
   total_size += 1 * this->data_size();
   for (int i = 0; i < this->data_size(); i++) {
     total_size +=
@@ -491,6 +525,9 @@ void Synchro_Master::MergeFrom(const Synchro_Master& from) {
     if (from.has_isend()) {
       set_isend(from.isend());
     }
+    if (from.has_pending()) {
+      set_pending(from.pending());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -508,7 +545,7 @@ void Synchro_Master::CopyFrom(const Synchro_Master& from) {
 }
 
 bool Synchro_Master::IsInitialized() const {
-  if ((_has_bits_[0] & 0x0000001f) != 0x0000001f) return false;
+  if ((_has_bits_[0] & 0x0000003f) != 0x0000003f) return false;
 
   if (!::google::protobuf::internal::AllAreInitialized(this->data())) return false;
   return true;
@@ -521,6 +558,7 @@ void Synchro_Master::Swap(Synchro_Master* other) {
     std::swap(skip_, other->skip_);
     std::swap(total_, other->total_);
     std::swap(isend_, other->isend_);
+    std::swap(pending_, other->pending_);
     data_.Swap(&other->data_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);

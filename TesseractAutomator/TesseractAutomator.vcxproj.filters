@@ -153,6 +153,9 @@
     <ClInclude Include="UninitializedOcrException.h">
       <Filter>Headers\Ocr</Filter>
     </ClInclude>
+    <ClInclude Include="SlaveState.h">
+      <Filter>Headers\Master</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">

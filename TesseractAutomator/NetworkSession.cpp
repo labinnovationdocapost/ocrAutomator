@@ -169,7 +169,7 @@ void NetworkSession::SendStatus(int done, int skip, int total, int psm, int oem,
 	);
 }
 
-void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool isEnd, boost::unordered_map<std::string, std::vector<unsigned char>*> files)
+void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool isEnd, int pending, boost::unordered_map<std::string, std::vector<unsigned char>*> files)
 {
 	auto self(shared_from_this());
 
@@ -179,6 +179,7 @@ void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool
 	s->set_skip(skip);
 	s->set_total(total);
 	s->set_isend(isEnd);
+	s->set_pending(pending);
 
 	for(auto& file : files)
 	{

@@ -78,7 +78,7 @@ void NetworkClient::ReceiveData(int length)
 						dict[d.uuid()] = new std::vector<unsigned char>(d.file().begin(), d.file().end());
 					}
 				}
-				onMasterSynchro(m.synchro().totalthread(), m.synchro().done(), m.synchro().skip(), m.synchro().total(), m.synchro().isend(), dict);
+				onMasterSynchro(m.synchro().totalthread(), m.synchro().done(), m.synchro().skip(), m.synchro().total(), m.synchro().isend(), m.synchro().pending(),dict);
 				mSynchroWaiting -= dict.size();
 			}
 			ReceiveDataHeader();
@@ -169,9 +169,9 @@ void NetworkClient::Connect(int port, ip::address_v4 ip, std::string version)
 	ip::udp::resolver::query query(boost::asio::ip::host_name(), "");
 	ip::udp::resolver::iterator it = resolver.resolve(query);
 
-	while (it != ip::udp::resolver::iterator())
+	/*while (it != ip::udp::resolver::iterator())
 	{
-	}
+	}*/
 
 	std::cerr << "Sending broadcast, Version : " << ni.version() << " Port : " << ni.port() << std::endl;
 	mUdpSocket.async_send_to(boost::asio::buffer(*buffer, coded_output.ByteCount()), senderEndpoint, [this, self](boost::system::error_code ec, std::size_t bytes_transferred)

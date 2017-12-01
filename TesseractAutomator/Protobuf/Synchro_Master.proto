@@ -10,7 +10,8 @@ message Synchro_Master {
 	required int32 skip = 3;
 	required int32 total = 4;
 	required bool isEnd = 5;
+	required int32 Pending = 6;
 
 	
-	repeated File Data = 6;
+	repeated File Data = 7;
 }
