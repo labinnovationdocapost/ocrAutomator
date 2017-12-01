@@ -1,5 +1,5 @@
 
-VERSION=1.3.8
+VERSION=1.3.9
 
 mkdir -p "/tmp/Package/DEBIAN"
 mkdir -p "/tmp/Package/usr/bin"

@@ -90,7 +90,7 @@ namespace Docapost {
 					return mOcrFactory;
 				}
 
-				std::size_t NbThreads() { boost::lock_guard<std::mutex> lock(mThreadMutex); return mThreads.size(); }
+				std::size_t NbThreads() { std::lock_guard<std::mutex> lock(mThreadMutex); return mThreads.size(); }
 				boost::posix_time::ptime StartTime() const { return mStart; }
 				boost::posix_time::ptime EndTime() const { return mEnd; }
 				int NbThreadToStop() const { return mNbThreadToStop; }

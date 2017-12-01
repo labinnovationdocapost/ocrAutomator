@@ -2,20 +2,13 @@
 
 #include "BaseProcessingWorker.h"
 
-#include <cstdio>
 
 #include <string>
-#include <queue>
-#include <iostream>
 #include <mutex>
 #include <thread>
-#include <fstream>
-#include <atomic>
-#include "BaseFileStatus.h"
 
 #include <boost/program_options.hpp>
 #include <boost/date_time.hpp>
-#include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/signals2.hpp>
 #include <boost/unordered_map.hpp>

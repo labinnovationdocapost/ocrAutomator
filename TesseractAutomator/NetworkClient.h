@@ -37,6 +37,7 @@ private:
 	ip::udp::endpoint mUdpSenderEndpoint;
 	ip::tcp::endpoint mTcpSenderEndpoint;
 	int mPort;
+	std::string mIp;
 
 	enum { max_length = 1024 };
 	char mData[max_length];
@@ -62,10 +63,12 @@ public:
 	// thread, files
 	boost::signals2::signal<void(int, int, int, int ,bool, boost::unordered_map<std::string, std::vector<unsigned char>*>&)> onMasterSynchro;
 
-	explicit NetworkClient(int port);
+	explicit NetworkClient(int port, std::string ip);
 	google::protobuf::uint32 readHeader(char* buf);
 	void Start();
 	void BroadcastNetworkInfo(int port, std::string version);
+	void SendNetworkInfoTo(int port, std::string ip, std::string version);
+	void Connect(int port, ip::address_v4 endpoint, std::string ip);
 	void SendDeclare(int thread, std::string version);
 	void SendSynchro(int thread, int threadId, int req, std::vector<SlaveFileStatus*> files);
 	void SendSynchroIfNone(int thread, int threadId, int req, std::vector<SlaveFileStatus*> files);

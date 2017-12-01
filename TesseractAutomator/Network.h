@@ -1,23 +1,12 @@
 #pragma once
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <boost/asio.hpp>
 #include <thread>
-#include <iostream>
 #include <fstream>
 #include <mutex>
 #include "NetworkSession.h"
-#include "Version.h"
-#include <boost/uuid/uuid.hpp>
 #include <boost/uuid/random_generator.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/signals2.hpp>
-#include "Protobuf_all.h"
 
 namespace ip = boost::asio::ip;
 

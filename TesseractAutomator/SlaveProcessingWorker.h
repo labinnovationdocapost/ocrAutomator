@@ -17,6 +17,10 @@ namespace Docapost {
 				std::thread* mNetworkThread;
 				std::mutex mStackToSendMutex;
 
+				bool mRequestPending = false;
+
+				std::string mIp;
+
 				std::deque<SlaveFileStatus*> mFilesToSend;
 
 				void AddFileToSend(SlaveFileStatus* file);
@@ -36,7 +40,7 @@ namespace Docapost {
 				boost::signals2::signal<void(SlaveFileStatus*)> onStartProcessFile;
 				boost::signals2::signal<void()> onProcessEnd;
 
-				SlaveProcessingWorker(OcrFactory& ocr, int port = 12000);
+				SlaveProcessingWorker(OcrFactory& ocr, int port = 12000, std::string ip = std::string());
 				~SlaveProcessingWorker();
 
 				bool NetworkEnable() const { return mNetwork != nullptr;  }

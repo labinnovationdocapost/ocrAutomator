@@ -10,6 +10,7 @@
 #include "Error.h"
 #include "TesseractFactory.h"
 #include "UninitializedOcrException.h"
+#include <boost/algorithm/string.hpp>
 
 
 Docapost::IA::Tesseract::MasterProcessingWorker::MasterProcessingWorker(OcrFactory& ocr, Docapost::IA::Tesseract::OutputFlags types, int port) :

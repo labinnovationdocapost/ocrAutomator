@@ -1,7 +1,7 @@
 #include "Network.h"
 #include <boost/uuid/uuid_io.hpp>
-#include <boost/smart_ptr/make_shared.hpp>
 #include "Error.h"
+#include "Version.h"
 
 namespace ip = boost::asio::ip;
 namespace proto = Docapost::IA::Tesseract::Proto;

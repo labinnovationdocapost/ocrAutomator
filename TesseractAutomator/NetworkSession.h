@@ -40,6 +40,7 @@ private:
 	void WriteHandler(const boost::system::error_code& error,const size_t bytesTransferred);
 	void ReceiveData(int length);
 	void ReceiveDataHeader();
+	void CloseSocket();
 public:
 	boost::signals2::signal<void(NetworkSession*, int, int, std::vector<std::tuple<std::string, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>&)> onSlaveSynchro;
 	boost::signals2::signal<void(NetworkSession*, int, std::string)> onSlaveConnect;

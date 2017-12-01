@@ -6,15 +6,16 @@
 #include <future>
 
 
-Docapost::IA::Tesseract::SlaveProcessingWorker::SlaveProcessingWorker(OcrFactory& ocr, int port) :
+Docapost::IA::Tesseract::SlaveProcessingWorker::SlaveProcessingWorker(OcrFactory& ocr, int port, std::string ip) :
 	BaseProcessingWorker(ocr),
-	threadToRun(0)
+	threadToRun(0),
+	mIp(ip)
 {
 	setMsgSeverity(L_SEVERITY_NONE);
 	int i = 0;
 	try
 	{
-		mNetwork = std::make_shared<NetworkClient>(port);
+		mNetwork = std::make_shared<NetworkClient>(port, ip);
 		mNetwork->onMasterConnected.connect(boost::bind(&SlaveProcessingWorker::OnMasterConnectedHandler, this));
 		mNetwork->onMasterDisconnect.connect(boost::bind(&SlaveProcessingWorker::OnMasterDisconnectHandler, this));
 		mNetwork->onMasterStatusChanged.connect(boost::bind(&SlaveProcessingWorker::OnMasterStatusChangedHandler, this, _1, _2, _3, _4, _5, _6, _7));
@@ -78,7 +79,7 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterSynchroHandler(int 
 		AddFile(f);
 		onStartProcessFile(f);
 	}
-
+	mRequestPending = false;
 
 	if (done == total && mIsEnd)
 	{
@@ -112,17 +113,21 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::NetwordLoop()
 {
 	CatchAllErrorSignals();
 
-	while(mNetwork != nullptr && mNetwork->IsOpen())
+	while (mNetwork != nullptr && mNetwork->IsOpen())
 	{
 		std::vector<SlaveFileStatus*> toSend;
 		SlaveFileStatus * file;
-		while((file = GetFileToSend()) != nullptr)
+		while ((file = GetFileToSend()) != nullptr)
 		{
 			toSend.push_back(file);
 		}
 
-		auto ask = std::max(0, static_cast<int>(mThreads.size() - mFiles.size()));
-		mNetwork->SendSynchro(mThreads.size(), -1, ask, toSend);
+		if (!mRequestPending)
+		{
+			mRequestPending = true;
+			auto ask = std::max(0, static_cast<int>(mThreads.size() - mFiles.size()));
+			mNetwork->SendSynchro(mThreads.size(), -1, ask, toSend);
+		}
 
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -169,8 +174,6 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::ThreadLoop(int id)
 			if (mNbThreadToStop > 0)
 			{
 				--mNbThreadToStop;
-				mThreads.erase(id);
-
 				break;
 			}
 		}
@@ -181,7 +184,7 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::ThreadLoop(int id)
 	{
 		std::cerr << "Thread - " << id << " " << e.what();
 	}
-	
+
 	TerminateThread(id);
 }
 

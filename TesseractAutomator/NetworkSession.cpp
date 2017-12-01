@@ -61,9 +61,7 @@ void NetworkSession::ReceiveData(int length)
 		}
 		else
 		{
-			mSocket.close();
-			onSlaveDisconnect(this, mFileSend);
-
+			CloseSocket();
 		}
 	});
 }
@@ -78,11 +76,19 @@ void NetworkSession::ReceiveDataHeader()
 		}
 		else
 		{
-			mSocket.close();
-			onSlaveDisconnect(this, mFileSend);
-
+			CloseSocket();
 		}
 	});
+}
+
+void NetworkSession::CloseSocket()
+{
+	if (mSocket.is_open())
+	{
+		mSocket.shutdown(boost::asio::socket_base::shutdown_type::shutdown_both);
+		mSocket.close();
+		onSlaveDisconnect(this, mFileSend);
+	}
 }
 
 
@@ -101,6 +107,8 @@ void NetworkSession::WriteToStream(std::shared_ptr<std::vector<char>> data)
 // DO NOT USE WITHOUT DIRECTLY, USE WriteToStream(data) INSTEAD
 void NetworkSession::WriteNextItemToStream()
 {
+	if (!mSocket.is_open())
+		return;
 	const auto buffer = mWriteQueue.front();
 	boost::asio::async_write(
 		mSocket,
@@ -121,9 +129,10 @@ void NetworkSession::WriteHandler(const boost::system::error_code& error, const 
 	mWriteQueue.pop();
 	if (error)
 	{
-		mSocket.close();
-		onSlaveDisconnect(this, mFileSend);
+		CloseSocket();
+		return;
 	}
+
 	if (!mWriteQueue.empty()) {
 		// more messages to send
 		this->WriteNextItemToStream();
@@ -201,4 +210,9 @@ void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool
 
 NetworkSession::~NetworkSession()
 {
+	if (mSocket.is_open())
+	{
+		mSocket.shutdown(boost::asio::socket_base::shutdown_type::shutdown_both);
+		mSocket.close();
+	}
 }

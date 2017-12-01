@@ -5,12 +5,13 @@
 #include <sys/capability.h>
 #include <sys/prctl.h>
 
-NetworkClient::NetworkClient(int port) :
+NetworkClient::NetworkClient(int port, std::string ip) :
 	mSynchroWaiting(0),
 	mService(),
 	mUdpSocket(mService, ip::udp::endpoint(ip::udp::v4(), port + 20)),
 	mTcpSocket(mService, ip::tcp::endpoint(ip::tcp::v4(), port + 20)),
 	mPort(port),
+	mIp(ip),
 	mStrand(mService),
 	mTimer(mService)
 {
@@ -29,7 +30,10 @@ google::protobuf::uint32 NetworkClient::readHeader(char *buf)
 void NetworkClient::Start()
 {
 	auto self(shared_from_this());
-	BroadcastNetworkInfo(mPort, VERSION);
+	if (mIp.empty())
+		BroadcastNetworkInfo(mPort, VERSION);
+	else
+		SendNetworkInfoTo(mPort, mIp, VERSION);
 	mService.run();
 }
 
@@ -134,6 +138,16 @@ void NetworkClient::WriteHandler(const boost::system::error_code& error, const s
 
 void NetworkClient::BroadcastNetworkInfo(int port, std::string version)
 {
+	Connect(port, boost::asio::ip::address_v4::broadcast(), version);
+}
+void NetworkClient::SendNetworkInfoTo(int port, std::string ip, std::string version)
+{
+
+	Connect(port, ip::address_v4::from_string(ip), version);
+}
+
+void NetworkClient::Connect(int port, ip::address_v4 ip, std::string version)
+{
 	auto self(shared_from_this());
 	Docapost::IA::Tesseract::Proto::NetworkInfo ni;
 	ni.set_port(port);
@@ -146,9 +160,18 @@ void NetworkClient::BroadcastNetworkInfo(int port, std::string version)
 	ni.SerializeToCodedStream(&coded_output);
 
 	// Broacast du message en UDP pour trouver les pairs
-	boost::asio::ip::udp::endpoint senderEndpoint(boost::asio::ip::address_v4::broadcast(), port);
+
+	boost::asio::ip::udp::endpoint senderEndpoint(ip, port);
 
 	mTimer.expires_from_now(boost::posix_time::seconds(5));
+
+	ip::udp::resolver resolver(mService);
+	ip::udp::resolver::query query(boost::asio::ip::host_name(), "");
+	ip::udp::resolver::iterator it = resolver.resolve(query);
+
+	while (it != ip::udp::resolver::iterator())
+	{
+	}
 
 	std::cerr << "Sending broadcast, Version : " << ni.version() << " Port : " << ni.port() << std::endl;
 	mUdpSocket.async_send_to(boost::asio::buffer(*buffer, coded_output.ByteCount()), senderEndpoint, [this, self](boost::system::error_code ec, std::size_t bytes_transferred)
@@ -256,7 +279,7 @@ void NetworkClient::SendSynchro(int thread, int threadId, int req, std::vector<S
 	google::protobuf::io::CodedOutputStream coded_output(&aos);
 	coded_output.WriteLittleEndian32(m.ByteSize());
 	m.SerializeToCodedStream(&coded_output);
-	
+
 	mStrand.post(
 		boost::bind(
 			&NetworkClient::WriteToStream,
@@ -272,7 +295,7 @@ void NetworkClient::SendSynchroIfNone(int thread, int threadId, int req, std::ve
 	if (mSynchroWaiting < req)
 	{
 		auto toAdd = req - mSynchroWaiting;
-		if(toAdd > 0)
+		if (toAdd > 0)
 		{
 			mSynchroWaiting += toAdd;
 			SendSynchro(thread, threadId, toAdd, files);

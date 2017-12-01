@@ -12,34 +12,26 @@
 #include "Version.h"
 #include "SlaveProcessingWorker.h"
 #include <google/protobuf/extension_set.h>
-#include <google/protobuf/extension_set.h>
 #include "Error.h"
 #include "TesseractFactory.h"
 using std::string;
 
 #include <tesseract/baseapi.h>
-#include <leptonica/allheaders.h>
 #include <dirent.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <boost/program_options.hpp>
 #include <boost/date_time.hpp>
 #include <boost/unordered_map.hpp>
-#include <execinfo.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/capability.h>
-#include <sys/prctl.h>
 
 #define __USE_GNU
-#include <ucontext.h>
 
 namespace po = boost::program_options;
 using boost::program_options::value;
 
 #include "MasterProcessingWorker.h"
 #include "Network.h"
-#include "BaseOcr.h"
 
 #if DISPLAY
 #include "Display.h"
@@ -280,7 +272,7 @@ void Slave(char** argv, po::variables_map& vm)
 	}
 
 	Docapost::IA::Tesseract::TesseractFactory factory{};
-	Docapost::IA::Tesseract::SlaveProcessingWorker tessSR{ factory, vm["port"].as<int>() };
+	Docapost::IA::Tesseract::SlaveProcessingWorker tessSR{ factory, vm["port"].as<int>(), vm["ip"].as<std::string>() };
 #if DISPLAY
 	if (!vm.count("silent"))
 	{
@@ -357,7 +349,8 @@ int main(int argc, char* argv[])
 
 	po::options_description slaveDesc;
 	slaveDesc.add_options()
-		("slave,a", "Le programme agira comme un noeud de calcul et cherchera a ce connecter a un noeud maitre disponible pour récupérer des images a traiter");
+		("slave,a", "Le programme agira comme un noeud de calcul et cherchera a ce connecter a un noeud maitre disponible pour récupérer des images a traiter")
+		("ip", value<std::string>()->value_name("IP")->default_value(""), "Ip specifique à laquelle ce connecter");;
 
 	po::options_description cmdline_options;
 	cmdline_options.add(globalDesc).add(desc).add(slaveDesc).add(shareDesc);
