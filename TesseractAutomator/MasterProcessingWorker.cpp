@@ -59,7 +59,7 @@ Docapost::IA::Tesseract::MasterProcessingWorker::MasterProcessingWorker(OcrFacto
 
 void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveConnectHandler(NetworkSession* ns, int thread, std::string hostname)
 {
-	if(mSlaves[ns->Hostname()] == nullptr) mSlaves[ns->Hostname()] = std::make_shared<SlaveState>();
+	if (mSlaves[ns->Hostname()] == nullptr) mSlaves[ns->Hostname()] = std::make_shared<SlaveState>();
 	mSlaves[ns->Hostname()]->NbThread = thread;
 
 	auto tf = dynamic_cast<TesseractFactory&>(mOcrFactory);
@@ -68,9 +68,12 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveConnectHandler(Netw
 
 void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(NetworkSession* ns, int thread, int required, std::vector<std::tuple<std::string, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>& results)
 {
-	mSlaves[ns->Hostname()]->NbThread = thread;
-	mSlaves[ns->Hostname()]->PendingProcessed += required;
-	mSlaves[ns->Hostname()]->PendingNotProcessed += required;
+	CatchAllErrorSignals();
+	// On garde une référence sur l'objet pou qu'il ne soit supprimer que quand plus personne ne l'utilise
+	auto slave = mSlaves[ns->Hostname()];
+	slave->NbThread = thread;
+	slave->PendingProcessed += required;
+	slave->PendingNotProcessed += required;
 	try
 	{
 		for (auto& res : results)
@@ -89,54 +92,77 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 			delete file->data;
 		}
 
-		if (mSlaves[ns->Hostname()]->PendingNotProcessed > 0 && mSlaves[ns->Hostname()]->PendingProcessed > 0)
+		if (slave->PendingNotProcessed > 0 && slave->PendingProcessed > 0)
 		{
-			auto th = new std::thread([&ns, this]()
+			auto th = new std::thread([&ns, this, slave]()
 			{
-				boost::unordered_map<std::string, std::vector<unsigned char>*> fileToSend;
-				auto ocr = mOcrFactory.CreateNew();
-				int i = 0;
-				while ([this, &ns]() -> bool
+				try
 				{
-					// Cette lambda expression permet de boucler sans conflit par client
-					std::lock_guard<std::mutex> lock(mSlaves[ns->Hostname()]->ClientMutex);
-					if (mSlaves[ns->Hostname()]->PendingProcessed > 0)
+					boost::unordered_map<std::string, std::vector<unsigned char>*> fileToSend;
+					auto ocr = mOcrFactory.CreateNew();
+					int i = 0;
+					while ([this, &ns, &slave]() -> bool
 					{
-						--mSlaves[ns->Hostname()]->PendingProcessed;
-						return true;
-					}
-					return false;
-				}())
-				{
-					MasterFileStatus*  file;
-					if ((file = GetFile()) != nullptr)
-					{
-						auto id = boost::uuids::to_string(mGen());
-
-						file->uuid = id;
-						mFileSend[id] = file;
-						fileToSend[id] = ocr->LoadFile(file, [this](MasterFileStatus* file)
+						if (slave->Terminated)
+							return false;
+						// Cette lambda expression permet de boucler sans conflit par client
+						std::lock_guard<std::mutex> lock(slave->ClientMutex);
+						if (slave->PendingProcessed > 0)
 						{
-							this->AddFile(file);
-						});
-						file->hostname = ns->Hostname();
-						onStartProcessFile(file);
-						i++;
+							--slave->PendingProcessed;
+							return true;
+						}
+						return false;
+					}())
+					{
+						MasterFileStatus*  file;
+						if ((file = GetFile()) != nullptr)
+						{
+							auto id = boost::uuids::to_string(mGen());
+
+							file->uuid = id;
+							file->hostname = ns->Hostname();
+							onStartProcessFile(file);
+							mFileSend[id] = file;
+							fileToSend[id] = ocr->LoadFile(file, [this](MasterFileStatus* file)
+							{
+								this->AddFile(file);
+							});
+							i++;
+						}
+					}
+					 
+					if (fileToSend.size() == 0)
+						return;
+					std::lock_guard<std::mutex> lock(slave->ClientMutex);
+					if (!slave->Terminated)
+					{
+						slave->PendingNotProcessed -= i;
+						ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, slave->PendingNotProcessed, fileToSend);
+					}
+					else
+					{
+						std::lock_guard<std::mutex> lock(mNetworkMutex);
+						for (auto file : fileToSend)
+						{
+							mFileSend[file.first]->hostname = "";
+							this->AddFile(mFileSend[file.first]);
+							onFileCanceled(mFileSend[file.first]);
+							mFileSend.erase(file.first);
+						}
 					}
 				}
-
-				if (fileToSend.size() == 0)
-					return;
-				std::lock_guard<std::mutex> lock(mSlaves[ns->Hostname()]->ClientMutex);
-				mSlaves[ns->Hostname()]->PendingNotProcessed -= i;
-				ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, mSlaves[ns->Hostname()]->PendingNotProcessed, fileToSend);
+				catch (std::exception& e)
+				{
+					std::cout << "ERROR !!! : " << e.what() << std::endl;
+				}
 
 			});
 			th->detach();
 			delete th;
 		}
-		std::lock_guard<std::mutex> lock(mSlaves[ns->Hostname()]->ClientMutex);
-		ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, mSlaves[ns->Hostname()]->PendingNotProcessed, boost::unordered_map<std::string, std::vector<unsigned char>*>());
+		std::lock_guard<std::mutex> lock(slave->ClientMutex);
+		ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, slave->PendingNotProcessed, boost::unordered_map<std::string, std::vector<unsigned char>*>());
 	}
 	catch (std::exception& e)
 	{
@@ -148,17 +174,23 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveDisconnectHandler(N
 {
 	if (ns == nullptr)
 		return;
-	mSlaves.erase(ns->Hostname());
+	{
+		auto slave = mSlaves[ns->Hostname()];
+		slave->Terminated = true;
+		std::lock_guard<std::mutex> lock2(slave->ClientMutex);
+		mSlaves.erase(ns->Hostname());
+	}
 	std::lock_guard<std::mutex> lock(mNetworkMutex);
 	try
 	{
-		for (auto& res : noUsed)
+		for (auto& file : noUsed)
 		{
-			if (!res.second)
+			if (!file.second)
 			{
-				AddFile(mFileSend[res.first]);
-				onFileCanceled(mFileSend[res.first]);
-				mFileSend.erase(res.first);
+				mFileSend[file.first]->hostname = "";
+				AddFile(mFileSend[file.first]);
+				onFileCanceled(mFileSend[file.first]);
+				mFileSend.erase(file.first);
 			}
 		}
 

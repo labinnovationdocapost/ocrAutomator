@@ -82,7 +82,7 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterSynchroHandler(int 
 	{
 		auto f = new SlaveFileStatus(file.first, file.second);
 		f->fileSize = file.second->size();
-		AddFile(f);
+		AddFileBack(f);
 		onStartProcessFile(f);
 	}
 

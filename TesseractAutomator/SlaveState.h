@@ -7,5 +7,6 @@ public:
 	int NbThread = 0;
 	std::atomic<int> PendingProcessed{ 0 };
 	std::atomic<int> PendingNotProcessed{ 0 };
+	std::atomic<bool> Terminated{ false };
 	std::mutex ClientMutex{};
 };

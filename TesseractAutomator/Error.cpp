@@ -87,9 +87,26 @@ void CatchAllExceptions()
 {
 	std::set_terminate([]()
 	{
+		if (display != nullptr)
+			display->terminated(true);
+		if (sdisplay != nullptr)
+			delete sdisplay;
+
+
 		auto eptr = std::current_exception();
 		auto n = eptr.__cxa_exception_type()->name();
-		std::cerr << "Unhandled exception " << n << std::endl;;
+		std::cout << "Exception " << n << " happened view /var/log/TesseractAutomatorLog.log for more details" << std::endl << std::flush;
+		std::cerr << "Unhandled exception " << n << std::endl;
+
+		void *trace_elems[20];
+		int trace_elem_count(backtrace(trace_elems, 20));
+		char **stack_syms(backtrace_symbols(trace_elems, trace_elem_count));
+		for (int i = 0; i < trace_elem_count; ++i)
+		{
+			std::cerr << stack_syms[i] << std::endl;
+		}
+		free(stack_syms);
+
 		std::abort();
 	});
 }
