@@ -165,13 +165,16 @@ void NetworkClient::Connect(int port, ip::address_v4 ip, std::string version)
 
 	mTimer.expires_from_now(boost::posix_time::seconds(5));
 
-	ip::udp::resolver resolver(mService);
-	ip::udp::resolver::query query(boost::asio::ip::host_name(), "");
-	ip::udp::resolver::iterator it = resolver.resolve(query);
+	ip::tcp::resolver resolver(mService);
+	ip::tcp::resolver::query query(boost::asio::ip::host_name(), "");
+	ip::tcp::resolver::iterator it = resolver.resolve(query);
 
-	/*while (it != ip::udp::resolver::iterator())
+	while (it != ip::tcp::resolver::iterator())
 	{
-	}*/
+		boost::asio::ip::address addr = (it++)->endpoint().address();
+		auto str = addr.to_string();
+		std::cerr << str << std::endl;
+	}
 
 	std::cerr << "Sending broadcast, Version : " << ni.version() << " Port : " << ni.port() << std::endl;
 	mUdpSocket.async_send_to(boost::asio::buffer(*buffer, coded_output.ByteCount()), senderEndpoint, [this, self](boost::system::error_code ec, std::size_t bytes_transferred)

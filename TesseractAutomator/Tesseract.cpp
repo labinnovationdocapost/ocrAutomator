@@ -50,12 +50,22 @@ std::vector<unsigned char>* Docapost::IA::Tesseract::Tesseract::LoadFile(MasterF
 				auto data = (char*)blobOut.data();
 				(*file->siblings)[i]->data = new std::vector<l_uint8>(data, data + blobOut.length());
 				(*file->siblings)[i]->fileSize = (*file->siblings)[i]->data->size();
-				if (file != (*file->siblings)[i])
+				if (file->filePosition != (*file->siblings)[i]->filePosition)
 				{
 					AddFile((*file->siblings)[i]);
 				}
 			}
 			return file->data;
+		}
+		catch(Magick::ErrorDelegate &ed)
+		{
+			std::cerr << "Impossible de decoder le fichier " << file->name << " | " << ed.what() << std::endl;
+			return nullptr;
+		}
+		catch(Magick::Exception &e)
+		{
+			std::cerr << "Impossible de decoder le fichier " << file->name << " | " << e.what() << std::endl;
+			return nullptr;
 		}
 		catch (...)
 		{

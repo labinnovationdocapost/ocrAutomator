@@ -52,8 +52,7 @@ void Network::InitComm()
 
 			obj->onSlaveConnect.connect([this](NetworkSession* ns, int thread, std::string hostname)
 			{
-				auto id = boost::uuids::to_string(ns->Id());
-				this->mConnections[id] = ns;
+				this->mConnections[ns->Id()] = ns;
 				this->onSlaveConnect(ns, thread, hostname);
 			});
 
@@ -65,8 +64,7 @@ void Network::InitComm()
 
 			obj->onSlaveDisconnect.connect([this](NetworkSession* ns, boost::unordered_map<std::string, bool>& noUsed)
 			{
-				auto id = boost::uuids::to_string(ns->Id());
-				this->mConnections.erase(id);
+				this->mConnections.erase(ns->Id());
 				this->onSlaveDisconnect(ns, noUsed);
 			});
 

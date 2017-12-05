@@ -83,7 +83,7 @@ Display::~Display()
 
 void Display::DrawHeader() const
 {
-	if (mTesseractRunner.Output().empty())
+	if (mTesseractRunner.Output().empty()) 
 	{
 		mvwprintw(mTopWindow, 0, 0, "Input : %s | Output: %s\n", mTesseractRunner.Input().c_str(), mTesseractRunner.Input().c_str());
 	}
@@ -133,11 +133,11 @@ void Display::DrawBody(const std::vector<MasterFileStatus*> files, FileSum& s) c
 			std::stringstream cstring;
 			cstring << "" << files[j]->ellapsed;
 			//wprintw(win, "%-15s %-6d %s -> %s\n", cstring.str().c_str(), files[j]->thread, files[j]->relative_name.c_str(), boost::algorithm::join(files[j]->relative_output, " | ").c_str());
-			wprintw(mMainWindow, "%-15s %-6d %-15s %s\n", cstring.str().c_str(), files[j]->thread,  files[j]->hostname.c_str(), files[j]->relative_name.c_str());
+			wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", cstring.str().c_str(), files[j]->thread,  files[j]->hostname.c_str(), files[j]->filePosition, files[j]->relative_name.c_str());
 		}
 		else
 		{
-			wprintw(mMainWindow, "%-15s %-6d %-15s %s\n", "", files[j]->thread,  files[j]->hostname.c_str(), files[j]->relative_name.c_str());
+			wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", "", files[j]->thread,  files[j]->hostname.c_str(), files[j]->filePosition, files[j]->relative_name.c_str());
 		}
 
 		s(files[j]);
@@ -158,7 +158,7 @@ void Display::DrawBodyNetwork(const std::vector<MasterFileStatus*> files, FileSu
 	wprintw(mMainWindow, "%-20s %-6d\n", "Master", mTesseractRunner.NbThreads());
 	for(auto& slave : mTesseractRunner.Slaves())
 	{
-		wprintw(mMainWindow, "%-20s %-6d\n", slave.first.c_str(), slave.second->NbThread);
+		wprintw(mMainWindow, "%-20s %-6d\n", slave.second->Name.c_str(), slave.second->NbThread);
 	}
 	wrefresh(mMainWindow);
 }

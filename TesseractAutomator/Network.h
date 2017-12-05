@@ -35,7 +35,7 @@ private:
 
 	int mPort;
 
-	boost::unordered_map<std::string, NetworkSession*> mConnections;
+	boost::unordered_map<boost::uuids::uuid, NetworkSession*> mConnections;
 	boost::uuids::basic_random_generator<boost::mt19937> mGen = boost::uuids::basic_random_generator<boost::mt19937>();
 
 public:

@@ -318,6 +318,7 @@ int main(int argc, char* argv[])
 #endif
 	//SetCapability();
 
+
 	// oblige le buffer desortie a etre thread safe
 	std::ios_base::sync_with_stdio(true);
 
@@ -402,10 +403,12 @@ int main(int argc, char* argv[])
 
 	if (vm.count("slave"))
 	{
+		freopen("/var/log/TesseractAutomatorStdErr_Slave.log", "w", stderr);
 		Slave(argv, vm);
 	}
 	else
 	{
+		freopen("/var/log/TesseractAutomatorStdErr_Master.log", "w", stderr);
 		Master(argv, vm);
 	}
 

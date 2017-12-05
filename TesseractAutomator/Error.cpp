@@ -80,8 +80,6 @@ void CatchAllErrorSignals()
 	sa.sa_flags = SA_SIGINFO | SA_RESTART;
 
 	sigaction(SIGSEGV, &sa, nullptr);
-
-	freopen("/var/log/TesseractAutomatorStdErr.log", "w", stderr);
 }
 void CatchAllExceptions()
 {

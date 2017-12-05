@@ -9,4 +9,5 @@ public:
 	std::atomic<int> PendingNotProcessed{ 0 };
 	std::atomic<bool> Terminated{ false };
 	std::mutex ClientMutex{};
+	std::string Name;
 };

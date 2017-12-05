@@ -73,10 +73,10 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterSynchroHandler(int 
 	this->mDone = done;
 	this->mIsEnd = end;
 
-	if (files.size() + pending != mPending)
+	/*if (files.size() + pending != mPending)
 	{
 		std::cout << "Pending error : " << files.size() << " : " << pending << " | " << mPending << std::endl;
-	}
+	}*/
 
 	for (auto& file : files)
 	{
@@ -92,7 +92,8 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterSynchroHandler(int 
 	}
 
 
-	mPending = pending;
+	mPending -= files.size();
+	//mPending = pending;
 }
 
 void Docapost::IA::Tesseract::SlaveProcessingWorker::AddFileToSend(SlaveFileStatus* file)
@@ -113,7 +114,7 @@ SlaveFileStatus* Docapost::IA::Tesseract::SlaveProcessingWorker::GetFileToSend()
 
 	mFilesToSend.pop_front();
 
-	return f;
+	return f; 
 }
 
 void Docapost::IA::Tesseract::SlaveProcessingWorker::NetwordLoop()

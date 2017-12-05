@@ -34,7 +34,7 @@ namespace Docapost {
 
 
 				boost::unordered_map<OutputFlags, fs::path> mOutputs;
-				boost::unordered_map<std::string, std::shared_ptr<SlaveState>> mSlaves;
+				boost::unordered_map<boost::uuids::uuid, std::shared_ptr<SlaveState>> mSlaves;
 				boost::unordered_map<std::string, MasterFileStatus*> mFileSend;
 
 
@@ -85,6 +85,8 @@ namespace Docapost {
 				 */
 				fs::path ConstructNewTextFilePath(fs::path path) const;
 
+				void MergeResult(MasterFileStatus* file);
+
 				void CreateOutput(MasterFileStatus* file, std::string outText);
 
 				void TerminateThread(int id);
@@ -127,7 +129,7 @@ namespace Docapost {
 					return total;
 				}
 
-				boost::unordered_map<std::string, std::shared_ptr<SlaveState>> Slaves() const { return mSlaves; }
+				boost::unordered_map<boost::uuids::uuid, std::shared_ptr<SlaveState>> Slaves() const { return mSlaves; }
 
 				~MasterProcessingWorker();
 			};
