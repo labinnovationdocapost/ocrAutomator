@@ -5,6 +5,7 @@
 #include <google/protobuf/io/coded_stream.h>
 #include <unordered_map>
 #include <boost/date_time.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 NetworkSession::NetworkSession(ip::tcp::socket socket, boost::uuids::uuid id) : mSocket(std::move(socket)), mId(id), mStrand(socket.get_io_service())
 {
@@ -45,13 +46,14 @@ void NetworkSession::ReceiveData(int length)
 			}
 			else if(m.has_synchro())
 			{
-				std::vector<std::tuple<std::string, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>> dict;
+				std::vector<std::tuple<boost::uuids::uuid, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>> dict;
 				for(auto& d : m.synchro().data())
 				{
 					if(d.has_result())
 					{
-						mFileSend.erase(d.uuid());
-						dict.push_back(std::make_tuple(d.uuid(), d.threadid(), boost::posix_time::from_time_t(d.start()), boost::posix_time::from_time_t(d.end()), boost::posix_time::time_duration(0,0,0,d.ellapsed()), d.result()));
+						auto uuid = boost::lexical_cast<boost::uuids::uuid>(d.uuid());
+						mFileSend.erase(uuid);
+						dict.push_back(std::make_tuple(uuid, d.threadid(), boost::posix_time::from_time_t(d.start()), boost::posix_time::from_time_t(d.end()), boost::posix_time::time_duration(0,0,0,d.ellapsed()), d.result()));
 					}
 				}
 				onSlaveSynchro(this, m.synchro().threadrunning(), m.synchro().nbfilesrequired(), dict);
@@ -169,7 +171,7 @@ void NetworkSession::SendStatus(int done, int skip, int total, int psm, int oem,
 	);
 }
 
-void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool isEnd, int pending, boost::unordered_map<std::string, std::vector<unsigned char>*> files)
+void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool isEnd, int pending, boost::unordered_map<boost::uuids::uuid, std::vector<unsigned char>*> files)
 {
 	auto self(shared_from_this());
 
@@ -184,7 +186,7 @@ void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool
 	for(auto& file : files)
 	{
 		auto f = s->add_data();
-		f->set_uuid(file.first);
+		f->set_uuid(boost::uuids::to_string(file.first));
 		f->set_file(file.second->data(), file.second->size());
 		mFileSend[file.first] = false;
 		//delete file.second;

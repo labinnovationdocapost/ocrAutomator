@@ -29,7 +29,7 @@ private:
 
 	ip::tcp::socket mSocket;
 
-	boost::unordered_map<std::string, bool> mFileSend;
+	boost::unordered_map<boost::uuids::uuid, bool> mFileSend;
 	boost::uuids::uuid mId;
 
 	std::queue<std::shared_ptr<std::vector<char>>> mWriteQueue; 
@@ -42,18 +42,18 @@ private:
 	void ReceiveDataHeader();
 	void CloseSocket();
 public:
-	boost::signals2::signal<void(NetworkSession*, int, int, std::vector<std::tuple<std::string, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>&)> onSlaveSynchro;
+	boost::signals2::signal<void(NetworkSession*, int, int, std::vector<std::tuple<boost::uuids::uuid, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>&)> onSlaveSynchro;
 	boost::signals2::signal<void(NetworkSession*, int, std::string)> onSlaveConnect;
-	boost::signals2::signal<void(NetworkSession*, boost::unordered_map<std::string, bool>&)> onSlaveDisconnect;
+	boost::signals2::signal<void(NetworkSession*, boost::unordered_map<boost::uuids::uuid, bool>&)> onSlaveDisconnect;
 
 	explicit NetworkSession(ip::tcp::socket socket, boost::uuids::uuid id);
 	void Start();
 	void Stop();
 	void SendStatus(int done, int skip, int total, int psm, int oem, std::string lang);
-	void SendSynchro(int thread, int done, int skip, int total, bool isEnd, int pending, boost::unordered_map<std::string, std::vector<unsigned char>*> files);
+	void SendSynchro(int thread, int done, int skip, int total, bool isEnd, int pending, boost::unordered_map<boost::uuids::uuid, std::vector<unsigned char>*> files);
 
 	boost::uuids::uuid& Id() { return mId; }
-	boost::unordered_map<std::string, bool> FileState() const { return mFileSend; }
+	boost::unordered_map<boost::uuids::uuid, bool> FileState() const { return mFileSend; }
 	std::string Hostname() const { return mHostname; }
 
 	~NetworkSession();

@@ -1,5 +1,6 @@
 #include "MasterProcessingWorker.h"
 
+#include <iostream>
 #include <fstream>
 #include <future>
 #include <exiv2/exiv2.hpp>
@@ -67,7 +68,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveConnectHandler(Netw
 	ns->SendStatus(this->mDone, this->mSkip, this->mTotal, tf.Psm(), tf.Oem(), tf.Lang());
 }
 
-void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(NetworkSession* ns, int thread, int required, std::vector<std::tuple<std::string, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>& results)
+void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(NetworkSession* ns, int thread, int required, std::vector<std::tuple<boost::uuids::uuid, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>& results)
 {
 	CatchAllErrorSignals();
 	// On garde une référence sur l'objet pou qu'il ne soit supprimer que quand plus personne ne l'utilise
@@ -78,20 +79,27 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 	try
 	{
 		for (auto& res : results)
-		{
-			std::string result, uuid;
+		{			std::string result;
+		boost::uuids::uuid uuid;
 			boost::posix_time::ptime start, end;
 			boost::posix_time::time_duration ellapsed;
 			int threadId;
-			auto file = mFileSend[std::get<0>(res)];
+			auto file = GetFileSend(std::get<0>(res));
+
+			std::cerr << ns->Hostname() << "Getting back " << file->name << "[" << file->filePosition <<"]" << "\n";
+
 			std::tie(uuid, file->thread, file->start, file->end, file->ellapsed, result) = res;
 			file->isEnd = true;
 			file->hostname = ns->Hostname();
+
+			std::cerr << ns->Hostname() << "Writing Output " << file->name << "[" << file->filePosition << "]" << "\n";
 			CreateOutput(file, result);
 			MergeResult(file);
 			mDone++;
-			mFileSend.erase(std::get<0>(res));
+
+			RemoveFileSend(uuid);
 			delete file->data;
+			std::cerr << ns->Hostname() << "Clean " << file->name << "[" << file->filePosition << "]" << "\n";
 		}
 
 		if (slave->PendingNotProcessed > 0 && slave->PendingProcessed > 0)
@@ -100,7 +108,8 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 			{
 				try
 				{
-					boost::unordered_map<std::string, std::vector<unsigned char>*> fileToSend;
+					std::cerr << std::this_thread::get_id() << " | Run Thread for network\n";
+					boost::unordered_map<boost::uuids::uuid, std::vector<unsigned char>*> filesToSend;
 					auto ocr = mOcrFactory.CreateNew();
 					int i = 0;
 					while ([this, slave]() -> bool
@@ -117,45 +126,55 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 						return false;
 					}())
 					{
+						std::cerr << std::this_thread::get_id() << " | Begining Loading\n";
 						MasterFileStatus*  file;
 						if ((file = GetFile()) != nullptr)
 						{
-							auto id = boost::uuids::to_string(mGen());
+							auto id = mGen();
 
 							file->uuid = id;
 							file->hostname = ns->Hostname();
 							onStartProcessFile(file);
-							mFileSend[id] = file;
+
+							AddFileSend(file);
+
+							//mFileSend[id] = file;
+							std::cerr << std::this_thread::get_id() << " | Loading\n";
 							if (nullptr != ocr->LoadFile(file, [this](MasterFileStatus* file) {this->AddFile(file); }))
 							{
-								fileToSend[id] = file->data;
+								filesToSend[id] = file->data;
 								i++;
 							}
 							else
 							{
 								std::lock_guard<std::mutex> lock(slave->ClientMutex);
+								std::cerr << std::this_thread::get_id() << " | Decreasing PendingProcessed " << slave->PendingProcessed << "\n";
 								++slave->PendingProcessed;
 							}
 						}
 					}
 
-					if (fileToSend.size() == 0)
+					if (filesToSend.size() == 0)
 						return;
 					std::lock_guard<std::mutex> lock(slave->ClientMutex);
 					if (!slave->Terminated)
 					{
+						std::cerr << std::this_thread::get_id() << " | Netowrk interface is open -> sending " << i << " files\n";
 						slave->PendingNotProcessed -= i;
-						ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, slave->PendingNotProcessed, fileToSend);
+						ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, slave->PendingNotProcessed, filesToSend);
 					}
 					else
 					{
+						std::cerr << std::this_thread::get_id() << " | Netowrk interface closed -> rollback\n";
 						std::lock_guard<std::mutex> lock(mNetworkMutex);
-						for (auto file : fileToSend)
+						for (auto fileToSend : filesToSend)
 						{
-							mFileSend[file.first]->hostname = "";
-							this->AddFile(mFileSend[file.first]);
-							onFileCanceled(mFileSend[file.first]);
-							mFileSend.erase(file.first);
+							auto file = GetFileSend(fileToSend.first);
+
+							file->hostname = "";
+							this->AddFile(file);
+							onFileCanceled(file);
+							RemoveFileSend(fileToSend.first);
 						}
 					}
 				}
@@ -168,8 +187,9 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 			th->detach();
 			delete th;
 		}
+		std::cerr << ns->Hostname() << " | Sending ACK\n";
 		std::lock_guard<std::mutex> lock(slave->ClientMutex);
-		ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, slave->PendingNotProcessed, boost::unordered_map<std::string, std::vector<unsigned char>*>());
+		ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, slave->PendingNotProcessed, boost::unordered_map<boost::uuids::uuid, std::vector<unsigned char>*>());
 	}
 	catch (std::exception& e)
 	{
@@ -177,7 +197,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 	}
 }
 
-void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveDisconnectHandler(NetworkSession* ns, boost::unordered_map<std::string, bool>& noUsed)
+void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveDisconnectHandler(NetworkSession* ns, boost::unordered_map<boost::uuids::uuid, bool>& noUsed)
 {
 	if (ns == nullptr)
 		return;
@@ -660,7 +680,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 				std::this_thread::sleep_for(std::chrono::milliseconds(300));
 				continue;
 			}
-			file->uuid = "";
+			file->uuid = boost::uuids::uuid();
 			file->thread = id;
 			onStartProcessFile(file);
 			file->start = boost::posix_time::microsec_clock::local_time();

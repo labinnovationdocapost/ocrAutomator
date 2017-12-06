@@ -35,7 +35,7 @@ namespace Docapost {
 
 				boost::unordered_map<OutputFlags, fs::path> mOutputs;
 				boost::unordered_map<boost::uuids::uuid, std::shared_ptr<SlaveState>> mSlaves;
-				boost::unordered_map<std::string, MasterFileStatus*> mFileSend;
+				boost::unordered_map<boost::uuids::uuid, MasterFileStatus*> mFileSend;
 
 
 				OutputFlags mOutputTypes;
@@ -91,10 +91,14 @@ namespace Docapost {
 
 				void TerminateThread(int id);
 
+				MasterFileStatus* GetFileSend(boost::uuids::uuid uuid) { std::lock_guard<std::mutex> lock(mNetworkMutex); return mFileSend[uuid]; }
+				void AddFileSend(MasterFileStatus* file) { std::lock_guard<std::mutex> lock(mNetworkMutex); mFileSend[file->uuid] = file; }
+				void RemoveFileSend(boost::uuids::uuid uuid) { std::lock_guard<std::mutex> lock(mNetworkMutex); mFileSend.erase(uuid); }
+
 
 				void OnSlaveConnectHandler(NetworkSession* ns, int thread, std::string hostname);
-				void OnSlaveDisconnectHandler(NetworkSession* ns, boost::unordered_map<std::string, bool>& noUsed);
-				void OnSlaveSynchroHandler(NetworkSession* ns, int thread, int required, std::vector<std::tuple<std::string, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>& results);
+				void OnSlaveDisconnectHandler(NetworkSession* ns, boost::unordered_map<boost::uuids::uuid, bool>& noUsed);
+				void OnSlaveSynchroHandler(NetworkSession* ns, int thread, int required, std::vector<std::tuple<boost::uuids::uuid, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>& results);
 			public:
 				MasterProcessingWorker(OcrFactory& ocr, OutputFlags type = OutputFlags::None, int port = 12000);
 

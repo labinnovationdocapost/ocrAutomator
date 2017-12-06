@@ -4,6 +4,7 @@
 #include "Version.h"
 #include <sys/capability.h>
 #include <sys/prctl.h>
+#include <boost/uuid/uuid_io.hpp>
 
 NetworkClient::NetworkClient(int port, std::string ip) :
 	mSynchroWaiting(0),
@@ -265,7 +266,7 @@ void NetworkClient::SendSynchro(int thread, int threadId, int req, std::vector<S
 	for (auto& file : files)
 	{
 		auto f = s->add_data();
-		f->set_uuid(file->uuid);
+		f->set_uuid(boost::uuids::to_string(file->uuid));
 		f->set_result(file->result.data(), files.size());
 		f->set_start(boost::posix_time::to_time_t(file->start));
 		f->set_end(boost::posix_time::to_time_t(file->end));

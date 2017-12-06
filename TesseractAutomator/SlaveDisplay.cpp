@@ -1,5 +1,6 @@
 #include "SlaveDisplay.h"
 #include "TesseractFactory.h"
+#include <boost/uuid/uuid_io.hpp>
 
 #define COLOR_GREY 8
 
@@ -122,11 +123,11 @@ void SlaveDisplay::DrawBody(const std::vector<SlaveFileStatus*> files) const
 			std::stringstream cstring;
 			cstring << "" << files[j]->ellapsed;
 			//wprintw(win, "%-15s %-6d %s -> %s\n", cstring.str().c_str(), files[j]->thread, files[j]->relative_name.c_str(), boost::algorithm::join(files[j]->relative_output, " | ").c_str());
-			wprintw(mMainWindow, "%-15s %-6d %-36s %d\n", cstring.str().c_str(), files[j]->thread, files[j]->uuid.c_str(), files[j]->fileSize);
+			wprintw(mMainWindow, "%-15s %-6d %-36s %d\n", cstring.str().c_str(), files[j]->thread, boost::uuids::to_string(files[j]->uuid).c_str(), files[j]->fileSize);
 		}
 		else
 		{
-			wprintw(mMainWindow, "%-15s %-6d %-36s %d\n", "", files[j]->thread, files[j]->uuid.c_str(), files[j]->fileSize);
+			wprintw(mMainWindow, "%-15s %-6d %-36s %d\n", "", files[j]->thread, boost::uuids::to_string(files[j]->uuid).c_str(), files[j]->fileSize);
 		}
 	}
 	wrefresh(mMainWindow);

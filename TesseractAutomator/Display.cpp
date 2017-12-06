@@ -83,7 +83,7 @@ Display::~Display()
 
 void Display::DrawHeader() const
 {
-	if (mTesseractRunner.Output().empty()) 
+	if (mTesseractRunner.Output().empty())
 	{
 		mvwprintw(mTopWindow, 0, 0, "Input : %s | Output: %s\n", mTesseractRunner.Input().c_str(), mTesseractRunner.Input().c_str());
 	}
@@ -93,12 +93,12 @@ void Display::DrawHeader() const
 	}
 	auto& ocrFactory = mTesseractRunner.ocrFactory();
 	auto tess = dynamic_cast<Docapost::IA::Tesseract::TesseractFactory*>(&ocrFactory);
-	if(tess != nullptr)
+	if (tess != nullptr)
 	{
-	if (mTesseractRunner.NbThreadToStop() > 0)
-		mvwprintw(mTopWindow, 1, 0, "Threads Local/Remote: %d (-%d)/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.NbThreadToStop(), mTesseractRunner.TotalRemoteThreads(), tess->Psm(), tess->Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
-	else
-		mvwprintw(mTopWindow, 1, 0, "Threads Local/Remote: %d/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.TotalRemoteThreads(), tess->Psm(), tess->Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
+		if (mTesseractRunner.NbThreadToStop() > 0)
+			mvwprintw(mTopWindow, 1, 0, "Threads Local/Remote: %d (-%d)/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.NbThreadToStop(), mTesseractRunner.TotalRemoteThreads(), tess->Psm(), tess->Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
+		else
+			mvwprintw(mTopWindow, 1, 0, "Threads Local/Remote: %d/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.TotalRemoteThreads(), tess->Psm(), tess->Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
 	}
 
 	if (mIsEnd)
@@ -133,11 +133,11 @@ void Display::DrawBody(const std::vector<MasterFileStatus*> files, FileSum& s) c
 			std::stringstream cstring;
 			cstring << "" << files[j]->ellapsed;
 			//wprintw(win, "%-15s %-6d %s -> %s\n", cstring.str().c_str(), files[j]->thread, files[j]->relative_name.c_str(), boost::algorithm::join(files[j]->relative_output, " | ").c_str());
-			wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", cstring.str().c_str(), files[j]->thread,  files[j]->hostname.c_str(), files[j]->filePosition, files[j]->relative_name.c_str());
+			wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", cstring.str().c_str(), files[j]->thread, files[j]->hostname.c_str(), files[j]->filePosition, files[j]->relative_name.c_str());
 		}
 		else
 		{
-			wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", "", files[j]->thread,  files[j]->hostname.c_str(), files[j]->filePosition, files[j]->relative_name.c_str());
+			wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", "", files[j]->thread, files[j]->hostname.c_str(), files[j]->filePosition, files[j]->relative_name.c_str());
 		}
 
 		s(files[j]);
@@ -156,7 +156,7 @@ void Display::DrawBodyNetwork(const std::vector<MasterFileStatus*> files, FileSu
 		s(files[j]);
 	}
 	wprintw(mMainWindow, "%-20s %-6d\n", "Master", mTesseractRunner.NbThreads());
-	for(auto& slave : mTesseractRunner.Slaves())
+	for (auto& slave : mTesseractRunner.Slaves())
 	{
 		wprintw(mMainWindow, "%-20s %-6d\n", slave.second->Name.c_str(), slave.second->NbThread);
 	}
@@ -165,36 +165,39 @@ void Display::DrawBodyNetwork(const std::vector<MasterFileStatus*> files, FileSu
 
 void Display::DrawFooter(const std::vector<MasterFileStatus*> cfiles, FileSum s) const
 {
-	if (s.count > 0 && (mTesseractRunner.TotalRemoteThreads() + mTesseractRunner.NbThreads() > 0 || mIsEnd))
+	if (s.count > 0 && mIsEnd)
+	{
+		std::stringstream cstring;
+		auto average = (mTesseractRunner.EndTime() - mTesseractRunner.StartTime()) / mTesseractRunner.Total();
+		cstring << "files: " << mTesseractRunner.Done() << "/" << mTesseractRunner.Total()
+			<< "\t Average: " << std::setw(2) << std::setfill('0') << average.hours() << ":"
+			<< std::setw(2) << std::setfill('0') << average.minutes() << ":"
+			<< std::setw(2) << std::setfill('0') << average.seconds() << "."
+			<< std::setw(3) << std::setfill('0') << average.fractional_seconds() / 1000 << "/Image"
+			<< "\t Ellapsed: " << mTesseractRunner.EndTime() - mTesseractRunner.StartTime() << "\t Finish: " << mTesseractRunner.EndTime();
+
+		cstring << std::endl;
+
+		mvwprintw(mFooterWindow, 0, 0, cstring.str().c_str());
+	}
+	else if (s.count > 0 && mTesseractRunner.TotalRemoteThreads() + mTesseractRunner.NbThreads() > 0)
 	{
 		std::stringstream cstring;
 
 
-		if (mIsEnd)
-		{
-			auto average = (mTesseractRunner.EndTime() - mTesseractRunner.StartTime()) / mTesseractRunner.Total();
-			cstring << "files: " << mTesseractRunner.Done() << "/" << mTesseractRunner.Total() 
-				<< "\t Average: " << std::setw(2) << std::setfill('0') << average.hours() << ":"
-				<< std::setw(2) << std::setfill('0') << average.minutes() << ":"
-				<< std::setw(2) << std::setfill('0') << average.seconds() << "."
-				<< std::setw(3) << std::setfill('0') << average.fractional_seconds() / 1000 << "/Image"
-				<< "\t Ellapsed: " << mTesseractRunner.EndTime() - mTesseractRunner.StartTime() << "\t Finish: " << mTesseractRunner.EndTime();
-		}
-		else
-		{
-			auto remaining = (s.sum / s.count / (mTesseractRunner.NbThreads() + mTesseractRunner.TotalRemoteThreads())) * (mTesseractRunner.Total() - cfiles.size());
-			auto average = s.sum / s.count / (mTesseractRunner.NbThreads() + mTesseractRunner.TotalRemoteThreads());
-			cstring << "files: " << mTesseractRunner.Done() << "/" << mTesseractRunner.Total()
-				<< "\t Average: " << std::setw(2) << std::setfill('0') << average.hours() << ":"
-				<< std::setw(2) << std::setfill('0') << average.minutes() << ":"
-				<< std::setw(2) << std::setfill('0') << average.seconds() << "."
-				<< std::setw(3) << std::setfill('0') << average.fractional_seconds()/1000 << "/Image";
+		auto remaining = (s.sum / s.count / (mTesseractRunner.NbThreads() + mTesseractRunner.TotalRemoteThreads())) * (mTesseractRunner.Total() - cfiles.size());
+		auto average = s.sum / s.count / (mTesseractRunner.NbThreads() + mTesseractRunner.TotalRemoteThreads());
+		cstring << "files: " << mTesseractRunner.Done() << "/" << mTesseractRunner.Total()
+			<< "\t Average: " << std::setw(2) << std::setfill('0') << average.hours() << ":"
+			<< std::setw(2) << std::setfill('0') << average.minutes() << ":"
+			<< std::setw(2) << std::setfill('0') << average.seconds() << "."
+			<< std::setw(3) << std::setfill('0') << average.fractional_seconds() / 1000 << "/Image";
 
-			cstring << "\t Remaining: " << std::setw(2) << std::setfill('0') << remaining.hours() << ":"
-				<< std::setw(2) << std::setfill('0') << remaining.minutes() << ":"
-				<< std::setw(2) << std::setfill('0') << remaining.seconds()
-				<< "\t Estimated End: " << boost::posix_time::second_clock::local_time() + remaining;
-		}
+		cstring << "\t Remaining: " << std::setw(2) << std::setfill('0') << remaining.hours() << ":"
+			<< std::setw(2) << std::setfill('0') << remaining.minutes() << ":"
+			<< std::setw(2) << std::setfill('0') << remaining.seconds()
+			<< "\t Estimated End: " << boost::posix_time::second_clock::local_time() + remaining;
+
 		cstring << std::endl;
 
 		mvwprintw(mFooterWindow, 0, 0, cstring.str().c_str());
@@ -223,7 +226,7 @@ void Display::Draw()
 
 	FileSum s{};
 
-	if(mCurrentView == 0)
+	if (mCurrentView == 0)
 		DrawBody(mFiles, s);
 	if (mCurrentView == 1)
 		DrawBodyNetwork(mFiles, s);
