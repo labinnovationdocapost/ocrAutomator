@@ -35,7 +35,7 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterDisconnectHandler()
 {
 	std::cerr << "Flux reseau coupe, interuption du programme" << std::endl;
 	mNetwork->Stop();
-	onProcessEnd();
+	//onProcessEnd();
 }
 void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterStatusChangedHandler(int threadToRun, int done, int skip, int total, int psm, int oem, std::string lang)
 {
@@ -50,10 +50,8 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterStatusChangedHandle
 	dynamic_cast<TesseractFactory&>(mOcrFactory).Oem(static_cast<tesseract::OcrEngineMode>(oem));
 	dynamic_cast<TesseractFactory&>(mOcrFactory).Lang(lang);
 
-
-	mStackMutex.lock();
+	std::lock_guard<std::mutex> lock(mStackMutex);
 	auto file_buffer = mFiles.size();
-	mStackMutex.unlock();
 
 	this->threadToRun += threadToRun;
 

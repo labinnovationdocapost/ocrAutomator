@@ -150,7 +150,7 @@ void segint_action(int sig, siginfo_t *info, void *secret)
 
 	/*if (th->joinable())
 		th->join();*/
-	delete display;
+	//delete display;
 	exit(0);
 }
 void CatchAllErrorSignals()

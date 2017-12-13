@@ -206,6 +206,7 @@ void NetworkClient::Connect(int port, ip::address_v4 ip, std::string version)
 				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Error Broadcast: " << ec.message();
 				return;
 			}
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Response Broadcast";
 
 			mTimer.cancel();
 			Docapost::IA::Tesseract::Proto::NetworkInfo ni;

@@ -145,34 +145,38 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 					}())
 					{
 						std::cerr << std::this_thread::get_id() << " | Begining Loading\n";
-						MasterFileStatus*  file;
-						if ((file = GetFile()) != nullptr)
+						MasterFileStatus*  file = GetFile();
+						if (file == nullptr)
 						{
-							boost::uuids::uuid id;
-							{
-								std::lock_guard<std::mutex> lock(mNetworkMutex);
-								id = mGen();
-							}
+							std::lock_guard<std::mutex> lock(slave->ClientMutex);
+							++slave->PendingProcessed;
+							break;
+						}
 
-							file->uuid = id;
-							file->hostname = ns->Hostname();
-							onStartProcessFile(file);
+						boost::uuids::uuid id;
+						{
+							std::lock_guard<std::mutex> lock(mNetworkMutex);
+							id = mGen();
+						}
 
-							AddFileSend(file);
+						file->uuid = id;
+						file->hostname = ns->Hostname();
+						onStartProcessFile(file);
 
-							//mFileSend[id] = file;
-							std::cerr << std::this_thread::get_id() << " | Loading\n";
-							if (nullptr != ocr->LoadFile(file, [this](MasterFileStatus* file) {this->AddFile(file); }))
-							{
-								filesToSend[id] = file->data;
-								i++;
-							}
-							else
-							{
-								std::lock_guard<std::mutex> lock(slave->ClientMutex);
-								std::cerr << std::this_thread::get_id() << " | Decreasing PendingProcessed " << slave->PendingProcessed << "\n";
-								++slave->PendingProcessed;
-							}
+						AddFileSend(file);
+
+						//mFileSend[id] = file;
+						std::cerr << std::this_thread::get_id() << " | Loading\n";
+						if (nullptr != ocr->LoadFile(file, [this](MasterFileStatus* file) {this->AddFile(file); }))
+						{
+							filesToSend[id] = file->data;
+							i++;
+						}
+						else
+						{
+							std::lock_guard<std::mutex> lock(slave->ClientMutex);
+							std::cerr << std::this_thread::get_id() << " | Decreasing PendingProcessed " << slave->PendingProcessed << "\n";
+							++slave->PendingProcessed;
 						}
 					}
 
