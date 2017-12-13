@@ -42,6 +42,7 @@ namespace Docapost {
 
 				fs::path mInput;
 
+				bool mIsTerminated = false;
 
 
 				std::string mSeparator = "__";
@@ -49,6 +50,7 @@ namespace Docapost {
 				boost::shared_ptr<Network> mNetwork;
 
 				std::thread* mNetworkThread;
+				std::thread* ListingThread;
 
 				void ThreadLoop(int id) override;
 

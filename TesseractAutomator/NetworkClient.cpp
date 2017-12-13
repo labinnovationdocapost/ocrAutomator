@@ -38,6 +38,8 @@ void NetworkClient::Start()
 			BroadcastNetworkInfo(mPort, VERSION);
 		else
 			SendNetworkInfoTo(mPort, mIp, VERSION);
+
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Starting ASIO Service: ";
 		mService.run();
 	}
 	catch(std::exception e)
@@ -175,7 +177,8 @@ void NetworkClient::Connect(int port, ip::address_v4 ip, std::string version)
 
 	boost::asio::ip::udp::endpoint senderEndpoint(ip, port);
 
-	mTimer.expires_from_now(boost::posix_time::seconds(5));
+	auto timer = std::make_shared<boost::asio::deadline_timer>(mService);
+	timer->expires_from_now(boost::posix_time::seconds(5));
 
 	ip::tcp::resolver resolver(mService);
 	ip::tcp::resolver::query query(boost::asio::ip::host_name(), "");
@@ -190,7 +193,7 @@ void NetworkClient::Connect(int port, ip::address_v4 ip, std::string version)
 
 
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Sending broadcast, Version : " << ni.version() << " Port : " << ni.port();
-	mUdpSocket.async_send_to(boost::asio::buffer(*buffer, coded_output.ByteCount()), senderEndpoint, [this, self](boost::system::error_code ec, std::size_t bytes_transferred)
+	mUdpSocket.async_send_to(boost::asio::buffer(*buffer, coded_output.ByteCount()), senderEndpoint, [this, self, timer](boost::system::error_code ec, std::size_t bytes_transferred)
 	{
 		if (ec)
 		{
@@ -199,7 +202,7 @@ void NetworkClient::Connect(int port, ip::address_v4 ip, std::string version)
 		}
 		// Une fois un pair trouver
 		//std::vector<char> rcv_buffer(300);
-		mUdpSocket.async_receive_from(boost::asio::buffer(mData, 1204), mMasterEndpoint, [this, self](boost::system::error_code ec, std::size_t bytes_rcv)
+		mUdpSocket.async_receive_from(boost::asio::buffer(mData, 1204), mMasterEndpoint, [this, self, timer](boost::system::error_code ec, std::size_t bytes_rcv)
 		{
 			if (ec)
 			{
@@ -208,7 +211,7 @@ void NetworkClient::Connect(int port, ip::address_v4 ip, std::string version)
 			}
 			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Response Broadcast";
 
-			mTimer.cancel();
+			timer->cancel();
 			Docapost::IA::Tesseract::Proto::NetworkInfo ni;
 			ni.ParseFromArray(mData, bytes_rcv);
 			// On vérifié ca version
@@ -238,7 +241,7 @@ void NetworkClient::Connect(int port, ip::address_v4 ip, std::string version)
 		});
 	});
 
-	mTimer.async_wait([this, port, version, self](boost::system::error_code ec) { if (!ec) { mUdpSocket.cancel(); BroadcastNetworkInfo(port, version); } });
+	timer->async_wait([this, port, version, self, timer](boost::system::error_code ec) { if (!ec) { mUdpSocket.cancel(); BroadcastNetworkInfo(port, version); } });
 }
 
 void NetworkClient::SendDeclare(int thread, std::string version)
@@ -332,6 +335,7 @@ void NetworkClient::Stop()
 {
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Stopping Network";
 	mService.stop();
+	mService.reset();
 }
 
 NetworkClient::~NetworkClient()

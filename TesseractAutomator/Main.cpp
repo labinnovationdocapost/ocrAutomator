@@ -248,6 +248,8 @@ void Master(char** argv, po::variables_map& vm)
 	mTesseractRunner.Wait();
 #endif
 
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cleaning MasterProcessingWorker instance";
+
 	auto processTime = tessR.EndTime() - tessR.StartTime();
 
 	std::cout << "Total Files : " << tessR.Total() << "\n";
@@ -308,6 +310,9 @@ void Slave(char** argv, po::variables_map& vm)
 
 	tessSR.Wait(); .Wait();
 #endif
+
+
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cleaning SlaveProcessingWorker instance";
 }
 
 int main(int argc, char* argv[])

@@ -101,30 +101,37 @@ void Network::Start()
 			mService.run(ec);
 			if (ec) { // handling asio system errors
 				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "[system-error]: " << ec.message();
+				Stop();
 				continue;
 			}
 			break;
 		}
 		catch (const std::exception& ex) {
 			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "[exception]: " << ex.what();
+			Stop();
 		}
 	}
 }
 void Network::Stop()
 {
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Stoping ASIO service";
 	const auto conn = mConnections;
 	for (auto& c : conn)
 	{
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Disconnecting " << c.second->Hostname();
 		c.second->onSlaveDisconnect.disconnect_all_slots();
 		//delete c.second;
 	}
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Closing UDP Socket";
 	if(mUdpSocket.is_open())
 		mUdpSocket.close();
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Closing TCP Socket";
 	if (mTcpAcceptor.is_open())
 		mTcpAcceptor.close();
+
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Stoping ASIO service";
 	mService.stop();
 	std::lock_guard<std::mutex> lock(mStateMutex);
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "ASIO service Stopped";
 }
 
 Network::Network(short port) : 
@@ -139,4 +146,6 @@ mPort(port)
 
 Network::~Network()
 {
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Detroying Network";
+	Stop();
 }

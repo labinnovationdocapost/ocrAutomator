@@ -62,7 +62,7 @@ void Log::InitLogger()
 	boost::shared_ptr< sinks::text_file_backend > backend = boost::make_shared< sinks::text_file_backend >(
 		keywords::file_name = "TesseractAutomator_Log_%5N.log",
 		keywords::rotation_size = 5 * 1024 * 1024,
-		keywords::time_based_rotation = sinks::file::rotation_at_time_point(12, 0, 0)
+		keywords::time_based_rotation = sinks::file::rotation_at_time_interval(boost::posix_time::minutes(1))
 		);
 	backend->auto_flush(true);
 	
@@ -85,17 +85,27 @@ void segfault_action(int sig, siginfo_t *info, void *secret)
 	if (display != nullptr)
 		display->terminated(true);
 	if (sdisplay != nullptr)
-		delete sdisplay;
+		sdisplay->terminated(true);
 	void *trace[16];
 	char **messages = (char **)NULL;
 	int i, trace_size = 0;
 	ucontext_t *uc = (ucontext_t *)secret;
 
+	auto file = fopen("/var/log/TesseractAutomatorLog.log", "w");
+
 	/* Do something useful with siginfo_t */
 	if (sig == SIGSEGV)
+	{
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Got signal: " << sig << ", faulty address is " << info->si_addr << ", from " << uc->uc_mcontext.gregs[REG_RIP];
+		fprintf(file, "Got signal %d, faulty address is %p, "
+			"from %p\n", sig, info->si_addr,
+			uc->uc_mcontext.gregs[REG_RIP]);
+	}
 	else
+	{
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Got signal " << sig;
+		fprintf(file, "Got signal %d\n", sig);
+	}
 
 	std::cout << "Segfault happened view /var/log/TesseractAutomatorLog.log for more details" << std::endl << std::flush;
 
@@ -105,9 +115,11 @@ void segfault_action(int sig, siginfo_t *info, void *secret)
 
 	messages = backtrace_symbols(trace, trace_size);
 	/* skip first stack frame (points here) */
+	fprintf(file, "[bt] Execution path:\n"); 
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "[bt] Execution path:";
 	for (i = 1; i < trace_size; ++i)
 	{
+		fprintf(file, "[bt] %s\n", messages[i]);
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "[bt] " << messages[i];
 
 		/* find first occurence of '(' or ' ' in message[i] and assume
@@ -125,11 +137,13 @@ void segfault_action(int sig, siginfo_t *info, void *secret)
 		char buf[BUFSIZ];
 
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << syscom;
+		fprintf(file, "%s\n", syscom);
 		if ((ptr = popen(syscom, "r")) != NULL) {
 			while (fgets(buf, BUFSIZ, ptr) != NULL)
 			{
 
 				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << buf;
+				fprintf(file, "%s", buf);
 			}
 			pclose(ptr);
 		}
@@ -144,14 +158,14 @@ void segint_action(int sig, siginfo_t *info, void *secret)
 	if (display != nullptr)
 		display->terminated(true);
 	if (sdisplay != nullptr)
-		delete sdisplay;
+		sdisplay->terminated(true);
 
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "SIGINT received";
 
 	/*if (th->joinable())
 		th->join();*/
 	//delete display;
-	exit(0);
+	//exit(0);
 }
 void CatchAllErrorSignals()
 {
@@ -186,15 +200,12 @@ void terminated()
 	if (display != nullptr)
 		display->terminated(true);
 	if (sdisplay != nullptr)
-		delete sdisplay;
+		sdisplay->terminated(true);
 
 	if (th != nullptr && th->joinable())
 	{
 		th->join();
 	}
-	delete display;
-
-
 
 	std::exception_ptr eptr = std::current_exception();
 	try
@@ -218,8 +229,6 @@ void terminated()
 		std::cerr << "Unhandled exception " << n << std::endl;
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "[Unhandled exception]: " << n;
 	}
-
-	exit(0);
 }
 
 void CatchAllExceptions()

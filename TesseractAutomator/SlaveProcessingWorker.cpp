@@ -33,8 +33,11 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterConnectedHandler()
 }
 void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterDisconnectHandler()
 {
-	std::cerr << "Flux reseau coupe, interuption du programme" << std::endl;
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Network stream broken, restart discover" << std::endl;
+	boost::lock_guard<std::mutex> lock(mStackMutex);
+	mFiles.clear();  
 	mNetwork->Stop();
+	mNetwork->Start();
 	//onProcessEnd();
 }
 void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterStatusChangedHandler(int threadToRun, int done, int skip, int total, int psm, int oem, std::string lang)
@@ -147,7 +150,7 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::ThreadLoop(int id)
 
 	try
 	{
-		while (mNetwork != nullptr && mNetwork->IsOpen())
+		while (/*mNetwork != nullptr && mNetwork->IsOpen()*/true)
 		{
 			SlaveFileStatus * file = GetFile();
 			if (file == nullptr)

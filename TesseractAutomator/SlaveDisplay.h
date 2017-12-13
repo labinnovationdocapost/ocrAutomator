@@ -23,6 +23,7 @@ private:
 	int mTotalView = 1;
 
 	std::mutex mThreadMutex;
+	bool mIsTerminated = false;
 
 	Docapost::IA::Tesseract::SlaveProcessingWorker& mTesseractRunner;
 
@@ -43,6 +44,7 @@ public:
 	void Resize();
 
 	void ShowFile(SlaveFileStatus* str);
+	void terminated(bool t) { mIsTerminated = t; }
 
 	void Run();
 };

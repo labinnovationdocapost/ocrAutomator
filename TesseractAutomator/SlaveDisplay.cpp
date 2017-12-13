@@ -176,7 +176,7 @@ void SlaveDisplay::ShowFile(SlaveFileStatus* str)
 void SlaveDisplay::Run()
 {
 	int ch;
-	while (true)
+	while (!mIsTerminated)
 	{
 		if ((ch = getch()) == ERR) {
 			/* user hasn't responded

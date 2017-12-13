@@ -101,7 +101,8 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 
 			if (file == nullptr)
 			{
-				std::cerr << ns->Hostname() << "Unable to locate : " << std::get<0>(res) << "\n";
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << ns->Hostname() << "Unable to locate : " << std::get<0>(res) << "\n";
+				continue;
 			}
 
 			std::cerr << ns->Hostname() << "Getting back " << file->name << "[" << file->filePosition << "]" << "\n";
@@ -397,7 +398,7 @@ string Docapost::IA::Tesseract::MasterProcessingWorker::CreatePdfOutputPath(fs::
 
 void Docapost::IA::Tesseract::MasterProcessingWorker::_AddFolder(fs::path folder, bool resume)
 {
-	if (!fs::is_directory(folder))
+	if (!fs::is_directory(folder) || mIsTerminated)
 	{
 		return;
 	}
@@ -591,7 +592,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::_AddFolder(fs::path folder
 }
 void Docapost::IA::Tesseract::MasterProcessingWorker::AddFolder(fs::path folder, bool resume)
 {
-	std::thread([this, folder, resume]()
+	ListingThread = new std::thread([this, folder, resume]()
 	{
 		CatchAllErrorSignals();
 		if (mFiles.size() > 0)
@@ -599,7 +600,13 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::AddFolder(fs::path folder,
 		mInput = folder;
 		_AddFolder(folder, resume);
 		mIsEnd = true;
-	}).detach();
+
+		if(!mIsTerminated)
+		{
+			ListingThread->detach();
+			delete ListingThread;
+		}
+	});
 }
 
 std::thread* Docapost::IA::Tesseract::MasterProcessingWorker::Run(int nbThread)
@@ -686,7 +693,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Thread " << id << " - " << e.message();
 	}
 
-	while (ocr != nullptr)
+	while (ocr != nullptr && !mIsTerminated)
 	{
 		try
 		{
@@ -819,5 +826,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::SetOutput(boost::unordered
 
 Docapost::IA::Tesseract::MasterProcessingWorker::~MasterProcessingWorker()
 {
+	mIsTerminated = true;
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Detroying MasterProcessingWorker";
 	mNetwork.reset();
 }

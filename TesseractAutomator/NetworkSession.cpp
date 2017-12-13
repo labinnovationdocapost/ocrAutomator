@@ -224,10 +224,6 @@ void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool
 
 NetworkSession::~NetworkSession()
 {
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Closing TCP connection for "<< mHostname;
-	if (mSocket.is_open())
-	{
-		mSocket.shutdown(boost::asio::socket_base::shutdown_type::shutdown_both);
-		mSocket.close();
-	}
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destroying NetworkSession for "<< mHostname;
+	CloseSocket();
 }
