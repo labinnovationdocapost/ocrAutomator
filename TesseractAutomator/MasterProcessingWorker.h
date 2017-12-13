@@ -92,7 +92,15 @@ namespace Docapost {
 				void TerminateThread(int id);
 
 				MasterFileStatus* GetFileSend(boost::uuids::uuid uuid) { std::lock_guard<std::mutex> lock(mNetworkMutex); return mFileSend[uuid]; }
-				void AddFileSend(MasterFileStatus* file) { std::lock_guard<std::mutex> lock(mNetworkMutex); mFileSend[file->uuid] = file; }
+				void AddFileSend(MasterFileStatus* file)
+				{
+					std::lock_guard<std::mutex> lock(mNetworkMutex); 
+					if(mFileSend[file->uuid] != nullptr)
+					{
+						std::cout << "File " << file->uuid << " exist already\n"; 
+					}
+					mFileSend[file->uuid] = file;
+				}
 				void RemoveFileSend(boost::uuids::uuid uuid) { std::lock_guard<std::mutex> lock(mNetworkMutex); mFileSend.erase(uuid); }
 
 
@@ -112,13 +120,13 @@ namespace Docapost {
 				boost::signals2::signal<void(MasterFileStatus*)> onStartProcessFile;
 				boost::signals2::signal<void()> onProcessEnd;
 
-				bool NetworkEnable() const { return mNetwork != nullptr || mNetworkThread != nullptr; }
+				bool NetworkEnable() const { return mNetwork != nullptr/* && mNetworkThread != nullptr*/; }
 				int Port() const
 				{
 					if (NetworkEnable()) 
-						return mNetwork->Port(); 
-					else 
-						return 0;
+						return mNetwork->Port();
+
+					return 0;
 				}
 				void Separator(std::string separator) { this->mSeparator = separator; }
 				std::string Separator() const { return mSeparator; }

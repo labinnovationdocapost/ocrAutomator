@@ -159,7 +159,7 @@
       <DebugInformationFormat>FullDebug</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses;exiv2;protobuf-lite;protobuf;Magick++-6.Q16;MagickCore-6.Q16;podofo;z;jpeg;fontconfig;freetype</LibraryDependencies>
+      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses;exiv2;protobuf-lite;protobuf;Magick++-6.Q16;MagickCore-6.Q16;podofo;z;jpeg;fontconfig;freetype;dl;boost_thread;boost_log;boost_log_setup</LibraryDependencies>
       <AdditionalLibraryDirectories>/boost_1_65_1/stage/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <VerboseOutput>true</VerboseOutput>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>

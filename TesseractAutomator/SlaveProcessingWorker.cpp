@@ -132,6 +132,8 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::NetwordLoop()
 
 		auto ask = std::max(0, static_cast<int>(mThreads.size() * 2 - mFiles.size() - mPending));
 		mPending += ask;
+
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Ask " << ask << " file(s)";
 		mNetwork->SendSynchro(mThreads.size(), -1, ask, toSend);
 
 

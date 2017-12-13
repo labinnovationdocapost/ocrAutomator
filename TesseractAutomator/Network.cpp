@@ -13,12 +13,9 @@ void Network::BroadcastLoop()
 		if (!ec && bytes_recvd > 0)
 		{
 			RespondBroadcast();
-			BroadcastLoop();
 		}
-		else
-		{
-			BroadcastLoop();
-		}
+
+		BroadcastLoop();
 	});
 } 
 void Network::RespondBroadcast()
@@ -72,7 +69,14 @@ void Network::InitComm()
 			std::thread([obj]()
 			{
 				CatchAllErrorSignals();
-				obj->Start();
+				try
+				{
+					obj->Start();
+				}
+				catch(std::exception &e)
+				{
+					BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "[exception]: " << e.what();
+				}
 			}).detach();
 		}
 
@@ -83,18 +87,42 @@ void Network::InitComm()
 void Network::Start()
 {
 	std::lock_guard<std::mutex> lock(mStateMutex);
-	mService.run();
+	while (true) {
+		try {
+
+			if (!mTcpAcceptor.is_open())
+			{
+				mTcpAcceptor.close();
+				mTcpAcceptor = std::move(ip::tcp::acceptor(mService, ip::tcp::endpoint(ip::tcp::v4(), mPort)));
+			}
+
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "ASIO service starting";
+			boost::system::error_code ec;
+			mService.run(ec);
+			if (ec) { // handling asio system errors
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "[system-error]: " << ec.message();
+				continue;
+			}
+			break;
+		}
+		catch (const std::exception& ex) {
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "[exception]: " << ex.what();
+		}
+	}
 }
 void Network::Stop()
 {
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Stoping ASIO service";
 	const auto conn = mConnections;
 	for (auto& c : conn)
 	{
 		c.second->onSlaveDisconnect.disconnect_all_slots();
 		//delete c.second;
 	}
-	mUdpSocket.close();
-	mTcpAcceptor.close();
+	if(mUdpSocket.is_open())
+		mUdpSocket.close();
+	if (mTcpAcceptor.is_open())
+		mTcpAcceptor.close();
 	mService.stop();
 	std::lock_guard<std::mutex> lock(mStateMutex);
 }

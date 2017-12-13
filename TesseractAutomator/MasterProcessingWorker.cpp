@@ -17,19 +17,20 @@
 Docapost::IA::Tesseract::MasterProcessingWorker::MasterProcessingWorker(OcrFactory& ocr, Docapost::IA::Tesseract::OutputFlags types, int port) :
 	BaseProcessingWorker(ocr),
 	mOutputTypes(types)
-{ 
+{
 	PoDoFo::PdfError::EnableDebug(false);
 	PoDoFo::PdfError::EnableLogging(false);
 
-	std::cerr << "Lancement du réseau sur le port " << port << std::endl;
-	while (port < 65565)
+	mNetworkThread = new std::thread([this, port]()
 	{
-		try
+		int _port = port;
+		while (_port < 65565)
 		{
-			mNetworkThread = new std::thread([this, port]()
+			try
 			{
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Try Starting network on port " << _port;
 				CatchAllErrorSignals();
-				mNetwork = boost::make_shared<Network>(port);
+				mNetwork = boost::make_shared<Network>(_port);
 				mNetwork->onSlaveConnect.connect(boost::bind(&MasterProcessingWorker::OnSlaveConnectHandler, this, _1, _2, _3));
 
 				mNetwork->onSlaveSynchro.connect(boost::bind(&MasterProcessingWorker::OnSlaveSynchroHandler, this, _1, _2, _3, _4));
@@ -39,27 +40,38 @@ Docapost::IA::Tesseract::MasterProcessingWorker::MasterProcessingWorker(OcrFacto
 				mNetwork->InitBroadcastReceiver();
 				mNetwork->InitComm();
 				mNetwork->Start();
-			});
-			break;
-		}
-		catch (...)
-		{
-			std::cerr << "/!\ Lancement du réseau impossible sur le port " << port << std::endl;
-
-			if (mNetwork != nullptr)
-				mNetwork->Stop();
-			if (mNetworkThread != nullptr && mNetworkThread->joinable())
-			{
-				mNetworkThread->join();
-				delete mNetworkThread;
+				break;
 			}
-			port++;
+			catch (std::exception &e)
+			{
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "/!\\ Unable to start network on port " << _port;
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "/!\\ Error " << e.what();
+
+				if (mNetwork != nullptr)
+				{
+					mNetwork->Stop();
+				}
+				_port++;
+			}
+			catch (...)
+			{
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "/!\\ Unable to start network on port " << _port;
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "/!\\ Error " << std::current_exception().__cxa_exception_type()->name();
+
+				if (mNetwork != nullptr)
+				{
+					mNetwork->Stop();
+				}
+				_port++;
+			}
 		}
-	}
+	});
 }
 
 void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveConnectHandler(NetworkSession* ns, int thread, std::string hostname)
 {
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Client connected : " << hostname;
+
 	if (mSlaves[ns->Id()] == nullptr) mSlaves[ns->Id()] = std::make_shared<SlaveState>();
 	mSlaves[ns->Id()]->NbThread = thread;
 	mSlaves[ns->Id()]->Name = ns->Hostname();
@@ -79,14 +91,20 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 	try
 	{
 		for (auto& res : results)
-		{			std::string result;
-		boost::uuids::uuid uuid;
+		{
+			std::string result;
+			boost::uuids::uuid uuid;
 			boost::posix_time::ptime start, end;
 			boost::posix_time::time_duration ellapsed;
 			int threadId;
 			auto file = GetFileSend(std::get<0>(res));
 
-			std::cerr << ns->Hostname() << "Getting back " << file->name << "[" << file->filePosition <<"]" << "\n";
+			if (file == nullptr)
+			{
+				std::cerr << ns->Hostname() << "Unable to locate : " << std::get<0>(res) << "\n";
+			}
+
+			std::cerr << ns->Hostname() << "Getting back " << file->name << "[" << file->filePosition << "]" << "\n";
 
 			std::tie(uuid, file->thread, file->start, file->end, file->ellapsed, result) = res;
 			file->isEnd = true;
@@ -130,7 +148,11 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 						MasterFileStatus*  file;
 						if ((file = GetFile()) != nullptr)
 						{
-							auto id = mGen();
+							boost::uuids::uuid id;
+							{
+								std::lock_guard<std::mutex> lock(mNetworkMutex);
+								id = mGen();
+							}
 
 							file->uuid = id;
 							file->hostname = ns->Hostname();
@@ -193,12 +215,13 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 	}
 	catch (std::exception& e)
 	{
-		std::cout << "ERROR !!! : " << e.what() << std::endl;
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Synchro error : " << e.what();
 	}
 }
 
 void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveDisconnectHandler(NetworkSession* ns, boost::unordered_map<boost::uuids::uuid, bool>& noUsed)
 {
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Client disconnected : " << ns->Hostname() << " | " << "File get back : " << noUsed.size();
 	if (ns == nullptr)
 		return;
 	{
@@ -451,6 +474,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::_AddFolder(fs::path folder
 						}
 						catch (PoDoFo::PdfError& e)
 						{
+							//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Impossible de decoder le fichier " << path.string() << " fallback sur ImageMagic| " << e.ErrorMessage(e.GetError());
 							std::cerr << "Impossible de decoder le fichier " << path.string() << " fallback sur ImageMagic| " << e.ErrorMessage(e.GetError()) << std::endl;
 
 							if (siblings != nullptr)
@@ -517,6 +541,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::_AddFolder(fs::path folder
 							{
 								auto eptr = std::current_exception();
 								auto n = eptr.__cxa_exception_type()->name();
+								//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Impossible de decoder le fichier, le fichier ne sera pas inclue pour traitement " << path.string() << " | " << n;
 								std::cerr << "Impossible de decoder le fichier, le fichier ne sera pas inclue pour traitement " << path.string() << " | " << n << std::endl;
 							}
 						}
@@ -524,6 +549,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::_AddFolder(fs::path folder
 						{
 							auto eptr = std::current_exception();
 							auto n = eptr.__cxa_exception_type()->name();
+							//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Impossible de decoder le fichier, le fichier ne sera pas inclue pour traitement " << path.string() << " | " << n;
 							std::cerr << "Impossible de decoder le fichier, le fichier ne sera pas inclue pour traitement " << path.string() << " | " << n << std::endl;
 						}
 					}
@@ -653,7 +679,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 	}
 	catch (UninitializedOcrException& e)
 	{
-		std::cerr << "Thread " << id << " - " << e.message() << std::endl;
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Thread " << id << " - " << e.message();
 	}
 
 	while (ocr != nullptr)
@@ -725,13 +751,13 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 		}
 		catch (const std::exception& e)
 		{
-			std::cerr << "Thread - " << id << " " << e.what();
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Thread - " << id << " " << e.what();
 		}
 		catch (...)
 		{
 			auto eptr = std::current_exception();
 			auto n = eptr.__cxa_exception_type()->name();
-			std::cerr << "Thread - " << id << " | " << n << std::endl;
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Thread - " << id << " | " << n;
 		}
 	}
 
@@ -743,13 +769,13 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << "Thread - " << id << " " << e.what();
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Thread - " << id << " " << e.what();
 	}
 	catch (...)
 	{
 		auto eptr = std::current_exception();
 		auto n = eptr.__cxa_exception_type()->name();
-		std::cerr << "Thread - " << id << " | " << n << std::endl;
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Thread - " << id << " | " << n;
 	}
 
 	TerminateThread(id);

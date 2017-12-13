@@ -5,6 +5,7 @@
 #include <sys/capability.h>
 #include <sys/prctl.h>
 #include <boost/uuid/uuid_io.hpp>
+#include "Error.h"
 
 NetworkClient::NetworkClient(int port, std::string ip) :
 	mSynchroWaiting(0),
@@ -30,12 +31,19 @@ google::protobuf::uint32 NetworkClient::readHeader(char *buf)
 
 void NetworkClient::Start()
 {
-	auto self(shared_from_this());
-	if (mIp.empty())
-		BroadcastNetworkInfo(mPort, VERSION);
-	else
-		SendNetworkInfoTo(mPort, mIp, VERSION);
-	mService.run();
+	try
+	{
+		auto self(shared_from_this());
+		if (mIp.empty())
+			BroadcastNetworkInfo(mPort, VERSION);
+		else
+			SendNetworkInfoTo(mPort, mIp, VERSION);
+		mService.run();
+	}
+	catch(std::exception e)
+	{
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Error ASIO Service: " << e.what();
+	}
 }
 
 
@@ -86,6 +94,7 @@ void NetworkClient::ReceiveData(int length)
 		}
 		else
 		{
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Error Read: " << ec.message();
 			mTcpSocket.close();
 			onMasterDisconnect();
 
@@ -125,12 +134,14 @@ void NetworkClient::WriteNextItemToStream()
 
 void NetworkClient::WriteHandler(const boost::system::error_code& error, const size_t bytesTransferred)
 {
-	mWriteQueue.pop();
 	if (error)
 	{
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Error Write: " << error.message();
 		mTcpSocket.close();
 		onMasterConnected();
 	}
+	mWriteQueue.pop();
+
 	if (!mWriteQueue.empty()) {
 		// more messages to send
 		this->WriteNextItemToStream();
@@ -177,12 +188,13 @@ void NetworkClient::Connect(int port, ip::address_v4 ip, std::string version)
 		std::cerr << str << std::endl;
 	}
 
-	std::cerr << "Sending broadcast, Version : " << ni.version() << " Port : " << ni.port() << std::endl;
+
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Sending broadcast, Version : " << ni.version() << " Port : " << ni.port();
 	mUdpSocket.async_send_to(boost::asio::buffer(*buffer, coded_output.ByteCount()), senderEndpoint, [this, self](boost::system::error_code ec, std::size_t bytes_transferred)
 	{
 		if (ec)
 		{
-			std::cerr << "Error broadcast, " << ec.message() << std::endl;
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Error broadcast, " << ec.message();
 			return;
 		}
 		// Une fois un pair trouver
@@ -191,6 +203,7 @@ void NetworkClient::Connect(int port, ip::address_v4 ip, std::string version)
 		{
 			if (ec)
 			{
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Error Broadcast: " << ec.message();
 				return;
 			}
 
@@ -200,7 +213,7 @@ void NetworkClient::Connect(int port, ip::address_v4 ip, std::string version)
 			// On vérifié ca version
 			if (ni.version() != VERSION)
 			{
-				std::cerr << "Version mismatch, Expected : " << VERSION << " Received : " << ni.version() << std::endl;
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Version mismatch, Expected : " << VERSION << " Received : " << ni.version() << std::endl;
 			}
 
 			auto ip = mMasterEndpoint.address().to_string();
@@ -229,6 +242,7 @@ void NetworkClient::Connect(int port, ip::address_v4 ip, std::string version)
 
 void NetworkClient::SendDeclare(int thread, std::string version)
 {
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Send declare: " << version;
 	auto self(shared_from_this());
 	Docapost::IA::Tesseract::Proto::Declare* d = new Docapost::IA::Tesseract::Proto::Declare();
 	d->set_thread(thread);
@@ -257,6 +271,8 @@ void NetworkClient::SendDeclare(int thread, std::string version)
 
 void NetworkClient::SendSynchro(int thread, int threadId, int req, std::vector<SlaveFileStatus*> files)
 {
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Send synchro req: " << req;
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Send synchro files:" << files.size();
 	auto self(shared_from_this());
 
 	Docapost::IA::Tesseract::Proto::Synchro_Slave* s = new Docapost::IA::Tesseract::Proto::Synchro_Slave{};
@@ -313,11 +329,13 @@ void NetworkClient::SendSynchroIfNone(int thread, int threadId, int req, std::ve
 
 void NetworkClient::Stop()
 {
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Stopping Network";
 	mService.stop();
 }
 
 NetworkClient::~NetworkClient()
 {
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Destroying Netowrk";
 	if (mUdpSocket.is_open())
 	{
 		mUdpSocket.close();

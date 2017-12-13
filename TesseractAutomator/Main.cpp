@@ -316,6 +316,9 @@ int main(int argc, char* argv[])
 	CatchAllErrorSignals();
 	CatchAllExceptions();
 #endif
+	Log::InitLogger();
+
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Starting Logger";
 	//SetCapability();
 
 

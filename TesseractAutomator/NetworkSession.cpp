@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <boost/date_time.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include "Error.h"
 
 NetworkSession::NetworkSession(ip::tcp::socket socket, boost::uuids::uuid id) : mSocket(std::move(socket)), mId(id), mStrand(socket.get_io_service())
 {
@@ -63,6 +64,8 @@ void NetworkSession::ReceiveData(int length)
 		}
 		else
 		{
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Socket error for " << mHostname;
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Error  " << ec.message();
 			CloseSocket();
 		}
 	});
@@ -78,6 +81,8 @@ void NetworkSession::ReceiveDataHeader()
 		}
 		else
 		{
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Socket error for " << mHostname;
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Error  " << ec.message();
 			CloseSocket();
 		}
 	});
@@ -85,10 +90,14 @@ void NetworkSession::ReceiveDataHeader()
 
 void NetworkSession::CloseSocket()
 {
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Closing Socket for " << mHostname;
 	if (mSocket.is_open())
 	{
-		mSocket.shutdown(boost::asio::socket_base::shutdown_type::shutdown_both);
-		mSocket.close();
+		boost::system::error_code ec;
+		mSocket.shutdown(boost::asio::socket_base::shutdown_type::shutdown_both, ec);
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << mHostname << " | shutdown Status " << ec.message();
+		mSocket.close(ec);
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << mHostname << " | Closing Status " << ec.message();
 		onSlaveDisconnect(this, mFileSend);
 	}
 }
@@ -128,12 +137,14 @@ void NetworkSession::WriteNextItemToStream()
 
 void NetworkSession::WriteHandler(const boost::system::error_code& error, const size_t bytesTransferred)
 {
-	mWriteQueue.pop();
 	if (error)
 	{
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Socket error for " << mHostname;
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Error  " << error.message();
 		CloseSocket();
 		return;
 	}
+	mWriteQueue.pop();
 
 	if (!mWriteQueue.empty()) {
 		// more messages to send
@@ -213,6 +224,7 @@ void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool
 
 NetworkSession::~NetworkSession()
 {
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Closing TCP connection for "<< mHostname;
 	if (mSocket.is_open())
 	{
 		mSocket.shutdown(boost::asio::socket_base::shutdown_type::shutdown_both);
