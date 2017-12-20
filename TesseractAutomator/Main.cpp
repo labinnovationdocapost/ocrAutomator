@@ -300,8 +300,9 @@ void Slave(char** argv, po::variables_map& vm)
 	}
 	else
 	{
+		//pth->detach();
 		if (th != nullptr)
-		{
+		{ 
 			th->join();
 			delete th;
 		}

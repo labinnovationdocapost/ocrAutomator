@@ -66,7 +66,7 @@ void Log::InitLogger()
 		);
 	backend->auto_flush(true);
 	
-	//boost::shared_ptr< sinks::syslog_backend > backend = boost::make_shared< sinks::syslog_backend >();
+	//boost::shared_ptr< sinks::syslog_backend > backend = boost::make_shared< sinks::syslog_backend >();Tes
 
 	typedef sinks::synchronous_sink< sinks::text_file_backend > sink_t;
 	//typedef sinks::synchronous_sink< sinks::syslog_backend > sink_t;

@@ -170,13 +170,22 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 						std::cerr << std::this_thread::get_id() << " | Loading\n";
 						if (nullptr != ocr->LoadFile(file, [this](MasterFileStatus* file) {this->AddFile(file); }))
 						{
-							filesToSend[id] = file->data;
-							i++;
+							if(slave->Terminated)
+							{
+								file->hostname = "";
+								this->AddFile(file);
+								break;
+							}
+							else
+							{
+								filesToSend[id] = file->data;
+								i++;
+							}
 						}
 						else
 						{
 							std::lock_guard<std::mutex> lock(slave->ClientMutex);
-							std::cerr << std::this_thread::get_id() << " | Decreasing PendingProcessed " << slave->PendingProcessed << "\n";
+							BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << std::this_thread::get_id() << " | Rollback PendingProcessed " << slave->PendingProcessed << "\n";
 							++slave->PendingProcessed;
 						}
 					}
@@ -186,13 +195,13 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 					std::lock_guard<std::mutex> lock(slave->ClientMutex);
 					if (!slave->Terminated)
 					{
-						std::cerr << std::this_thread::get_id() << " | Netowrk interface is open -> sending " << i << " files\n";
+						BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << std::this_thread::get_id() << " | Netowrk interface is open -> sending " << i << " files\n";
 						slave->PendingNotProcessed -= i;
 						ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, slave->PendingNotProcessed, filesToSend);
 					}
 					else
 					{
-						std::cerr << std::this_thread::get_id() << " | Netowrk interface closed -> rollback\n";
+						BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << std::this_thread::get_id() << " | Netowrk interface closed -> rollback\n";
 						std::lock_guard<std::mutex> lock(mNetworkMutex);
 						for (auto fileToSend : filesToSend)
 						{
@@ -214,8 +223,8 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 			th->detach();
 			delete th;
 		}
-		std::cerr << ns->Hostname() << " | Sending ACK\n";
 		std::lock_guard<std::mutex> lock(slave->ClientMutex);
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Synchro Ack";
 		ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, slave->PendingNotProcessed, boost::unordered_map<boost::uuids::uuid, std::vector<unsigned char>*>());
 	}
 	catch (std::exception& e)

@@ -9,15 +9,45 @@
 
 NetworkClient::NetworkClient(int port, std::string ip) :
 	mSynchroWaiting(0),
-	mService(),
-	mUdpSocket(mService, ip::udp::endpoint(ip::udp::v4(), port + 20)),
-	mTcpSocket(mService, ip::tcp::endpoint(ip::tcp::v4(), port + 20)),
+	mService(new boost::asio::io_service{}),
+	mUdpSocket(*mService),
+	mTcpSocket(*mService),
 	mPort(port),
 	mIp(ip),
-	mStrand(mService),
-	mTimer(mService)
+	mStrand(*mService),
+	mTimer(*mService)
 {
+	boost::system::error_code ec;
+
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Opening UDP Socket";
+	mUdpSocket.open(ip::udp::v4());
+	mUdpSocket.set_option(boost::asio::socket_base::reuse_address(true));
 	mUdpSocket.set_option(boost::asio::socket_base::broadcast(true));
+	int i = 1; // Le +1 évite que le broadcast ce réponde à lui même
+	while (true)
+	{
+		mUdpSocket.bind(ip::udp::endpoint(ip::udp::v4(), mPort + i), ec);
+		if (ec == boost::system::errc::success)
+			break;
+		i++;
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Udp inc port " << mPort << " | " << ec.message();
+	}
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Udp Bind on " << mPort;
+
+
+	int j = 1;
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Opening TCP Socket";
+	mTcpSocket.open(ip::tcp::v4());
+	mTcpSocket.set_option(boost::asio::socket_base::reuse_address(true));
+	while(true)
+	{
+		mTcpSocket.bind(ip::tcp::endpoint(ip::tcp::v4(), mPort + j), ec);
+		if (ec == boost::system::errc::success)
+			break;
+		j++;
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Tcp inc port " << mPort << " | " << ec.message();
+	}
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Tcp Bind on " << mPort;
 }
 
 google::protobuf::uint32 NetworkClient::readHeader(char *buf)
@@ -34,18 +64,35 @@ void NetworkClient::Start()
 	try
 	{
 		auto self(shared_from_this());
+		
+		mService->reset();
+
 		if (mIp.empty())
 			BroadcastNetworkInfo(mPort, VERSION);
 		else
 			SendNetworkInfoTo(mPort, mIp, VERSION);
 
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Starting ASIO Service: ";
-		mService.run();
+		mService->run();
 	}
-	catch(std::exception e)
+	catch (std::exception e)
 	{
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Error ASIO Service: " << e.what();
 	}
+}
+
+void NetworkClient::Reconnect()
+{
+	mService->post([this]()
+	{
+		if(!mTcpSocket.is_open())
+		{
+			if (mIp.empty())
+				BroadcastNetworkInfo(mPort, VERSION);
+			else
+				SendNetworkInfoTo(mPort, mIp, VERSION);
+		}
+	});
 }
 
 
@@ -56,6 +103,7 @@ void NetworkClient::ReceiveDataHeader()
 	{
 		if (ec)
 		{
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Error Read: " << ec.message();
 			mTcpSocket.close();
 			onMasterDisconnect();
 			return;
@@ -73,6 +121,7 @@ void NetworkClient::ReceiveData(int length)
 	{
 		if (!ec)
 		{
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Data received";
 			Docapost::IA::Tesseract::Proto::Message_Master m;
 			m.ParseFromArray(buffer->data(), length);
 			if (m.has_status())
@@ -89,7 +138,7 @@ void NetworkClient::ReceiveData(int length)
 						dict[d.uuid()] = new std::vector<unsigned char>(d.file().begin(), d.file().end());
 					}
 				}
-				onMasterSynchro(m.synchro().totalthread(), m.synchro().done(), m.synchro().skip(), m.synchro().total(), m.synchro().isend(), m.synchro().pending(),dict);
+				onMasterSynchro(m.synchro().totalthread(), m.synchro().done(), m.synchro().skip(), m.synchro().total(), m.synchro().isend(), m.synchro().pending(), dict);
 				mSynchroWaiting -= dict.size();
 			}
 			ReceiveDataHeader();
@@ -177,10 +226,10 @@ void NetworkClient::Connect(int port, ip::address_v4 ip, std::string version)
 
 	boost::asio::ip::udp::endpoint senderEndpoint(ip, port);
 
-	auto timer = std::make_shared<boost::asio::deadline_timer>(mService);
+	auto timer = std::make_shared<boost::asio::deadline_timer>(*mService);
 	timer->expires_from_now(boost::posix_time::seconds(5));
 
-	ip::tcp::resolver resolver(mService);
+	ip::tcp::resolver resolver(*mService);
 	ip::tcp::resolver::query query(boost::asio::ip::host_name(), "");
 	ip::tcp::resolver::iterator it = resolver.resolve(query);
 
@@ -334,24 +383,42 @@ void NetworkClient::SendSynchroIfNone(int thread, int threadId, int req, std::ve
 void NetworkClient::Stop()
 {
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Stopping Network";
-	mService.stop();
-	mService.reset();
+	
+	mService->dispatch([this]()
+	{
+		mUdpSocket.close();
+		mTcpSocket.close();
+	});
 }
 
 NetworkClient::~NetworkClient()
 {
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Destroying Netowrk";
-	if (mUdpSocket.is_open())
+	if(mUdpSocket.is_open())
 	{
-		mUdpSocket.close();
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Socket Udp Open";
+		mService->dispatch([this]()
+		{
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Udp Closing";
+			mUdpSocket.close();
+		});
 	}
 	if (mTcpSocket.is_open())
 	{
-		mTcpSocket.shutdown(boost::asio::socket_base::shutdown_type::shutdown_both);
-		mTcpSocket.close();
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Socket Tcp Open";
+		mService->dispatch([this]()
+		{
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Tcp Closing";
+			mTcpSocket.close();
+		});
 	}
-	if (!mService.stopped())
+	while(mTcpSocket.is_open() || mUdpSocket.is_open()){}
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Destroying Netowrk";
+	if (!mService->stopped())
 	{
-		mService.stop();
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Stoping";
+		mService->stop();
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Stopped";
 	}
+	delete mService;
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "End Destroying Netowrk";
 }

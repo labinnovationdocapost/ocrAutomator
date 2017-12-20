@@ -24,20 +24,30 @@ Docapost::IA::Tesseract::SlaveProcessingWorker::SlaveProcessingWorker(OcrFactory
 	catch (std::exception& e)
 	{
 		std::cout << "/!\\ Lancement du réseau impossible sur le port " << port << std::endl;
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Network run failed " << e.what();
 	}
 }
 
 void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterConnectedHandler()
-{
+{ 
 	mNetwork->SendDeclare(mThreads.size(), VERSION);
 }
 void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterDisconnectHandler()
-{
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Network stream broken, restart discover" << std::endl;
+{ 
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "OnMasterDisconnectHandler Start";
 	boost::lock_guard<std::mutex> lock(mStackMutex);
-	mFiles.clear();  
-	mNetwork->Stop();
-	mNetwork->Start();
+	mPending = 0;
+	mFiles.clear();
+
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "joining";
+	mNetworkThread->join();
+
+	if(mNetwork)
+	{
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "mNetwork != nullptr";
+		mNetwork->Reconnect();
+	}
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "OnMasterDisconnectHandler End";
 	//onProcessEnd();
 }
 void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterStatusChangedHandler(int threadToRun, int done, int skip, int total, int psm, int oem, std::string lang)
@@ -65,6 +75,7 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterStatusChangedHandle
 	}
 
 	mNetworkThread = new std::thread(&SlaveProcessingWorker::NetwordLoop, this);
+	mNetworkThread->detach();
 
 }
 void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterSynchroHandler(int thread, int done, int skip, int total, bool end, int pending, boost::unordered_map<std::string, std::vector<unsigned char>*> files)
@@ -150,9 +161,10 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::ThreadLoop(int id)
 
 	try
 	{
-		while (/*mNetwork != nullptr && mNetwork->IsOpen()*/true)
+		while (mAsioThread != nullptr)
 		{
-			SlaveFileStatus * file = GetFile();
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Thread " << (mAsioThread != nullptr);
+			SlaveFileStatus * file = GetFile(); 
 			if (file == nullptr)
 			{
 				std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -204,18 +216,20 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::TerminateThread(int id)
 	delete mThreads[id];
 	mThreads.erase(id);
 
-	std::cerr << "Thread remove from list " << id << std::endl;
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Thread " << id << " Terminated";
 
 	if (mThreads.size() == 0)
 	{
 		mEnd = boost::posix_time::second_clock::local_time();
-		mNetwork->Stop();
+		/*mNetwork->Stop();
 		mNetworkThread->join();
-		delete mNetworkThread;
+		delete mNetworkThread;*/
 		onProcessEnd();
 
 		std::unique_lock<std::mutex> lk(mIsWorkDoneMutex);
 		mIsWorkDone.notify_all();
+
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "All Thread Terminated";
 	}
 }
 
@@ -224,16 +238,54 @@ std::thread* Docapost::IA::Tesseract::SlaveProcessingWorker::Run(int nbThread)
 	mStart = boost::posix_time::second_clock::local_time();
 
 	this->threadToRun = nbThread;
-	return new std::thread([this]()
+	return mAsioThread = new std::thread([this]()
 	{
 		CatchAllErrorSignals();
-		if (mNetwork != nullptr) mNetwork->Start();
+		while(mNetwork != nullptr)
+		{
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Starting Service";
+			mNetwork->Start();
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		}
 	});
 }
 
 
 
 Docapost::IA::Tesseract::SlaveProcessingWorker::~SlaveProcessingWorker()
-{
-	if (mNetwork != nullptr) mNetwork.reset();
+{ 
+	auto ptr = mNetwork;
+	if (mNetwork) 
+	{
+		onProcessEnd.disconnect_all_slots();
+		onStartProcessFile.disconnect_all_slots();
+
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Network Reset : " << ptr.use_count();
+		mNetwork.reset();
+
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Network Copy Stop & Reset";
+		ptr->Stop();
+		ptr.reset();
+		
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Ref count : " << ptr.use_count();
+
+		/*BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Join" << " file(s)";
+		mNetworkThread->join();*/
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Delete Network thread";
+		delete mNetworkThread; 
+
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Reset : " << ptr.use_count();
+
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Join : " << mAsioThread->joinable();
+		if (mAsioThread->joinable())
+		{
+			mAsioThread->join();
+			delete mAsioThread;
+			mAsioThread = nullptr;
+		}
+
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Reset" << ptr.use_count();
+
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor End" << " file(s)";
+	}
 }

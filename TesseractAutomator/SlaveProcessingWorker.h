@@ -15,6 +15,7 @@ namespace Docapost {
 								
 				std::shared_ptr<NetworkClient> mNetwork;
 				std::thread* mNetworkThread;
+				std::thread* mAsioThread;
 				std::mutex mStackToSendMutex;
 
 				std::atomic<int> mPending{ 0 };

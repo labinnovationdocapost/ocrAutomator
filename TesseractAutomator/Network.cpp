@@ -17,14 +17,14 @@ void Network::BroadcastLoop()
 
 		BroadcastLoop();
 	});
-} 
+}
 void Network::RespondBroadcast()
 {
 	proto::NetworkInfo s;
 	s.set_port(mPort);
 	s.set_version(VERSION);
-	
-	
+
+
 	s.SerializeToArray(mDefaultBuffer, 1024);
 	mUdpSocket.async_send_to(
 		boost::asio::buffer(mDefaultBuffer, s.ByteSize()), mUdpSenderEndpoint,
@@ -73,7 +73,7 @@ void Network::InitComm()
 				{
 					obj->Start();
 				}
-				catch(std::exception &e)
+				catch (std::exception &e)
 				{
 					BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "[exception]: " << e.what();
 				}
@@ -104,6 +104,7 @@ void Network::Start()
 				Stop();
 				continue;
 			}
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "ASIO service exit";
 			break;
 		}
 		catch (const std::exception& ex) {
@@ -121,25 +122,40 @@ void Network::Stop()
 		c.second->onSlaveDisconnect.disconnect_all_slots();
 		//delete c.second;
 	}
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Closing UDP Socket";
-	if(mUdpSocket.is_open())
-		mUdpSocket.close();
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Closing TCP Socket";
-	if (mTcpAcceptor.is_open())
-		mTcpAcceptor.close();
 
+	if (mUdpSocket.is_open())
+	{
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Closing UDP Socket";
+		mService.dispatch([this]()
+		{
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Udp Closing";
+			mUdpSocket.close();
+		});
+	}
+
+	if (mTcpAcceptor.is_open())
+	{
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Closing TCP Socket";
+		mService.dispatch([this]()
+		{
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Tcp Closing";
+			mTcpAcceptor.close();
+		});
+	}
+
+	while (mTcpAcceptor.is_open() || mUdpSocket.is_open()) {}
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Stoping ASIO service";
 	mService.stop();
 	std::lock_guard<std::mutex> lock(mStateMutex);
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "ASIO service Stopped";
 }
 
-Network::Network(short port) : 
-mService(),
-mUdpSocket(mService, ip::udp::endpoint(boost::asio::ip::address_v4::any(), port)),
-mTcpSocket(mService),
-mTcpAcceptor(mService, ip::tcp::endpoint(ip::tcp::v4(), port)),
-mPort(port)
+Network::Network(short port) :
+	mService(),
+	mUdpSocket(mService, ip::udp::endpoint(boost::asio::ip::address_v4::any(), port)),
+	mTcpSocket(mService),
+	mTcpAcceptor(mService, ip::tcp::endpoint(ip::tcp::v4(), port)),
+	mPort(port)
 {
 	mUdpSocket.set_option(boost::asio::socket_base::broadcast(true));
 }

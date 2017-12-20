@@ -30,7 +30,7 @@ private:
 	std::atomic<int> mSynchroWaiting;
 	std::mutex mThreadMutex;
 
-	boost::asio::io_service mService;
+	boost::asio::io_service* mService;
 
 	ip::udp::socket mUdpSocket;
 	ip::tcp::socket mTcpSocket;
@@ -66,6 +66,7 @@ public:
 	explicit NetworkClient(int port, std::string ip);
 	google::protobuf::uint32 readHeader(char* buf);
 	void Start();
+	void Reconnect();
 	void BroadcastNetworkInfo(int port, std::string version);
 	void SendNetworkInfoTo(int port, std::string ip, std::string version);
 	void Connect(int port, ip::address_v4 endpoint, std::string ip);
@@ -73,7 +74,7 @@ public:
 	void SendSynchro(int thread, int threadId, int req, std::vector<SlaveFileStatus*> files);
 	void SendSynchroIfNone(int thread, int threadId, int req, std::vector<SlaveFileStatus*> files);
 	boost::uuids::uuid& GetId() { return id; }
-	bool IsOpen() const { return !mService.stopped() && mTcpSocket.is_open(); }
+	bool IsOpen() const { return !mService->stopped() && mTcpSocket.is_open(); }
 	std::string GetRemoteAddress() const { return mTcpSocket.remote_endpoint().address().to_string(); }
 	int GetSynchroWaiting() const { return mSynchroWaiting; }
 	int Port() const { return mPort; }
