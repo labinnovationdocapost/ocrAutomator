@@ -17,5 +17,5 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update
 #tesseract
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y curl tesseract-ocr tesseract-ocr-fra tesseract-ocr-osd libtesseract-dev libleptonica-dev
 
-RUN curl https://www.dropbox.com/s/w4mmlx6pkr697oe/TesseractAutomator1.3.8.deb?dl=1 -L -O -J
-RUN apt-get install -y './TesseractAutomator1.3.8.deb'
+RUN curl https://www.dropbox.com/s/qpltyguc6h7qs7h/TesseractAutomator1.3.18.deb?dl=1 -L -O -J
+RUN apt-get install -y './TesseractAutomator1.3.18.deb'
