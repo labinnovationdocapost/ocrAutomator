@@ -170,7 +170,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 						std::cerr << std::this_thread::get_id() << " | Loading\n";
 						if (nullptr != ocr->LoadFile(file, [this](MasterFileStatus* file) {this->AddFile(file); }))
 						{
-							if(slave->Terminated)
+							if (slave->Terminated)
 							{
 								file->hostname = "";
 								this->AddFile(file);
@@ -415,172 +415,115 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::_AddFolder(fs::path folder
 	for (auto& entry : boost::make_iterator_range(fs::directory_iterator(folder), {}))
 	{
 		fs::path path = entry.path();
-		if (!path.filename_is_dot() && !path.filename_is_dot_dot())
+		if (path.filename_is_dot() || path.filename_is_dot_dot())
 		{
-			if (fs::is_directory(path))
+			continue;
+		}
+		if (fs::is_directory(path))
+		{
+			this->_AddFolder(path, resume);
+			continue;
+		}
+		auto ext = path.extension().string();
+		if (!extensions.count(ext))
+		{
+			continue;
+		}
+		if (ext == ".pdf")
+		{
+			std::vector<MasterFileStatus*>* siblings = nullptr;
+			std::mutex* mutex_siblings = new std::mutex();
+			try
 			{
-				this->_AddFolder(path, resume);
-			}
-			else
-			{
-				auto ext = path.extension().string();
-				if (extensions.count(ext))
+				PoDoFo::PdfMemDocument document;
+				document.Load(path.string().c_str());
+				//PoDoFo::PdfStreamedDocument document(path.string().c_str());
+				auto nbPages = document.GetPageCount();
+
+				siblings = new std::vector<MasterFileStatus*>(nbPages);
+
+				bool added = false;
+				for (int i = 0; i < nbPages; i++)
 				{
+					auto output_file = CreatePdfOutputPath(path, i);
 
-					if (ext == ".pdf")
+					bool toProcess = true;
+					if (resume)
 					{
-						std::vector<MasterFileStatus*>* siblings = nullptr;
-						std::mutex* mutex_siblings = new std::mutex();
-						try
+						toProcess = false;
+						if (mOutputTypes & OutputFlags::Text)
 						{
-							PoDoFo::PdfMemDocument document;
-							document.Load(path.string().c_str());
-							//PoDoFo::PdfStreamedDocument document(path.string().c_str());
-							auto nbPages = document.GetPageCount();
-
-							siblings = new std::vector<MasterFileStatus*>(nbPages);
-
-							bool added = false;
-							for (int i = 0; i < nbPages; i++)
-							{
-								auto output_file = CreatePdfOutputPath(path, i);
-
-								bool toProcess = true;
-								if (resume)
-								{
-									toProcess = false;
-									if (mOutputTypes & OutputFlags::Text)
-									{
-										toProcess = toProcess || !FileExist(output_file);
-									}
-
-									if (mOutputTypes & OutputFlags::Exif)
-									{
-										toProcess = toProcess || !ExifExist(output_file);
-									}
-
-									if (!toProcess)
-									{
-										mSkip++;
-									}
-								}
-
-								if (toProcess)
-								{
-									mTotal++;
-									auto file = new MasterFileStatus(path.string(), fs::relative(path, mInput).string(), output_file);
-									file->filePosition = i;
-									(*siblings)[i] = file;
-									file->siblings = siblings;
-									file->mutex_siblings = mutex_siblings;
-									if (added == false)
-									{
-										added = true;
-										AddFileBack(file);
-									}
-								}
-							}
-							if (added == false)
-							{
-								delete mutex_siblings;
-								delete siblings;
-							}
+							toProcess = toProcess || !FileExist(output_file);
 						}
-						catch (PoDoFo::PdfError& e)
+
+						if (mOutputTypes & OutputFlags::Exif)
 						{
-							//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Impossible de decoder le fichier " << path.string() << " fallback sur ImageMagic| " << e.ErrorMessage(e.GetError());
-							std::cerr << "Impossible de decoder le fichier " << path.string() << " fallback sur ImageMagic| " << e.ErrorMessage(e.GetError()) << std::endl;
-
-							if (siblings != nullptr)
-								delete siblings;
-
-							try
-							{
-								Magick::ReadOptions options;
-								options.density(Magick::Geometry(10, 10));
-
-								std::list<Magick::Image> images;
-								Magick::readImages(&images, path.string(), options);
-
-								size_t i;
-								std::list<Magick::Image>::iterator image;
-								siblings = new std::vector<MasterFileStatus*>(images.size());
-								bool insert = false;
-								for (image = images.begin(), i = 0; image != images.end(); image++, i++)
-								{
-									auto output_file = (boost::format("%s/%s-%d.jpg") % path.parent_path().string() % fs::change_extension(path.filename(), "").string() % i).str();
-
-									bool toProcess = true;
-									if (resume)
-									{
-										toProcess = false;
-										if (mOutputTypes & OutputFlags::Text)
-										{
-											toProcess = toProcess || !FileExist(output_file);
-										}
-
-										if (mOutputTypes & OutputFlags::Exif)
-										{
-											toProcess = toProcess || !ExifExist(output_file);
-										}
-
-										if (!toProcess)
-										{
-											mSkip++;
-										}
-									}
-
-									if (toProcess)
-									{
-										mTotal++;
-										auto file = new MasterFileStatus(path.string(), fs::relative(path, mInput).string(), output_file);
-										file->filePosition = i;
-										(*siblings)[i] = file;
-										file->siblings = siblings;
-										file->mutex_siblings = mutex_siblings;
-										if (!insert)
-										{
-											insert = true;
-											AddFileBack(file);
-										}
-									}
-								}
-								if (insert == false)
-								{
-									delete mutex_siblings;
-									delete siblings;
-								}
-							}
-							catch (...)
-							{
-								auto eptr = std::current_exception();
-								auto n = eptr.__cxa_exception_type()->name();
-								//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Impossible de decoder le fichier, le fichier ne sera pas inclue pour traitement " << path.string() << " | " << n;
-								std::cerr << "Impossible de decoder le fichier, le fichier ne sera pas inclue pour traitement " << path.string() << " | " << n << std::endl;
-							}
+							toProcess = toProcess || !ExifExist(output_file);
 						}
-						catch (...)
+
+						if (!toProcess)
 						{
-							auto eptr = std::current_exception();
-							auto n = eptr.__cxa_exception_type()->name();
-							//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Impossible de decoder le fichier, le fichier ne sera pas inclue pour traitement " << path.string() << " | " << n;
-							std::cerr << "Impossible de decoder le fichier, le fichier ne sera pas inclue pour traitement " << path.string() << " | " << n << std::endl;
+							mSkip++;
 						}
 					}
-					else
+
+					if (toProcess)
 					{
+						mTotal++;
+						auto file = new MasterFileStatus(path.string(), fs::relative(path, mInput).string(), output_file);
+						file->filePosition = i;
+						(*siblings)[i] = file;
+						file->siblings = siblings;
+						file->mutex_siblings = mutex_siblings;
+						if (added == false)
+						{
+							added = true;
+							AddFileBack(file);
+						}
+					}
+				}
+				if (added == false)
+				{
+					delete mutex_siblings;
+					delete siblings;
+				}
+			}
+			catch (PoDoFo::PdfError& e)
+			{
+				//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Impossible de decoder le fichier " << path.string() << " fallback sur ImageMagic| " << e.ErrorMessage(e.GetError());
+				std::cerr << "Impossible de decoder le fichier " << path.string() << " fallback sur ImageMagic| " << e.ErrorMessage(e.GetError()) << std::endl;
+
+				if (siblings != nullptr)
+					delete siblings;
+
+				try
+				{
+					Magick::ReadOptions options;
+					options.density(Magick::Geometry(10, 10));
+
+					std::list<Magick::Image> images;
+					Magick::readImages(&images, path.string(), options);
+
+					size_t i;
+					std::list<Magick::Image>::iterator image;
+					siblings = new std::vector<MasterFileStatus*>(images.size());
+					bool insert = false;
+					for (image = images.begin(), i = 0; image != images.end(); image++, i++)
+					{
+						auto output_file = (boost::format("%s/%s-%d.jpg") % path.parent_path().string() % fs::change_extension(path.filename(), "").string() % i).str();
+
 						bool toProcess = true;
 						if (resume)
 						{
 							toProcess = false;
 							if (mOutputTypes & OutputFlags::Text)
 							{
-								toProcess = toProcess || !FileExist(path);
+								toProcess = toProcess || !FileExist(output_file);
 							}
 
 							if (mOutputTypes & OutputFlags::Exif)
 							{
-								toProcess = toProcess || !ExifExist(path);
+								toProcess = toProcess || !ExifExist(output_file);
 							}
 
 							if (!toProcess)
@@ -588,13 +531,69 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::_AddFolder(fs::path folder
 								mSkip++;
 							}
 						}
+
 						if (toProcess)
 						{
 							mTotal++;
-							AddFileBack(new MasterFileStatus(path.string(), fs::relative(path, mInput).string()));
+							auto file = new MasterFileStatus(path.string(), fs::relative(path, mInput).string(), output_file);
+							file->filePosition = i;
+							(*siblings)[i] = file;
+							file->siblings = siblings;
+							file->mutex_siblings = mutex_siblings;
+							if (!insert)
+							{
+								insert = true;
+								AddFileBack(file);
+							}
 						}
 					}
+					if (insert == false)
+					{
+						delete mutex_siblings;
+						delete siblings;
+					}
 				}
+				catch (...)
+				{
+					auto eptr = std::current_exception();
+					auto n = eptr.__cxa_exception_type()->name();
+					//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Impossible de decoder le fichier, le fichier ne sera pas inclue pour traitement " << path.string() << " | " << n;
+					std::cerr << "Impossible de decoder le fichier, le fichier ne sera pas inclue pour traitement " << path.string() << " | " << n << std::endl;
+				}
+			}
+			catch (...)
+			{
+				auto eptr = std::current_exception();
+				auto n = eptr.__cxa_exception_type()->name();
+				//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Impossible de decoder le fichier, le fichier ne sera pas inclue pour traitement " << path.string() << " | " << n;
+				std::cerr << "Impossible de decoder le fichier, le fichier ne sera pas inclue pour traitement " << path.string() << " | " << n << std::endl;
+			}
+		}
+		else
+		{
+			bool toProcess = true;
+			if (resume)
+			{
+				toProcess = false;
+				if (mOutputTypes & OutputFlags::Text)
+				{
+					toProcess = toProcess || !FileExist(path);
+				}
+
+				if (mOutputTypes & OutputFlags::Exif)
+				{
+					toProcess = toProcess || !ExifExist(path);
+				}
+
+				if (!toProcess)
+				{
+					mSkip++;
+				}
+			}
+			if (toProcess)
+			{
+				mTotal++;
+				AddFileBack(new MasterFileStatus(path.string(), fs::relative(path, mInput).string()));
 			}
 		}
 	}
@@ -610,7 +609,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::AddFolder(fs::path folder,
 		_AddFolder(folder, resume);
 		mIsEnd = true;
 
-		if(!mIsTerminated)
+		if (!mIsTerminated)
 		{
 			ListingThread->detach();
 			delete ListingThread;
