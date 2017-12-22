@@ -148,6 +148,10 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::NetwordLoop()
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Ask " << ask << " file(s)";
 		mNetwork->SendSynchro(mThreads.size(), -1, ask, toSend);
 
+		for (auto fileSend : toSend)
+		{
+			fileSend->result.~basic_string();
+		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	}
@@ -180,6 +184,8 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::ThreadLoop(int id)
 
 				continue;
 			}
+
+			delete file->data;
 
 			mDone++;
 
