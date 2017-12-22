@@ -61,6 +61,9 @@
     <ClCompile Include="Tesseract.cpp">
       <Filter>Source Code\Ocr\Tesseract</Filter>
     </ClCompile>
+    <ClCompile Include="MuPDF.cpp">
+      <Filter>Source Code\PDF</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Protobuf\Status.pb.h">
@@ -156,6 +159,9 @@
     <ClInclude Include="SlaveState.h">
       <Filter>Headers\Master</Filter>
     </ClInclude>
+    <ClInclude Include="MuPDF.h">
+      <Filter>Headers\PDF</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -208,6 +214,12 @@
     </Filter>
     <Filter Include="Source Code\Ocr\Tesseract">
       <UniqueIdentifier>{96d7a578-5bef-47a4-8e83-6375502a4619}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Code\PDF">
+      <UniqueIdentifier>{2ca67efa-58e6-4ab8-97e6-36aac60336c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\PDF">
+      <UniqueIdentifier>{cdefb7b5-38cc-4f87-b9a6-67f5177d0585}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

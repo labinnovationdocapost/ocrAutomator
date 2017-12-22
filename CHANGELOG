@@ -1,3 +1,19 @@
+v1.4.0
+Remplacement d'ImageMagick et de Podofo par MuPdf
+v1.3.19
+Améliore la stabilité 
+v1.3.18
+Stabilisation du réseau Reprise des client (slave) en cas de coupure Correction de divers bugs 
+v1.3.11
+Rectification de divers bugs 
+v1.3.10
+Améliore le support du mode réseau 
+v1.3.9
+Correction de bugs réseau 
+Ajout d'un paramètre pour spécifié l'IP a laquelle ce connecter (--ip) 
+v1.3.8
+Amélioration de la gestion du réseau coté esclave. 
+Support du broadcast sous Linux (Ubuntu) 
 v1.3.7
 Stabilisation du réseau
 Lancement multiple de l'application sur une même machine

@@ -30,6 +30,7 @@
     <ClCompile Include="Display.cpp" />
     <ClCompile Include="Error.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="MuPDF.cpp" />
     <ClCompile Include="NetworkClient.cpp" />
     <ClCompile Include="NetworkSession.cpp" />
     <ClCompile Include="Network.cpp" />
@@ -56,6 +57,7 @@
     <ClInclude Include="MasterFileStatus.h" />
     <ClInclude Include="FileSum.h" />
     <ClInclude Include="BaseProcessingWorker.h" />
+    <ClInclude Include="MuPDF.h" />
     <ClInclude Include="NetworkClient.h" />
     <ClInclude Include="NetworkSession.h" />
     <ClInclude Include="Network.h" />
@@ -144,7 +146,7 @@
       <CppAdditionalWarning>switch;no-deprecated-declarations;empty-body;return-type;parentheses;no-format;uninitialized;unreachable-code;unused-function;unused-value;unused-variable</CppAdditionalWarning>
     </ClCompile>
     <Link>
-      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses;exiv2;protobuf-lite;protobuf;Magick++-6.Q16;MagickCore-6.Q16;podofo;z;jpeg;fontconfig;freetype;dl;boost_thread;boost_log;boost_log_setup</LibraryDependencies>
+      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;mupdf;mupdfthird;ncurses;exiv2;protobuf-lite;protobuf;z;fontconfig;freetype;dl;boost_thread;boost_log;boost_log_setup;jpeg;turbojpeg;Magick++-6.Q16;MagickCore-6.Q16</LibraryDependencies>
       <AdditionalLibraryDirectories>/boost_1_65_1/stage/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SharedLibrarySearchPath>%(SharedLibrarySearchPath)</SharedLibrarySearchPath>
       <VerboseOutput>false</VerboseOutput>

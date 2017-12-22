@@ -5,21 +5,20 @@
 #include <future>
 #include <exiv2/exiv2.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <Magick++.h>
 #include <boost/format.hpp>
-#include <podofo/podofo.h>
 #include "Error.h"
 #include "TesseractFactory.h"
 #include "UninitializedOcrException.h"
 #include <boost/algorithm/string.hpp>
+#include "MuPDF.h"
 
 
 Docapost::IA::Tesseract::MasterProcessingWorker::MasterProcessingWorker(OcrFactory& ocr, Docapost::IA::Tesseract::OutputFlags types, int port) :
 	BaseProcessingWorker(ocr),
 	mOutputTypes(types)
 {
-	PoDoFo::PdfError::EnableDebug(false);
-	PoDoFo::PdfError::EnableLogging(false);
+	/*PoDoFo::PdfError::EnableDebug(false);
+	PoDoFo::PdfError::EnableLogging(false);*/
 
 	mNetworkThread = new std::thread([this, port]()
 	{
@@ -81,7 +80,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveConnectHandler(Netw
 }
 
 void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(NetworkSession* ns, int thread, int required, std::vector<std::tuple<boost::uuids::uuid, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>& results)
-{
+{ 
 	CatchAllErrorSignals();
 	// On garde une référence sur l'objet pou qu'il ne soit supprimer que quand plus personne ne l'utilise
 	auto slave = mSlaves[ns->Id()];
@@ -435,10 +434,13 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::_AddFolder(fs::path folder
 			std::mutex* mutex_siblings = new std::mutex();
 			try
 			{
-				PoDoFo::PdfMemDocument document;
+				MuPDF pdf;
+				auto nbPages = pdf.GetNbPage(path.string());
+
+				/*PoDoFo::PdfMemDocument document;
 				document.Load(path.string().c_str());
 				//PoDoFo::PdfStreamedDocument document(path.string().c_str());
-				auto nbPages = document.GetPageCount();
+				auto nbPages = document.GetPageCount();*/
 
 				siblings = new std::vector<MasterFileStatus*>(nbPages);
 
@@ -486,79 +488,6 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::_AddFolder(fs::path folder
 				{
 					delete mutex_siblings;
 					delete siblings;
-				}
-			}
-			catch (PoDoFo::PdfError& e)
-			{
-				//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Impossible de decoder le fichier " << path.string() << " fallback sur ImageMagic| " << e.ErrorMessage(e.GetError());
-				std::cerr << "Impossible de decoder le fichier " << path.string() << " fallback sur ImageMagic| " << e.ErrorMessage(e.GetError()) << std::endl;
-
-				if (siblings != nullptr)
-					delete siblings;
-
-				try
-				{
-					Magick::ReadOptions options;
-					options.density(Magick::Geometry(10, 10));
-
-					std::list<Magick::Image> images;
-					Magick::readImages(&images, path.string(), options);
-
-					size_t i;
-					std::list<Magick::Image>::iterator image;
-					siblings = new std::vector<MasterFileStatus*>(images.size());
-					bool insert = false;
-					for (image = images.begin(), i = 0; image != images.end(); image++, i++)
-					{
-						auto output_file = (boost::format("%s/%s-%d.jpg") % path.parent_path().string() % fs::change_extension(path.filename(), "").string() % i).str();
-
-						bool toProcess = true;
-						if (resume)
-						{
-							toProcess = false;
-							if (mOutputTypes & OutputFlags::Text)
-							{
-								toProcess = toProcess || !FileExist(output_file);
-							}
-
-							if (mOutputTypes & OutputFlags::Exif)
-							{
-								toProcess = toProcess || !ExifExist(output_file);
-							}
-
-							if (!toProcess)
-							{
-								mSkip++;
-							}
-						}
-
-						if (toProcess)
-						{
-							mTotal++;
-							auto file = new MasterFileStatus(path.string(), fs::relative(path, mInput).string(), output_file);
-							file->filePosition = i;
-							(*siblings)[i] = file;
-							file->siblings = siblings;
-							file->mutex_siblings = mutex_siblings;
-							if (!insert)
-							{
-								insert = true;
-								AddFileBack(file);
-							}
-						}
-					}
-					if (insert == false)
-					{
-						delete mutex_siblings;
-						delete siblings;
-					}
-				}
-				catch (...)
-				{
-					auto eptr = std::current_exception();
-					auto n = eptr.__cxa_exception_type()->name();
-					//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Impossible de decoder le fichier, le fichier ne sera pas inclue pour traitement " << path.string() << " | " << n;
-					std::cerr << "Impossible de decoder le fichier, le fichier ne sera pas inclue pour traitement " << path.string() << " | " << n << std::endl;
 				}
 			}
 			catch (...)

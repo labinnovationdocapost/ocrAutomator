@@ -106,7 +106,7 @@ void SlaveDisplay::DrawHeader() const
 	}
 
 
-	mvwprintw(mTopWindow, 3, 0, "Files Total: %d | Files Skip: %d\n", mTesseractRunner.Total(), mTesseractRunner.Skip());
+	mvwprintw(mTopWindow, 3, 0, "Files Total: %d | Files Skip: %d | Tesseract: %s\n", mTesseractRunner.Total(), mTesseractRunner.Skip(), TESSERACT_VERSION_STR);
 	wrefresh(mTopWindow);
 }
 

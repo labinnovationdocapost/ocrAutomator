@@ -114,7 +114,7 @@ void Display::DrawHeader() const
 		mvwprintw(mTopWindow, 2, 0, "%s\n", cstring.str().c_str());
 	}
 
-	mvwprintw(mTopWindow, 3, 0, "Files Total: %d | Files Skip: %d | Mode: %d\n", mTesseractRunner.Total(), mTesseractRunner.Skip(), mTesseractRunner.OutputTypes());
+	mvwprintw(mTopWindow, 3, 0, "Files Total: %d | Files Skip: %d | Mode: %d | Tesseract: %s\n", mTesseractRunner.Total(), mTesseractRunner.Skip(), mTesseractRunner.OutputTypes(), TESSERACT_VERSION_STR);
 	wrefresh(mTopWindow);
 }
 

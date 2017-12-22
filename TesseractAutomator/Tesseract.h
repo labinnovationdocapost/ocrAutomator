@@ -20,6 +20,9 @@ namespace Docapost {
 				tesseract::OcrEngineMode mOem;
 				std::string mLang;
 				tesseract::TessBaseAPI mTessBaseAPI;
+
+				std::vector<unsigned char>* ExtractPdfFromImageMagick(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile);
+				std::vector<unsigned char>* ExtractPdfFromMuPdf(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile);
 			public:
 				Tesseract(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang);
 
