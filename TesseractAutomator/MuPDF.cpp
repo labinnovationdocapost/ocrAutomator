@@ -136,11 +136,11 @@ void MuPDF::Extract(MasterFileStatus* file)
 		}
 
 		//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destruct page";
-		fz_drop_page(mContext, page);
+		//fz_drop_page(mContext, page);
 
 		fz_pixmap *pix = nullptr;
 		fz_try(mContext)
-		{
+		{ 
 			std::lock_guard<std::mutex> staticlock(mStaticContextMutex);
 			//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "create pixmap";
 			pix = fz_new_pixmap_with_bbox(mContext, fz_device_rgb(mContext), &irect, 0, 0);
