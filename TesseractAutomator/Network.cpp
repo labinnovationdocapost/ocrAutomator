@@ -125,20 +125,18 @@ void Network::Stop()
 
 	if (mUdpSocket.is_open())
 	{
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Closing UDP Socket";
 		mService.dispatch([this]()
 		{
-			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Udp Closing";
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Closing UDP Socket";
 			mUdpSocket.close();
 		});
 	}
 
 	if (mTcpAcceptor.is_open())
 	{
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Closing TCP Socket";
 		mService.dispatch([this]()
 		{
-			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Tcp Closing";
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Closing TCP Acceptor";
 			mTcpAcceptor.close();
 		});
 	}
@@ -162,6 +160,7 @@ Network::Network(short port) :
 
 Network::~Network()
 {
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Detroying Network";
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destroying Network";
 	Stop();
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Network Destroyed";
 }

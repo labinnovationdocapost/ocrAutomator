@@ -33,7 +33,7 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterConnectedHandler()
 	mNetwork->SendDeclare(mThreads.size(), VERSION);
 }
 void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterDisconnectHandler()
-{ 
+{
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "OnMasterDisconnectHandler Start";
 	boost::lock_guard<std::mutex> lock(mStackMutex);
 	mPending = 0;
@@ -70,12 +70,11 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterStatusChangedHandle
 
 	for (; this->threadToRun > 0; --this->threadToRun)
 	{
-		int id = mNextId++;
-		mThreads[id] = new std::thread(&SlaveProcessingWorker::ThreadLoop, this, id);
+		AddThread();
 	}
 
-	mNetworkThread = new std::thread(&SlaveProcessingWorker::NetwordLoop, this);
-	mNetworkThread->detach();
+	mNetworkThread = new boost::thread(&SlaveProcessingWorker::NetwordLoop, this);
+	//mNetworkThread->detach();
 
 }
 void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterSynchroHandler(int thread, int done, int skip, int total, bool end, int pending, boost::unordered_map<std::string, std::vector<unsigned char>*> files)
@@ -145,7 +144,7 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::NetwordLoop()
 		auto ask = std::max(0, static_cast<int>(mThreads.size() * 2 - mFiles.size() - mPending));
 		mPending += ask;
 
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Ask " << ask << " file(s)";
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::debug) << "Ask " << ask << " file(s)";
 		mNetwork->SendSynchro(mThreads.size(), -1, ask, toSend);
 
 		for (auto fileSend : toSend)
@@ -167,7 +166,7 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::ThreadLoop(int id)
 	{
 		while (mAsioThread != nullptr)
 		{
-			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Thread " << (mAsioThread != nullptr);
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Thread ASIO: " << (mAsioThread != nullptr);
 			SlaveFileStatus * file = GetFile(); 
 			if (file == nullptr)
 			{
@@ -261,28 +260,27 @@ std::thread* Docapost::IA::Tesseract::SlaveProcessingWorker::Run(int nbThread)
 Docapost::IA::Tesseract::SlaveProcessingWorker::~SlaveProcessingWorker()
 { 
 	auto ptr = mNetwork;
-	if (mNetwork) 
+	if (mNetwork)
 	{
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Disconnect Signals";
 		onProcessEnd.disconnect_all_slots();
 		onStartProcessFile.disconnect_all_slots();
 
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Network Reset : " << ptr.use_count();
 		mNetwork.reset();
 
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Network Copy Stop & Reset";
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Network Stop & Reset";
 		ptr->Stop();
 		ptr.reset();
 		
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Ref count : " << ptr.use_count();
 
 		/*BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Join" << " file(s)";
 		mNetworkThread->join();*/
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Delete Network thread";
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Delete Network thread";
+		mNetworkThread->join();
 		delete mNetworkThread; 
 
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Reset : " << ptr.use_count();
 
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Join : " << mAsioThread->joinable();
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Join : " << mAsioThread->joinable();
 		if (mAsioThread->joinable())
 		{
 			mAsioThread->join();
@@ -290,8 +288,7 @@ Docapost::IA::Tesseract::SlaveProcessingWorker::~SlaveProcessingWorker()
 			mAsioThread = nullptr;
 		}
 
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Reset" << ptr.use_count();
 
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor End" << " file(s)";
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "End" << " file(s)";
 	}
 }

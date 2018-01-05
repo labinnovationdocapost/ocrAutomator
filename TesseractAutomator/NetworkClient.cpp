@@ -72,7 +72,7 @@ void NetworkClient::Start()
 		else
 			SendNetworkInfoTo(mPort, mIp, VERSION);
 
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Starting ASIO Service: ";
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Starting ASIO Service";
 		mService->run();
 	}
 	catch (std::exception e)
@@ -121,7 +121,7 @@ void NetworkClient::ReceiveData(int length)
 	{
 		if (!ec)
 		{
-			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Data received";
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::debug) << "Data received";
 			Docapost::IA::Tesseract::Proto::Message_Master m;
 			m.ParseFromArray(buffer->data(), length);
 			if (m.has_status())
@@ -295,7 +295,7 @@ void NetworkClient::Connect(int port, ip::address_v4 ip, std::string version)
 
 void NetworkClient::SendDeclare(int thread, std::string version)
 {
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Send declare: " << version;
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::debug) << "Send declare: " << version;
 	auto self(shared_from_this());
 	Docapost::IA::Tesseract::Proto::Declare* d = new Docapost::IA::Tesseract::Proto::Declare();
 	d->set_thread(thread);
@@ -324,8 +324,8 @@ void NetworkClient::SendDeclare(int thread, std::string version)
 
 void NetworkClient::SendSynchro(int thread, int threadId, int req, std::vector<SlaveFileStatus*> files)
 {
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Send synchro req: " << req;
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Send synchro files:" << files.size();
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::debug) << "Send synchro req: " << req;
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::debug) << "Send synchro files:" << files.size();
 	auto self(shared_from_this());
 
 	Docapost::IA::Tesseract::Proto::Synchro_Slave* s = new Docapost::IA::Tesseract::Proto::Synchro_Slave{};
@@ -382,7 +382,7 @@ void NetworkClient::SendSynchroIfNone(int thread, int threadId, int req, std::ve
 
 void NetworkClient::Stop()
 {
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Stopping Network";
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Stopping Network";
 	
 	mService->dispatch([this]()
 	{
@@ -395,30 +395,30 @@ NetworkClient::~NetworkClient()
 {
 	if(mUdpSocket.is_open())
 	{
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Socket Udp Open";
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Socket Udp Open";
 		mService->dispatch([this]()
 		{
-			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Udp Closing";
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Udp Closing";
 			mUdpSocket.close();
 		});
 	}
 	if (mTcpSocket.is_open())
 	{
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Socket Tcp Open";
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Socket Tcp Open";
 		mService->dispatch([this]()
 		{
-			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Tcp Closing";
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Tcp Closing";
 			mTcpSocket.close();
 		});
 	}
 	while(mTcpSocket.is_open() || mUdpSocket.is_open()){}
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Destroying Netowrk";
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destroying Netowrk";
 	if (!mService->stopped())
 	{
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Stoping";
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Stoping";
 		mService->stop();
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Stopped";
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Stopped";
 	}
 	delete mService;
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "End Destroying Netowrk";
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "End Destroying Netowrk";
 }

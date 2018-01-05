@@ -18,7 +18,7 @@ private:
 	WINDOW * mFooterWindow;
 	WINDOW * mControlWindow;
 	int mScreenHeight, mScreenWidth;
-	std::vector<MasterFileStatus*> mFiles{};
+	std::list<MasterFileStatus*> mFiles{};
 
 	int mCurrentView = 0;
 	int mTotalView = 2;
@@ -31,6 +31,11 @@ private:
 	bool mIsEnd = false;
 	bool mIsTerminated = false;
 
+	boost::signals2::connection mStartProcessFileSignalConnection;
+	boost::signals2::connection mProcessEndSignalConnection;
+	boost::signals2::connection mFileCanceledSignalConnection;
+
+	int GetAverageSize() const;
 	void Init(bool create = true);
 	void OnEnd();
 public:
@@ -38,9 +43,9 @@ public:
 	~Display();
 
 	void DrawHeader() const;
-	void DrawBody(const std::vector<MasterFileStatus*> files, FileSum& s) const;
-	void DrawBodyNetwork(const std::vector<MasterFileStatus*> files, FileSum& s) const;
-	void DrawFooter(const std::vector<MasterFileStatus*> cfiles, FileSum s) const;
+	void DrawBody(const std::list<MasterFileStatus*> files, FileSum& s) const;
+	void DrawBodyNetwork(const std::list<MasterFileStatus*> files, FileSum& s) const;
+	void DrawFooter(const std::list<MasterFileStatus*> cfiles, FileSum s) const;
 	void DrawCommand() const;
 	void Draw();
 

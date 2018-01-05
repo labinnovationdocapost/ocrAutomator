@@ -90,14 +90,14 @@ void NetworkSession::ReceiveDataHeader()
 
 void NetworkSession::CloseSocket()
 {
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Closing Socket for " << mHostname;
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Closing Socket for " << mHostname;
 	if (mSocket.is_open())
 	{
 		boost::system::error_code ec;
 		mSocket.shutdown(boost::asio::socket_base::shutdown_type::shutdown_both, ec);
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << mHostname << " | shutdown Status " << ec.message();
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << mHostname << " | shutdown Status " << ec.message();
 		mSocket.close(ec);
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << mHostname << " | Closing Status " << ec.message();
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << mHostname << " | Closing Status " << ec.message();
 		onSlaveDisconnect(this, mFileSend);
 	}
 }
@@ -226,4 +226,5 @@ NetworkSession::~NetworkSession()
 {
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destroying NetworkSession for "<< mHostname;
 	CloseSocket();
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "NetworkSession for " << mHostname << " Destroyed";
 }

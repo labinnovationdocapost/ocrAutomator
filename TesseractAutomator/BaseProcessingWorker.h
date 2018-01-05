@@ -33,7 +33,7 @@ namespace Docapost {
 
 				std::mutex mStackMutex;
 				std::mutex mThreadMutex;
-				std::map<int, std::thread*> mThreads;
+				std::map<int, boost::thread*> mThreads;
 
 				const std::string mSoftName = "Docapost Tesseract Automator";
 
@@ -102,10 +102,15 @@ namespace Docapost {
 					std::unique_lock<std::mutex> lk(mIsWorkDoneMutex);
 					mIsWorkDone.wait(lk);
 				}
+				void Terminate()
+				{
+					std::unique_lock<std::mutex> lk(mIsWorkDoneMutex);
+					mIsWorkDone.notify_all();
+				}
 				void AddThread()
 				{
 					int id = mNextId++;
-					mThreads[id] = new std::thread(&BaseProcessingWorker<T>::ThreadLoop, this, id);
+					mThreads[id] = new boost::thread(&BaseProcessingWorker<T>::ThreadLoop, this, id);
 				}
 				void RemoveThread()
 				{

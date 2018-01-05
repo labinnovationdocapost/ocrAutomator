@@ -27,6 +27,9 @@ private:
 
 	Docapost::IA::Tesseract::SlaveProcessingWorker& mTesseractRunner;
 
+	boost::signals2::connection mStartProcessFileSignalConnection;
+	boost::signals2::connection mProcessEndSignalConnection;
+
 	boost::posix_time::ptime mTimeEnd;
 	bool mIsEnd = false;
 	void Init(bool create = true);

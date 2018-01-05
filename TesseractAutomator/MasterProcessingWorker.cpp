@@ -80,7 +80,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveConnectHandler(Netw
 }
 
 void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(NetworkSession* ns, int thread, int required, std::vector<std::tuple<boost::uuids::uuid, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>& results)
-{ 
+{
 	CatchAllErrorSignals();
 	// On garde une référence sur l'objet pou qu'il ne soit supprimer que quand plus personne ne l'utilise
 	auto slave = mSlaves[ns->Id()];
@@ -194,7 +194,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 					std::lock_guard<std::mutex> lock(slave->ClientMutex);
 					if (!slave->Terminated)
 					{
-						BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << std::this_thread::get_id() << " | Netowrk interface is open -> sending " << i << " files\n";
+						BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::debug) << std::this_thread::get_id() << " | Netowrk interface is open -> sending " << i << " files\n";
 						slave->PendingNotProcessed -= i;
 						ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, slave->PendingNotProcessed, filesToSend);
 					}
@@ -223,7 +223,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 			delete th;
 		}
 		std::lock_guard<std::mutex> lock(slave->ClientMutex);
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Synchro Ack";
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::debug) << "Synchro Ack";
 		ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, slave->PendingNotProcessed, boost::unordered_map<boost::uuids::uuid, std::vector<unsigned char>*>());
 	}
 	catch (std::exception& e)
@@ -237,6 +237,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveDisconnectHandler(N
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Client disconnected : " << ns->Hostname() << " | " << "File get back : " << noUsed.size();
 	if (ns == nullptr)
 		return;
+
 	{
 		auto slave = mSlaves[ns->Id()];
 		slave->Terminated = true;
@@ -555,8 +556,7 @@ std::thread* Docapost::IA::Tesseract::MasterProcessingWorker::Run(int nbThread)
 	};
 	for (int i = 0; i < nbThread; i++)
 	{
-		int id = mNextId++;
-		mThreads[id] = new std::thread(&MasterProcessingWorker::ThreadLoop, this, id);
+		AddThread();
 	}
 	return nullptr;
 }
@@ -731,27 +731,37 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 
 void Docapost::IA::Tesseract::MasterProcessingWorker::TerminateThread(int id)
 {
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Thread " << id << " begin terminate procedure";
 	boost::lock_guard<std::mutex> lock(mThreadMutex);
 
 	mThreads[id]->detach();
 	delete mThreads[id];
 	mThreads.erase(id);
 
-	std::cerr << "Thread remove from list " << id << std::endl;
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Thread " << id << " removed from thread list";
 
 	if (mThreads.size() == 0)
 	{
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Last thread running stopped";
 		while (mFileSend.size() > 0)
 		{
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Wait for " << mFileSend.size() << " file to be retrieved, retry in 300ms";
 			std::this_thread::sleep_for(std::chrono::milliseconds(300));
 		}
 		mEnd = boost::posix_time::second_clock::local_time();
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Stoping network";
 		mNetwork->Stop();
-		mNetworkThread->join();
-		delete mNetworkThread;
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "network Stop";
+		if (mNetworkThread != nullptr)
+		{
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Waiting for network Thread to complete";
+			mNetworkThread->join();
+			delete mNetworkThread;
+		}
 		onProcessEnd();
 
 		std::unique_lock<std::mutex> lk(mIsWorkDoneMutex);
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Notify everyone of the shutdown";
 		mIsWorkDone.notify_all();
 	}
 }
@@ -764,6 +774,12 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::SetOutput(boost::unordered
 Docapost::IA::Tesseract::MasterProcessingWorker::~MasterProcessingWorker()
 {
 	mIsTerminated = true;
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Detroying MasterProcessingWorker";
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Destroying MasterProcessingWorker";
+
+	for (auto th : mThreads)
+	{
+		th.second->join();
+	}
 	mNetwork.reset();
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "MasterProcessingWorker Destroyed";
 }

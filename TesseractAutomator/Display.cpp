@@ -1,5 +1,6 @@
 #include "Display.h"
 #include "TesseractFactory.h"
+#include <math.h>
 
 #define COLOR_GREY 8
 
@@ -45,6 +46,8 @@ void Display::Init(bool create)
 void Display::OnEnd()
 {
 	boost::lock_guard<std::mutex> lock(mThreadMutex);
+	if (mIsEnd == true || mIsTerminated == true)
+		return;
 	mTimeEnd = boost::posix_time::second_clock::local_time();
 	this->mIsEnd = true;
 
@@ -68,15 +71,18 @@ Display::Display(Docapost::IA::Tesseract::MasterProcessingWorker& tessR) : mTess
 	init_pair(4, COLOR_WHITE, COLOR_GREY);
 
 	Init();
-	tessR.onStartProcessFile.connect(boost::bind(&Display::ShowFile, this, _1));
-	tessR.onProcessEnd.connect(boost::bind(&Display::OnEnd, this));
-	tessR.onFileCanceled.connect(boost::bind(&Display::OnCanceled, this, _1));
+	mStartProcessFileSignalConnection = tessR.onStartProcessFile.connect(boost::bind(&Display::ShowFile, this, _1));
+	mProcessEndSignalConnection = tessR.onProcessEnd.connect(boost::bind(&Display::OnEnd, this));
+	mFileCanceledSignalConnection = tessR.onFileCanceled.connect(boost::bind(&Display::OnCanceled, this, _1));
 }
 
 
 Display::~Display()
 {
 	boost::lock_guard<std::mutex> lock(mThreadMutex);
+	mStartProcessFileSignalConnection.disconnect();
+	mProcessEndSignalConnection.disconnect();
+	mFileCanceledSignalConnection.disconnect();
 	endwin();
 }
 
@@ -118,7 +124,12 @@ void Display::DrawHeader() const
 	wrefresh(mTopWindow);
 }
 
-void Display::DrawBody(const std::vector<MasterFileStatus*> files, FileSum& s) const
+int Display::GetAverageSize() const
+{
+	return std::floor(pow(log(mTesseractRunner.NbThreads() + mTesseractRunner.TotalRemoteThreads()), 3.5)) + 10;
+}
+
+void Display::DrawBody(const std::list<MasterFileStatus*> files, FileSum& s) const
 {
 	mvwprintw(mHeaderWindow, 0, 0, "%-15s %-6s %s\n", "Ellapsed", "Thread", "Origin");
 	wrefresh(mHeaderWindow);
@@ -126,34 +137,50 @@ void Display::DrawBody(const std::vector<MasterFileStatus*> files, FileSum& s) c
 	wmove(mMainWindow, 0, 0);
 	auto start = std::max(static_cast<int>(files.size()) - mScreenHeight, 0);
 	auto fileToPrint = files.size();
-	for (auto j = start; j < fileToPrint; j++)
+
+	for (auto j = std::prev(files.end(), std::min(static_cast<int>(files.size()), mScreenHeight)); j != files.end(); ++j)
 	{
-		if (files[j]->isEnd)
+		if (*j == nullptr)
+			break;
+		if ((*j)->isEnd)
 		{
 			std::stringstream cstring;
-			cstring << "" << files[j]->ellapsed;
+			cstring << "" << (*j)->ellapsed;
 			//wprintw(win, "%-15s %-6d %s -> %s\n", cstring.str().c_str(), files[j]->thread, files[j]->relative_name.c_str(), boost::algorithm::join(files[j]->relative_output, " | ").c_str());
-			wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", cstring.str().c_str(), files[j]->thread, files[j]->hostname.c_str(), files[j]->filePosition, files[j]->relative_name.c_str());
+			wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", cstring.str().c_str(), (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, (*j)->relative_name.c_str());
 		}
 		else
 		{
-			wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", "", files[j]->thread, files[j]->hostname.c_str(), files[j]->filePosition, files[j]->relative_name.c_str());
+			wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", "", (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, (*j)->relative_name.c_str());
 		}
 
-		s(files[j]);
 	}
+
+	auto max = GetAverageSize();
+	for (auto j = files.rbegin(); j != files.rend() && s.count < max; ++j)
+	{
+		if ((*j)->isEnd)
+		{
+			s(*j);
+		}
+	}
+
 	wrefresh(mMainWindow);
 }
 
-void Display::DrawBodyNetwork(const std::vector<MasterFileStatus*> files, FileSum& s) const
+void Display::DrawBodyNetwork(const std::list<MasterFileStatus*> files, FileSum& s) const
 {
 	mvwprintw(mHeaderWindow, 0, 0, "%-20s %-6s\n", "Hostname", "Thread");
 	wrefresh(mTopWindow);
 
 	wmove(mMainWindow, 0, 0);
-	for (auto j = std::max(static_cast<int>(files.size()) - mScreenHeight, 0); j < files.size(); j++)
+	auto max = GetAverageSize();
+	for (auto j = files.rbegin(); j != files.rend() && s.count < max; ++j)
 	{
-		s(files[j]);
+		if ((*j)->isEnd)
+		{
+			s((*j));
+		}
 	}
 	wprintw(mMainWindow, "%-20s %-6d\n", "Master", mTesseractRunner.NbThreads());
 	for (auto& slave : mTesseractRunner.Slaves())
@@ -163,7 +190,7 @@ void Display::DrawBodyNetwork(const std::vector<MasterFileStatus*> files, FileSu
 	wrefresh(mMainWindow);
 }
 
-void Display::DrawFooter(const std::vector<MasterFileStatus*> cfiles, FileSum s) const
+void Display::DrawFooter(const std::list<MasterFileStatus*> cfiles, FileSum s) const
 {
 	if (s.count > 0 && mIsEnd)
 	{
@@ -250,14 +277,14 @@ void Display::ShowFile(MasterFileStatus* file)
 void Display::OnCanceled(MasterFileStatus* str)
 {
 	boost::lock_guard<std::mutex> lock(mThreadMutex);
-	mFiles.erase(std::remove(mFiles.begin(), mFiles.end(), str), mFiles.end());
+	mFiles.remove(str);
 	werase(mMainWindow);
 }
 
 void Display::AddFile(MasterFileStatus* file)
 {
 	boost::lock_guard<std::mutex> lock(mThreadMutex);
-	mFiles.insert(mFiles.end(), file);
+	mFiles.push_back(file);
 }
 
 void Display::Run()

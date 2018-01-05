@@ -44,7 +44,10 @@ SlaveDisplay* sdisplay;
 
 #endif
 
-std::thread* th = nullptr;
+Docapost::IA::Tesseract::MasterProcessingWorker* workerM;
+Docapost::IA::Tesseract::SlaveProcessingWorker* workerS;
+
+boost::thread* th = nullptr;
 std::mutex g_console_mutex;
 
 //./TesseractAutomator -i "/mnt/e/LinuxHeader/rpa2" -p 3 --PSM 1 --OEM 3 -l fra -e /mnt/e/RPA/OutputE -t /mnt/e/RPA/OutputT -f
@@ -200,21 +203,21 @@ void Master(char** argv, po::variables_map& vm)
 	factory.Oem(static_cast<tesseract::OcrEngineMode>(vm["oem"].as<int>()));
 	factory.Psm(static_cast<tesseract::PageSegMode>(vm["psm"].as<int>()));
 
-	Docapost::IA::Tesseract::MasterProcessingWorker tessR(factory, types, vm["port"].as<int>());
+	workerM = new Docapost::IA::Tesseract::MasterProcessingWorker(factory, types, vm["port"].as<int>());
 
 	if (vm.count("prefixe"))
 	{
-		tessR.Separator(vm["prefixe"].as<std::string>());
+		workerM->Separator(vm["prefixe"].as<std::string>());
 	}
 
 #if DISPLAY
-	std::thread* th = nullptr;
 	if (!vm.count("silent"))
 	{
-		th = new std::thread([&]()
+		th = new boost::thread([&]()
 		{
 			CatchAllErrorSignals();
-			display = new Display(tessR);
+			CatchAllExceptions();
+			display = new Display(*workerM);
 
 			signal(SIGWINCH, resizeHandler);
 			display->Run();
@@ -225,16 +228,16 @@ void Master(char** argv, po::variables_map& vm)
 #endif
 
 
-	tessR.SetOutput(map);
+	workerM->SetOutput(map);
 
-	tessR.AddFolder(vm["input"].as<std::string>(), resume);
+	workerM->AddFolder(vm["input"].as<std::string>(), resume);
 
-	tessR.Run(nb_process);
+	workerM->Run(nb_process);
 
 #if DISPLAY
 	if (vm.count("silent"))
 	{
-		tessR.Wait();
+		workerM->Wait();
 	}
 	else
 	{
@@ -250,12 +253,14 @@ void Master(char** argv, po::variables_map& vm)
 
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cleaning MasterProcessingWorker instance";
 
-	auto processTime = tessR.EndTime() - tessR.StartTime();
+	auto processTime = workerM->EndTime() - workerM->StartTime();
 
-	std::cout << "Total Files : " << tessR.Total() << "\n";
-	std::cout << "Start       : " << tessR.StartTime() << "\n";
-	std::cout << "End         : " << tessR.EndTime() << "\n";
+	std::cout << "Total Files : " << workerM->Total() << "\n";
+	std::cout << "Start       : " << workerM->StartTime() << "\n";
+	std::cout << "End         : " << workerM->EndTime() << "\n";
 	std::cout << "Duration    : " << processTime << "\n";
+
+	delete workerM;
 }
 
 void Slave(char** argv, po::variables_map& vm)
@@ -274,14 +279,14 @@ void Slave(char** argv, po::variables_map& vm)
 	}
 
 	Docapost::IA::Tesseract::TesseractFactory factory{};
-	Docapost::IA::Tesseract::SlaveProcessingWorker tessSR{ factory, vm["port"].as<int>(), vm["ip"].as<std::string>() };
+	workerS = new Docapost::IA::Tesseract::SlaveProcessingWorker{ factory, vm["port"].as<int>(), vm["ip"].as<std::string>() };
 #if DISPLAY
 	if (!vm.count("silent"))
 	{
-		th = new std::thread([&]()
+		th = new boost::thread([&]()
 		{
 			CatchAllErrorSignals();
-			sdisplay = new SlaveDisplay(tessSR);
+			sdisplay = new SlaveDisplay(*workerS);
 
 			signal(SIGWINCH, resizeHandler);
 			sdisplay->Run();
@@ -291,7 +296,7 @@ void Slave(char** argv, po::variables_map& vm)
 	}
 #endif	
 
-	auto pth = tessSR.Run(nb_process);
+	auto pth = workerS->Run(nb_process);
 
 #if DISPLAY
 	if (vm.count("silent"))

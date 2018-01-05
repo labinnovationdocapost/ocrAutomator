@@ -46,19 +46,19 @@ std::vector<unsigned char>* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromIm
 	}
 	catch (Magick::ErrorDelegate &ed)
 	{
-		std::cerr << "Impossible de decoder le fichier " << file->name << " | " << ed.what() << std::endl;
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cannot decode file " << file->name << " | " << ed.what() << std::endl;
 		return nullptr;
 	}
 	catch (Magick::Exception &e)
 	{
-		std::cerr << "Impossible de decoder le fichier " << file->name << " | " << e.what() << std::endl;
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cannot decode file " << file->name << " | " << e.what() << std::endl;
 		return nullptr;
 	}
 	catch (...)
 	{
 		auto eptr = std::current_exception();
 		auto n = eptr.__cxa_exception_type()->name();
-		std::cerr << "Impossible de decoder le fichier " << file->name << " | " << n << std::endl;
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cannot decode file " << file->name << " | " << n << std::endl;
 		return nullptr;
 	}
 	return nullptr;
@@ -80,12 +80,12 @@ std::vector<unsigned char>* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromMu
 	}
 	catch(std::exception &e)
 	{
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Cannot extract PDF file " << file->name << " error: " << e.what();
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cannot extract PDF file " << file->name << " error: " << e.what();
 		return nullptr;
 	}
 	catch (std::runtime_error &e)
 	{
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Cannot extract PDF file " << file->name << " error: " << e.what();
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cannot extract PDF file " << file->name << " error: " << e.what();
 		return nullptr;
 	}
 

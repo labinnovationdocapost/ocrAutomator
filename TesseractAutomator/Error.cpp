@@ -28,8 +28,10 @@ namespace expr = boost::log::expressions;
 
 extern Display* display;
 extern SlaveDisplay* sdisplay;
-extern std::thread* th;
+extern boost::thread* th;
 
+extern Docapost::IA::Tesseract::MasterProcessingWorker* workerM;
+extern Docapost::IA::Tesseract::SlaveProcessingWorker* workerS;
 
 
 BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", boost::log::trivial::severity_level)
@@ -62,7 +64,7 @@ void Log::InitLogger()
 	boost::shared_ptr< sinks::text_file_backend > backend = boost::make_shared< sinks::text_file_backend >(
 		keywords::file_name = "TesseractAutomator_Log_%5N.log",
 		keywords::rotation_size = 5 * 1024 * 1024,
-		keywords::time_based_rotation = sinks::file::rotation_at_time_interval(boost::posix_time::minutes(1))
+		keywords::time_based_rotation = sinks::file::rotation_at_time_interval(boost::posix_time::hours(1))
 		);
 	backend->auto_flush(true);
 	
@@ -157,8 +159,13 @@ void segint_action(int sig, siginfo_t *info, void *secret)
 {
 	if (display != nullptr)
 		display->terminated(true);
+	else if (workerM != nullptr)
+		workerM->Terminate();
+
 	if (sdisplay != nullptr)
 		sdisplay->terminated(true);
+	else if (workerS != nullptr)
+		workerS->Terminate();
 
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "SIGINT received";
 

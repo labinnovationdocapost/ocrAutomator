@@ -270,54 +270,5 @@ std::vector<unsigned char>* MuPDF::WriteToJPEG(WorkerParam& wp)
 	tjDestroy(_jpegCompressor);
 	tjFree(_compressedImage);
 
-	/*BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Init jpeg version: " << JPEG_LIB_VERSION;
-	struct jpeg_compress_struct cinfo;
-	struct jpeg_error_mgr jerr;
-	cinfo.err = jpeg_std_error(&jerr);
-	jpeg_create_compress(&cinfo);
-
-	unsigned char *mem = NULL;
-	unsigned long mem_size = 0;
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Create jpeg buffer";
-	jpeg_mem_dest(&cinfo, &mem, &mem_size);
-
-	int width = cinfo.image_width = wp.area.x1;
-	int height= cinfo.image_height = wp.area.y1;
-	cinfo.input_components = 3;
-	cinfo.in_color_space = JCS_RGB;
-	jpeg_set_defaults(&cinfo);
-	jpeg_set_quality(&cinfo, 80, TRUE);
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Start jpeg compression";
-	jpeg_start_compress(&cinfo, TRUE);
-	auto row_stride = wp.area.x1 * 3;
-
-	auto pitch = width * tjPixelSize[TJPF_RGB];
-
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "scanline jpeg";
-	JSAMPROW* row_pointer = nullptr;
-	if ((row_pointer = (JSAMPROW *)malloc(sizeof(JSAMPROW)*height)) == nullptr)
-		throw("tjCompress2(): Memory allocation failure");
-	for (int i = 0; i<height; i++)
-	{
-		row_pointer[i] = &wp.pixmap->samples[i*pitch];
-	}
-
-	while (cinfo.next_scanline<cinfo.image_height)
-	{
-		jpeg_write_scanlines(&cinfo, &row_pointer[cinfo.next_scanline],
-			cinfo.image_height - cinfo.next_scanline);
-	}
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "end jpeg compression";
-	jpeg_finish_compress(&cinfo);
-
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "end jpeg";
-	if (cinfo.global_state>100) jpeg_abort_compress(&cinfo);
-	if (row_pointer) free(row_pointer);
-
-	auto res = new std::vector<unsigned char>(mem, mem + mem_size);
-
-	free(mem);*/
-	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "end jpeg";
-
 	return res;
 }

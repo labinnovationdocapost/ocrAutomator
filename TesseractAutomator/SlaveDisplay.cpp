@@ -12,6 +12,7 @@
 
 void SlaveDisplay::Init(bool create)
 {
+	boost::lock_guard<std::mutex> lock(mThreadMutex);
 	if (!create)
 	{
 		delwin(mTopWindow);
@@ -67,13 +68,16 @@ SlaveDisplay::SlaveDisplay(Docapost::IA::Tesseract::SlaveProcessingWorker& tessR
 	init_pair(4, COLOR_WHITE, COLOR_GREY);
 
 	Init();
-	tessR.onStartProcessFile.connect(boost::bind(&SlaveDisplay::ShowFile, this, _1));
-	tessR.onProcessEnd.connect(boost::bind(&SlaveDisplay::OnEnd, this));
+	mStartProcessFileSignalConnection = tessR.onStartProcessFile.connect(boost::bind(&SlaveDisplay::ShowFile, this, _1));
+	mProcessEndSignalConnection = tessR.onProcessEnd.connect(boost::bind(&SlaveDisplay::OnEnd, this));
 }
 
 
 SlaveDisplay::~SlaveDisplay()
 {
+	boost::lock_guard<std::mutex> lock(mThreadMutex);
+	mStartProcessFileSignalConnection.disconnect();
+	mProcessEndSignalConnection.disconnect();
 	endwin();
 }
 
