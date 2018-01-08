@@ -54,6 +54,7 @@
     <ClInclude Include="Display.h" />
     <ClInclude Include="Error.h" />
     <ClInclude Include="BaseFileStatus.h" />
+    <ClInclude Include="ImageFormatEnum.h" />
     <ClInclude Include="MasterFileStatus.h" />
     <ClInclude Include="FileSum.h" />
     <ClInclude Include="BaseProcessingWorker.h" />

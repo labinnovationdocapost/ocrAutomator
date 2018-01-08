@@ -23,7 +23,7 @@ namespace Docapost {
 
 				std::shared_ptr<BaseOcr> CreateNew() override
 				{
-					return std::make_shared<Tesseract>(mPsm, mOem, mLang);
+					return std::make_shared<Tesseract>(mPsm, mOem, mLang, mImageFormat);
 				}
 			};
 		}

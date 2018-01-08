@@ -96,10 +96,10 @@ namespace Docapost {
 				MasterFileStatus* GetFileSend(boost::uuids::uuid uuid) { std::lock_guard<std::mutex> lock(mNetworkMutex); return mFileSend[uuid]; }
 				void AddFileSend(MasterFileStatus* file)
 				{
-					std::lock_guard<std::mutex> lock(mNetworkMutex); 
-					if(mFileSend[file->uuid] != nullptr)
+					std::lock_guard<std::mutex> lock(mNetworkMutex);
+					if (mFileSend[file->uuid] != nullptr)
 					{
-						std::cout << "File " << file->uuid << " exist already\n"; 
+						std::cout << "File " << file->uuid << " exist already\n";
 					}
 					mFileSend[file->uuid] = file;
 				}
@@ -125,7 +125,7 @@ namespace Docapost {
 				bool NetworkEnable() const { return mNetwork != nullptr/* && mNetworkThread != nullptr*/; }
 				int Port() const
 				{
-					if (NetworkEnable()) 
+					if (NetworkEnable())
 						return mNetwork->Port();
 
 					return 0;

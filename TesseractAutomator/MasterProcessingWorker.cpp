@@ -402,7 +402,7 @@ bool Docapost::IA::Tesseract::MasterProcessingWorker::ExifExist(fs::path path) c
 
 string Docapost::IA::Tesseract::MasterProcessingWorker::CreatePdfOutputPath(fs::path path, int i)
 {
-	return (boost::format("%s/%s-%d.jpg") % path.parent_path().string() % fs::change_extension(path.filename(), "").string() % i).str();
+	return (boost::format("%s/%s-%d%d") % path.parent_path().string() % fs::change_extension(path.filename(), "").string() % i % mOcrFactory.GetExtension()).str();
 }
 
 void Docapost::IA::Tesseract::MasterProcessingWorker::_AddFolder(fs::path folder, bool resume)
@@ -750,14 +750,14 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::TerminateThread(int id)
 		}
 		mEnd = boost::posix_time::second_clock::local_time();
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Stoping network";
-		mNetwork->Stop();
+		/*mNetwork->Stop();
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "network Stop";
 		if (mNetworkThread != nullptr)
 		{
 			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Waiting for network Thread to complete";
 			mNetworkThread->join();
 			delete mNetworkThread;
-		}
+		}*/
 		onProcessEnd();
 
 		std::unique_lock<std::mutex> lk(mIsWorkDoneMutex);
@@ -780,6 +780,15 @@ Docapost::IA::Tesseract::MasterProcessingWorker::~MasterProcessingWorker()
 	{
 		th.second->join();
 	}
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Stoping network";
+	mNetwork->Stop();
 	mNetwork.reset();
+	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "network Stop";
+	if (mNetworkThread != nullptr)
+	{
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Waiting for network Thread to complete";
+		mNetworkThread->join();
+		delete mNetworkThread;
+	}
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "MasterProcessingWorker Destroyed";
 }

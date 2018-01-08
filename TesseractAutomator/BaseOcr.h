@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include "ImageFormatEnum.h"
 
 using std::string;
 #include <tesseract/baseapi.h>
@@ -17,10 +18,11 @@ namespace Docapost {
 			class BaseOcr
 			{
 			protected:
+				ImageFormatEnum mImageFormat;
 			public:
 				virtual ~BaseOcr() = default;
 
-				BaseOcr() 
+				BaseOcr(ImageFormatEnum format) : mImageFormat(format)
 				{
 
 				}
@@ -30,9 +32,22 @@ namespace Docapost {
 			};
 			class OcrFactory
 			{
+			protected:
+				ImageFormatEnum mImageFormat = ImageFormatEnum::JPG;
 			public:
+
 				virtual ~OcrFactory() = default;
 				virtual std::shared_ptr<BaseOcr> CreateNew() = 0;
+
+				ImageFormatEnum ImageFormat() const { return mImageFormat; }
+				void ImageFormat(const ImageFormatEnum image_format) { mImageFormat = image_format; }
+
+				std::string GetExtension()
+				{
+					if (mImageFormat == ImageFormatEnum::JPG) return ".jpg";
+					if (mImageFormat == ImageFormatEnum::PNG) return ".png";
+					return "";
+				}
 			};
 
 		}

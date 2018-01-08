@@ -76,7 +76,7 @@ std::vector<unsigned char>* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromMu
 	{
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Extract PDF file " << file->name;
 		MuPDF pdf;
-		pdf.Extract(file);
+		pdf.Extract(file, mImageFormat);
 	}
 	catch(std::exception &e)
 	{
@@ -102,7 +102,7 @@ std::vector<unsigned char>* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromMu
 	return file->data;
 }
 
-Docapost::IA::Tesseract::Tesseract::Tesseract(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang) : BaseOcr(), mPsm(psm), mOem(oem), mLang(lang), mTessBaseAPI(tesseract::TessBaseAPI())
+Docapost::IA::Tesseract::Tesseract::Tesseract(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang, ImageFormatEnum format) : BaseOcr(format), mPsm(psm), mOem(oem), mLang(lang), mTessBaseAPI(tesseract::TessBaseAPI())
 {
 	setMsgSeverity(L_SEVERITY_NONE);
 

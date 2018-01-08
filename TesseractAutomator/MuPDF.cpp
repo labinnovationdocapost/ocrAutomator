@@ -1,6 +1,7 @@
 #include "MuPDF.h"
 #include <boost/thread.hpp>
 #include "Error.h"
+#include <mupdf/fitz.h>
 
 std::mutex MuPDF::mStaticContextMutex;
 
@@ -64,7 +65,7 @@ int MuPDF::GetNbPage(std::string path)
 	return pageCount;
 }
 
-void MuPDF::Extract(MasterFileStatus* file)
+void MuPDF::Extract(MasterFileStatus* file, Docapost::IA::Tesseract::ImageFormatEnum format)
 {
 	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Begin extract PDF file";
 	//std::lock_guard<std::mutex> lock(mContextMutex);
@@ -158,6 +159,7 @@ void MuPDF::Extract(MasterFileStatus* file)
 		wp.pixmap = pix;
 		wp.displayList = list;
 		wp.pageNumber = pageNumber;
+		wp.format = format;
 		fz_rect_from_irect(&wp.area, &irect);
 
 		//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "create thread";
@@ -213,6 +215,15 @@ void MuPDF::initLocks()
 	int failed = 0;
 }
 
+
+struct fz_buffer_s
+{
+	int refs;
+	unsigned char *data;
+	size_t cap, len;
+	int unused_bits;
+	int shared;
+};
 void MuPDF::Worker(WorkerParam wp, MasterFileStatus* file)
 {
 	CatchAllErrorSignals();
@@ -242,9 +253,23 @@ void MuPDF::Worker(WorkerParam wp, MasterFileStatus* file)
 
 	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "writing to jpeg";
 
-	 
-	file->data = WriteToJPEG(wp);
-	file->fileSize = file->data->size();
+	 if(wp.format == Docapost::IA::Tesseract::ImageFormatEnum::JPG)
+	 {
+		 file->data = WriteToJPEG(wp);
+		 file->fileSize = file->data->size();
+	 }
+	 else if (wp.format == Docapost::IA::Tesseract::ImageFormatEnum::PNG)
+	 {
+		 auto buffer = fz_new_buffer_from_pixmap_as_png(local_ctx, wp.pixmap, fz_default_color_params(local_ctx));
+		 file->fileSize = buffer->len;
+		 file->data = new std::vector<unsigned char>(buffer->data, buffer->data+buffer->len);
+	 }
+	 else
+	 {
+		 BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Cannot convert to specified format, rollback to jpg";
+		 file->data = WriteToJPEG(wp);
+		 file->fileSize = file->data->size();
+	 }
 
 	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "clean";
 

@@ -14,6 +14,7 @@
 #include <google/protobuf/extension_set.h>
 #include "Error.h"
 #include "TesseractFactory.h"
+#include "ImageFormatEnum.h"
 using std::string;
 
 #include <tesseract/baseapi.h>
@@ -100,6 +101,10 @@ OCR Engine modes:
   1    Neural nets LSTM only.
   2    Tesseract + LSTM.
   3    Default, based on what is available.
+
+Image type:
+  - png
+  - jpg (default)
 )V0G0N";
 }
 
@@ -203,12 +208,30 @@ void Master(char** argv, po::variables_map& vm)
 	factory.Oem(static_cast<tesseract::OcrEngineMode>(vm["oem"].as<int>()));
 	factory.Psm(static_cast<tesseract::PageSegMode>(vm["psm"].as<int>()));
 
+	if (vm.count("image"))
+	{
+		if (vm["image"].as<std::string>() == "png")
+		{
+			factory.ImageFormat(Docapost::IA::Tesseract::ImageFormatEnum::PNG);
+		}
+		else if (vm["image"].as<std::string>() == "jpg")
+		{
+			factory.ImageFormat(Docapost::IA::Tesseract::ImageFormatEnum::JPG);
+		}
+		else
+		{
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Option " << vm["image"].as<std::string>() << " unrecognized for field [image], fallback to jpg";
+			factory.ImageFormat(Docapost::IA::Tesseract::ImageFormatEnum::JPG);
+		}
+	}
+
 	workerM = new Docapost::IA::Tesseract::MasterProcessingWorker(factory, types, vm["port"].as<int>());
 
 	if (vm.count("prefixe"))
 	{
 		workerM->Separator(vm["prefixe"].as<std::string>());
 	}
+
 
 #if DISPLAY
 	if (!vm.count("silent"))
@@ -360,7 +383,8 @@ int main(int argc, char* argv[])
 		("exif,e", value<std::string>()->value_name("DOSSIER")->default_value("")->implicit_value(""), "Copier l'image dans le fichier de sortie et écrire le resulat dans les Exif. Si non sépcifié le paramètre --output est utilisé")
 		("text,t", value<std::string>()->value_name("DOSSIER")->default_value("")->implicit_value(""), "Ecrire le resultat dans un fichier texte (.txt) dans le dossier de sortie. Si non sépcifié le paramètre --output est utilisé")
 		("prefixe,f", value<std::string>()->value_name("SEPARATOR")->default_value("__")->implicit_value("__"), "Ajout le chemin relatif a [input] en prefixe du fichier.Defaut: __")
-		("input,i", value<std::string>()->value_name("DOSSIER"), "Dossier d'entree a partir de laquelle seront listee les fichiers a traiter");
+		("input,i", value<std::string>()->value_name("DOSSIER"), "Dossier d'entree a partir de laquelle seront listee les fichiers a traiter")
+		("image", value<std::string>()->value_name("FORMAT")->default_value("jpg"), "Format de l'image de sortie");
 
 	po::options_description slaveDesc;
 	slaveDesc.add_options()

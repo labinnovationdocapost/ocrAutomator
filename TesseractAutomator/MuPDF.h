@@ -2,6 +2,7 @@
 
 #include <mutex>
 #include "MasterFileStatus.h"
+#include "ImageFormatEnum.h"
 
 
 extern "C" {
@@ -38,6 +39,7 @@ class MuPDF
 		fz_display_list * displayList;
 		fz_rect area;
 		int pageNumber;
+		Docapost::IA::Tesseract::ImageFormatEnum format;
 	};
 
 	void Worker(WorkerParam, MasterFileStatus*);
@@ -47,5 +49,5 @@ public:
 	~MuPDF();
 
 	int GetNbPage(std::string);
-	void Extract(MasterFileStatus*);
+	void Extract(MasterFileStatus*, Docapost::IA::Tesseract::ImageFormatEnum format);
 };

@@ -162,6 +162,9 @@
     <ClInclude Include="MuPDF.h">
       <Filter>Headers\PDF</Filter>
     </ClInclude>
+    <ClInclude Include="ImageFormatEnum.h">
+      <Filter>Headers\PDF</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
