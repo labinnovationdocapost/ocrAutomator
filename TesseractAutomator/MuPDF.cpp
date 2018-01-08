@@ -67,7 +67,7 @@ int MuPDF::GetNbPage(std::string path)
 void MuPDF::Extract(MasterFileStatus* file)
 {
 	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Begin extract PDF file";
-	std::lock_guard<std::mutex> lock(mContextMutex);
+	//std::lock_guard<std::mutex> lock(mContextMutex);
 	fz_document *doc = nullptr;
 	/* Open the document. */
 	fz_try(mContext)
@@ -141,7 +141,7 @@ void MuPDF::Extract(MasterFileStatus* file)
 		fz_pixmap *pix = nullptr;
 		fz_try(mContext)
 		{ 
-			std::lock_guard<std::mutex> staticlock(mStaticContextMutex);
+			//std::lock_guard<std::mutex> staticlock(mStaticContextMutex);
 			//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "create pixmap";
 			pix = fz_new_pixmap_with_bbox(mContext, fz_device_rgb(mContext), &irect, 0, 0);
 			fz_clear_pixmap_with_value(mContext, pix, 0xFF);
@@ -166,7 +166,7 @@ void MuPDF::Extract(MasterFileStatus* file)
 
 	}
 	fz_drop_document(mContext, doc);
-	lock.~lock_guard();
+	//lock.~lock_guard();
 	//worker_threads.join_all();
 
 
