@@ -74,6 +74,8 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterStatusChangedHandle
 	}
 
 	mNetworkThread = new boost::thread(&SlaveProcessingWorker::NetwordLoop, this);
+
+	onNewBatch();
 	//mNetworkThread->detach();
 
 }

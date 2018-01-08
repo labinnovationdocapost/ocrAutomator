@@ -40,6 +40,7 @@ namespace Docapost {
 			public:
 				boost::signals2::signal<void(SlaveFileStatus*)> onStartProcessFile;
 				boost::signals2::signal<void()> onProcessEnd;
+				boost::signals2::signal<void()> onNewBatch;
 
 				SlaveProcessingWorker(OcrFactory& ocr, int port = 12000, std::string ip = std::string());
 				~SlaveProcessingWorker();

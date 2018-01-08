@@ -29,11 +29,13 @@ private:
 
 	boost::signals2::connection mStartProcessFileSignalConnection;
 	boost::signals2::connection mProcessEndSignalConnection;
+	boost::signals2::connection mNewBatchSignalConnection;
 
 	boost::posix_time::ptime mTimeEnd;
 	bool mIsEnd = false;
 	void Init(bool create = true);
 	void OnEnd();
+	void OnNewBatch();
 public:
 	explicit SlaveDisplay(Docapost::IA::Tesseract::SlaveProcessingWorker &tessR);
 	~SlaveDisplay();

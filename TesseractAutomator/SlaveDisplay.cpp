@@ -52,6 +52,16 @@ void SlaveDisplay::OnEnd()
 	refresh();
 }
 
+void SlaveDisplay::OnNewBatch()
+{
+	if(this->mIsEnd)
+	{
+		this->mIsEnd = false;
+
+		wbkgd(mFooterWindow, COLOR_PAIR(2));
+	}
+}
+
 SlaveDisplay::SlaveDisplay(Docapost::IA::Tesseract::SlaveProcessingWorker& tessR) : mTesseractRunner(tessR)
 {
 	initscr();
@@ -70,6 +80,7 @@ SlaveDisplay::SlaveDisplay(Docapost::IA::Tesseract::SlaveProcessingWorker& tessR
 	Init();
 	mStartProcessFileSignalConnection = tessR.onStartProcessFile.connect(boost::bind(&SlaveDisplay::ShowFile, this, _1));
 	mProcessEndSignalConnection = tessR.onProcessEnd.connect(boost::bind(&SlaveDisplay::OnEnd, this));
+	mNewBatchSignalConnection = tessR.onNewBatch.connect(boost::bind(&SlaveDisplay::OnNewBatch, this));
 }
 
 
@@ -78,6 +89,7 @@ SlaveDisplay::~SlaveDisplay()
 	boost::lock_guard<std::mutex> lock(mThreadMutex);
 	mStartProcessFileSignalConnection.disconnect();
 	mProcessEndSignalConnection.disconnect();
+	mNewBatchSignalConnection.disconnect();
 	endwin();
 }
 
