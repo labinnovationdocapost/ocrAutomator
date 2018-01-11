@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|ARM">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM">
+      <Configuration>Release</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x86">
+      <Configuration>Debug</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x86">
+      <Configuration>Release</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Display.cpp" />
+    <ClCompile Include="DisplayManager.cpp" />
+    <ClCompile Include="Error.cpp" />
+    <ClCompile Include="SlaveDisplay.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Display.h" />
+    <ClInclude Include="DisplayManager.h" />
+    <ClInclude Include="SlaveDisplay.h" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{f95b37cf-a719-46ca-8879-b37ae473d7ea}</ProjectGuid>
+    <Keyword>Linux</Keyword>
+    <RootNamespace>TesseractAutomatorLinux</RootNamespace>
+    <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
+    <ApplicationType>Linux</ApplicationType>
+    <ApplicationTypeRevision>1.0</ApplicationTypeRevision>
+    <TargetLinuxPlatform>Generic</TargetLinuxPlatform>
+    <LinuxProjectType>{D51BCBC9-82E9-4017-911E-C93873C4EA2B}</LinuxProjectType>
+    <ProjectName>OcrAutomatorLinux</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared">
+    <Import Project="..\OcrAutomator\OcrAutomator.vcxitems" Label="Shared" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>..\Includes\Linux;..\Includes\Exiv2;..\Includes\MuPDF;$(IncludePath)</IncludePath>
+    <TargetExt />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>..\Includes;$(IncludePath)</IncludePath>
+    <TargetExt />
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>/boost_1_65_1/;/usr/include/ImageMagick-6;/usr/include/x86_64-linux-gnu/ImageMagick-6;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Verbose>false</Verbose>
+      <PreprocessorDefinitions>DISPLAY;MAGICKCORE_HDRI_ENABLE=0;MAGICKCORE_QUANTUM_DEPTH=16</PreprocessorDefinitions>
+      <CppLanguageStandard>c++11</CppLanguageStandard>
+      <CppAdditionalWarning>switch;no-deprecated-declarations;empty-body;return-type;parentheses;no-format;uninitialized;unreachable-code;unused-function;unused-value;unused-variable</CppAdditionalWarning>
+    </ClCompile>
+    <Link>
+      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;mupdf;mupdfthird;ncurses;exiv2;protobuf-lite;protobuf;z;fontconfig;freetype;dl;boost_thread;boost_log;boost_log_setup;jpeg;turbojpeg;Magick++-6.Q16;MagickCore-6.Q16</LibraryDependencies>
+      <AdditionalLibraryDirectories>/boost_1_65_1/stage/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SharedLibrarySearchPath>%(SharedLibrarySearchPath)</SharedLibrarySearchPath>
+      <VerboseOutput>false</VerboseOutput>
+      <AdditionalDependencies>$(StlAdditionalDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>-g -rdynamic %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>/boost_1_65_1/;/usr/include/ImageMagick-6;/usr/include/x86_64-linux-gnu/ImageMagick-6;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DISPLAY;NDEBUG;DISPLAY;MAGICKCORE_HDRI_ENABLE=0;MAGICKCORE_QUANTUM_DEPTH=16;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>FullDebug</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;ncurses;exiv2;protobuf-lite;protobuf;Magick++-6.Q16;MagickCore-6.Q16;podofo;z;jpeg;fontconfig;freetype;dl;boost_thread;boost_log;boost_log_setup</LibraryDependencies>
+      <AdditionalLibraryDirectories>/boost_1_65_1/stage/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <VerboseOutput>true</VerboseOutput>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>-g -rdynamic %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

@@ -1,0 +1,8 @@
+syntax = "proto2";
+
+package  Docapost.IA.Tesseract.Proto;
+
+message NetworkInfo {	
+	required int32 port = 1;
+	required string version = 2;
+}

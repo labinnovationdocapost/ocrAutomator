@@ -11,7 +11,7 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
 >Pour l'utilisation avec WSL (Windows Subsystem for Linux)
 - Suivre le tutoriel : https://blogs.msdn.microsoft.com/vcblog/2017/02/08/targeting-windows-subsystem-for-linux-from-visual-studio/
 
-## Configuration de Linux
+## Configuration pour compiler un ELF (Linux)
 - Installer le package Tesseract 4.0 LSTM : https://launchpad.net/~alex-p/+archive/ubuntu/tesseract-ocr
 - Installer les package libtesseract-dev, libtesseract-ocr-fra, libleptonica-dev, libncurses5-dev, libexiv2-dev, libmagick++-dev et libprotobuf-dev `sudo apt install libtesseract-dev libtesseract-ocr-fra libleptonica-dev libncurses5-dev libexiv2-dev libmagick++-dev libprotobuf-dev`
 - Télécharger Boost : `wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.bz2` puis extraire dans `/root/boost_1_65_1` avec `tar --bzip2 -xf /path/to/boost_1_65_1.tar.bz2`.
@@ -19,6 +19,62 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
 - Si vous souhaitez utiliser les lib static de Boost, enlever les .so générés précédemments
 - Télécharge Podofo : `wget https://mupdf.com/downloads/mupdf-1.12.0-source.tar.gz -o mupdf-1.12.0-source.tar.gz` puis extraire avec `tar -xf /path/to/mupdf-1.12.0-source.tar.gz`.
 - puis suivre la procédure : (https://mupdf.com/docs/building.html)
+
+## Configuration pour compiler un EXE (Windows)
+- Telecharger les trois librairies suivantes : 
+  - leptonica (https://github.com/DanBloomberg/leptonica)
+  - tesseract4 LTSM (https://github.com/tesseract-ocr/tesseract)
+  - jpegturbo (https://github.com/libjpeg-turbo/libjpeg-turbo)
+- Instaler les outils nécéssaire et ajouter les a votre PATH
+  - cmake (https://cmake.org/)
+  - NASM (http://www.nasm.us/)
+  - CPPAN (https://cppan.org/client/)
+  - Visual studio 2017
+- Leptonica:
+  - Suivez la procédure de génération du projet
+    - depuis le dossier ou ce situe les sources de leptonica
+    - ```cppan .```
+    - Lancer **cmake**
+      - Entrer le chemin vers le code source de leptonica et le chemin de sortie de la génération 
+      - Bouton ```Configure```
+      - Modifier la propriété **CPPAN_BUILD_SHARED_LIBS** pour qu'elle soit =0
+      - Bouton ```Generate```
+  - compiler en 64bits (ALL_BUILD)
+  - installer le (INSTALL), un dossier ```c:\programmes\leptonica``` doit être créer
+- Tesseract
+  - Suivez la procédure de génération du projet
+    - Lancer **cmake**
+      - Entrer le chemin vers le code source de tesseract et le chemin de sortie de la génération 
+      - Bouton ```Configure```
+      - Si leptonica a bien été installer la propriété **Leptonica_DIR** est préremplie
+      - Vous pouvez decocher la propriété **BUILD_TRAINING_TOOLS**
+      - Bouton ```Generate```
+  - Ouvrer le projet et modifier ses propriétés
+    - Click droit Properties sur libtesseract
+    - ```Configuration properties```
+    - ```C/C++```
+    - ```General```
+    - ```Additional Include Directories```
+    - Ajouter ```C:\Program Files\leptonica\include```
+    - Ajouter ```C:\Program Files\leptonica\include\leptonica```
+    - 
+    - ```Configuration properties```
+    - ```Linker```
+    - ```Input```
+    - ```Additional Directories```
+    - Supprimer toutes les références à pvt.cppan.demo.* 
+  - compiler en 64bits (ALL_BUILD)
+  - installer le (INSTALL), un dossier ```c:\programmes\tesseract``` doit être créer
+  - Créer un dossier ```c:\programmes\tesseract\tessdata```
+  - Télécharger dans ce dossier vos packs de langues (https://github.com/tesseract-ocr/tesseract/wiki/Data-Files)
+- JpegTurbo
+    - Lancer **cmake**
+      - Entrer le chemin vers le code source de jpegturbo et le chemin de sortie de la génération 
+      - Bouton ```Configure```
+      - Modifier la propriété **CMAKE_INSTALL_PREFIX** pour qu'elle soit ```C:\Program Files\libjpeg-turbo64```
+      - Bouton ```Generate```
+  - compiler en 64bits (ALL_BUILD)
+  - installer le (INSTALL), un dossier ```C:\Program Files\libjpeg-turbo64``` doit être créer
 
 ## Utilisation
 ```Usage:

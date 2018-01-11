@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{04d09c5e-18aa-4f3e-a90f-ac0de5cf5d34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{25f1b62c-4741-4597-ad23-ebf7a445c95f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Master">
+      <UniqueIdentifier>{4c8d3161-6650-426a-ad18-41c0ccb79656}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Slave">
+      <UniqueIdentifier>{68af6ec5-f550-494d-aaf8-276409abfe17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Master">
+      <UniqueIdentifier>{b4b6b7e1-0245-439b-9ed3-583713bfb784}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Slave">
+      <UniqueIdentifier>{28b4d74e-16c8-4e6a-94b5-72662a463a88}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Base">
+      <UniqueIdentifier>{3d36c683-354e-4074-9181-fbd9e92ae77e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Display.cpp">
+      <Filter>Source Files\Master</Filter>
+    </ClCompile>
+    <ClCompile Include="SlaveDisplay.cpp">
+      <Filter>Source Files\Slave</Filter>
+    </ClCompile>
+    <ClCompile Include="DisplayManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Error.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Display.h">
+      <Filter>Header Files\Master</Filter>
+    </ClInclude>
+    <ClInclude Include="SlaveDisplay.h">
+      <Filter>Header Files\Slave</Filter>
+    </ClInclude>
+    <ClInclude Include="DisplayManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

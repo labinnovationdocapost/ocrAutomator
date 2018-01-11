@@ -1,7 +1,0 @@
-syntax = "proto2";
-
-package  Docapost.IA.Tesseract.Proto;
-
-message Broadcast {
-	required string version = 2;
-}

@@ -1,0 +1,205 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{5c4dae4d-415a-4982-868d-642f1b058156}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{6c774acc-5c97-4398-9234-44466a1f518e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Base">
+      <UniqueIdentifier>{74e63827-b615-438a-aab1-0c6dcb577f9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\PDF">
+      <UniqueIdentifier>{e9a8f531-4445-4ed6-b672-42b8903cc29a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Slave">
+      <UniqueIdentifier>{524a166e-b603-40d5-a70d-b9a07832213c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Ocr">
+      <UniqueIdentifier>{fd1f8c6d-3f86-4239-aa1b-fc97d8025606}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Master">
+      <UniqueIdentifier>{9d4a9700-a7a2-4382-a65e-d4c481df80a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Ocr\Tesseract">
+      <UniqueIdentifier>{7ba0a9e3-2df7-42a7-9960-ef724ea488fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Base">
+      <UniqueIdentifier>{937333c0-0539-4cb5-8983-10b884b0bb4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Master">
+      <UniqueIdentifier>{98f6d1a2-4825-4a74-a821-c02e171eb9a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Ocr">
+      <UniqueIdentifier>{1bea5f4f-c221-4197-8b0b-0fdfbb1b1e55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Ocr\Tesseract">
+      <UniqueIdentifier>{639b971c-a3e6-4127-b905-3baa28797d9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Slave">
+      <UniqueIdentifier>{78ef4383-6192-4e3e-b2bd-23d914c944f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\PDF">
+      <UniqueIdentifier>{e094b0f0-47b0-4b2f-8236-56fe019ee61d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Protobuf">
+      <UniqueIdentifier>{12dfe56c-1dd9-41e4-93d4-e854f98ddc26}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Protobuf">
+      <UniqueIdentifier>{b6e56506-4374-40b0-93e6-a305d2eb3ef9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)BaseFileStatus.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)BaseProcessingWorker.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Broadcast.pb.h">
+      <Filter>Header Files\Protobuf</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Declare.pb.h">
+      <Filter>Header Files\Protobuf</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Error.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\File.pb.h">
+      <Filter>Header Files\Protobuf</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)FileSum.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)ImageFormatEnum.h">
+      <Filter>Header Files\PDF</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)MasterFileStatus.h">
+      <Filter>Header Files\Master</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)MasterProcessingWorker.h">
+      <Filter>Header Files\Master</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Message_Master.pb.h">
+      <Filter>Header Files\Protobuf</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Message_Slave.pb.h">
+      <Filter>Header Files\Protobuf</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)MuPDF.h">
+      <Filter>Header Files\PDF</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Network.h">
+      <Filter>Header Files\Master</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)NetworkClient.h">
+      <Filter>Header Files\Slave</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)NetworkSession.h">
+      <Filter>Header Files\Master</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf_all.h">
+      <Filter>Header Files\Protobuf</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Result.pb.h">
+      <Filter>Header Files\Protobuf</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\NetworkInfo.pb.h">
+      <Filter>Header Files\Protobuf</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)OutputFlags.h">
+      <Filter>Header Files\Master</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)SlaveFileStatus.h">
+      <Filter>Header Files\Slave</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)SlaveProcessingWorker.h">
+      <Filter>Header Files\Slave</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)SlaveState.h">
+      <Filter>Header Files\Slave</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Status.pb.h">
+      <Filter>Header Files\Protobuf</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Synchro_Master.pb.h">
+      <Filter>Header Files\Protobuf</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Synchro_Slave.pb.h">
+      <Filter>Header Files\Protobuf</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Tesseract.h">
+      <Filter>Header Files\Ocr\Tesseract</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)TesseractFactory.h">
+      <Filter>Header Files\Ocr\Tesseract</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)UninitializedOcrException.h">
+      <Filter>Header Files\Ocr</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)BaseOcr.h">
+      <Filter>Header Files\Ocr</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Version.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)BaseDisplay.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Broadcast.pb.cc">
+      <Filter>Source Files\Protobuf</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Declare.pb.cc">
+      <Filter>Source Files\Protobuf</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\File.pb.cc">
+      <Filter>Source Files\Protobuf</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)MasterProcessingWorker.cpp">
+      <Filter>Source Files\Master</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Message_Master.pb.cc">
+      <Filter>Source Files\Protobuf</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Message_Slave.pb.cc">
+      <Filter>Source Files\Protobuf</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)MuPDF.cpp">
+      <Filter>Source Files\PDF</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Network.cpp">
+      <Filter>Source Files\Master</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)NetworkClient.cpp">
+      <Filter>Source Files\Slave</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)NetworkSession.cpp">
+      <Filter>Source Files\Master</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Result.pb.cc">
+      <Filter>Source Files\Protobuf</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\NetworkInfo.pb.cc">
+      <Filter>Source Files\Protobuf</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)SlaveProcessingWorker.cpp">
+      <Filter>Source Files\Slave</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Status.pb.cc">
+      <Filter>Source Files\Protobuf</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Synchro_Master.pb.cc">
+      <Filter>Source Files\Protobuf</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Synchro_Slave.pb.cc">
+      <Filter>Source Files\Protobuf</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Tesseract.cpp">
+      <Filter>Source Files\Ocr\Tesseract</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Main.cpp" />
+  </ItemGroup>
+</Project>

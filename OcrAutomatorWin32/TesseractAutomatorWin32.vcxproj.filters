@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\Base">
+      <UniqueIdentifier>{47766a3b-789c-446a-9274-ccdd70c36435}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Master">
+      <UniqueIdentifier>{653be393-afed-4840-940b-4e809cbd2f41}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Ocr">
+      <UniqueIdentifier>{babc7a45-bd32-4566-be53-14767f0a6484}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Ocr\Tesseract">
+      <UniqueIdentifier>{906a1b42-c742-4b34-9e36-e7fa258d0d03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Slave">
+      <UniqueIdentifier>{c0716271-422f-444f-ac9a-be4e1f101bf0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\PDF">
+      <UniqueIdentifier>{7c4e5cc1-b340-4f29-8f71-fd555bea6920}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Base">
+      <UniqueIdentifier>{91386abd-df0d-4042-b117-61dbaa2d33d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Master">
+      <UniqueIdentifier>{f4ef72bf-af6e-48ce-84b9-ebaa8dd51877}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Ocr">
+      <UniqueIdentifier>{ca911304-fdae-48a4-ba84-84386dbdda60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Slave">
+      <UniqueIdentifier>{2f18fb11-301a-4857-b355-4d36cb3c4eea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\PDF">
+      <UniqueIdentifier>{f4936fcd-879f-431c-a0f6-f437173caba2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Ocr\Tesseract">
+      <UniqueIdentifier>{fa2d0dd5-49cb-4106-891f-1e5a25764469}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Display.cpp">
+      <Filter>Source Files\Master</Filter>
+    </ClCompile>
+    <ClCompile Include="DisplayManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Error.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="SlaveDisplay.cpp">
+      <Filter>Source Files\Slave</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Display.h">
+      <Filter>Header Files\Master</Filter>
+    </ClInclude>
+    <ClInclude Include="DisplayManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SlaveDisplay.h">
+      <Filter>Header Files\Slave</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+</Project>

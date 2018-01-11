@@ -1,0 +1,8 @@
+syntax = "proto2";
+
+package  Docapost.IA.Tesseract.Proto;
+
+message Declare {	
+	required int32 Thread = 1;
+	required string Hostname = 2;
+}

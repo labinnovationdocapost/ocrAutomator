@@ -1,8 +1,0 @@
-syntax = "proto2";
-
-package  Docapost.IA.Tesseract.Proto;
-
-message File {
-	required string uuid = 1;
-	required bytes File = 3;
-}

@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{32737229-c448-4f08-bfce-a59384283bbe}</ItemsProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)BaseDisplay.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)BaseFileStatus.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)BaseOcr.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)BaseProcessingWorker.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Error.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)FileSum.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)ImageFormatEnum.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)MasterFileStatus.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)MasterProcessingWorker.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)MuPDF.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Network.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)NetworkClient.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)NetworkSession.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)OutputFlags.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Broadcast.pb.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Declare.pb.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\File.pb.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Message_Master.pb.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Message_Slave.pb.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\NetworkInfo.pb.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Result.pb.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Status.pb.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Synchro_Master.pb.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Synchro_Slave.pb.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf_all.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)SlaveFileStatus.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)SlaveProcessingWorker.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)SlaveState.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Tesseract.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)TesseractFactory.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)UninitializedOcrException.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Version.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Main.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)MasterProcessingWorker.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)MuPDF.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Network.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)NetworkClient.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)NetworkSession.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Broadcast.pb.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Declare.pb.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\File.pb.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Message_Master.pb.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Message_Slave.pb.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\NetworkInfo.pb.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Result.pb.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Status.pb.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Synchro_Master.pb.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Synchro_Slave.pb.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)SlaveProcessingWorker.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Tesseract.cpp" />
+  </ItemGroup>
+</Project>

@@ -260,6 +260,17 @@ paket-files/
 __pycache__/
 *.pyc
 
-Includes
+/Includes/Linux
 Package
 *.deb
+
+!/Bin
+!/Bin/*
+!/Bin/*/*
+!/Bin/*/*/*
+
+
+!/Libs
+!/Libs/*
+!/Libs/*/*
+!/Libs/*/*/*

@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+import "Synchro_Slave.proto";
+import "Declare.proto";
+
+package  Docapost.IA.Tesseract.Proto;
+
+message Message_Slave {	
+	oneof message {
+		Synchro_Slave synchro = 1;
+		Declare declare = 2;
+	}
+}
