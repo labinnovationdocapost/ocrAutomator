@@ -8,7 +8,6 @@ void SlaveDisplayUI();
 extern Docapost::IA::Tesseract::MasterProcessingWorker* workerM;
 extern Docapost::IA::Tesseract::SlaveProcessingWorker* workerS;
 
-#if DISPLAY
 #include "Display.h"
 #include "SlaveDisplay.h"
 
@@ -16,5 +15,3 @@ void resizeHandler(int sig);
 
 Display* display;
 SlaveDisplay* sdisplay;
-
-#endif

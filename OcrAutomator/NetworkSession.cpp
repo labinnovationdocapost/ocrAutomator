@@ -182,7 +182,7 @@ void NetworkSession::SendStatus(int done, int skip, int total, int psm, int oem,
 	);
 }
 
-void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool isEnd, int pending, boost::unordered_map<boost::uuids::uuid, std::vector<unsigned char>*> files)
+void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool isEnd, int pending, boost::unordered_map<boost::uuids::uuid, Docapost::IA::Tesseract::MemoryFileBuffer*> files)
 {
 	auto self(shared_from_this());
 
@@ -198,7 +198,7 @@ void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool
 	{
 		auto f = s->add_data();
 		f->set_uuid(boost::uuids::to_string(file.first));
-		f->set_file(file.second->data(), file.second->size());
+		f->set_file(file.second->data(), file.second->len());
 		mFileSend[file.first] = false;
 		//delete file.second;
 	}

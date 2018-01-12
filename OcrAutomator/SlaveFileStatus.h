@@ -6,7 +6,7 @@ struct SlaveFileStatus : BaseFileStatus
 {
 	std::string result;
 
-	SlaveFileStatus(std::string uuid, std::vector<unsigned char>* data) : BaseFileStatus(uuid, data)
+	SlaveFileStatus(std::string uuid, Docapost::IA::Tesseract::MemoryFileBuffer* data) : BaseFileStatus(uuid, data)
 	{
 	}
 };

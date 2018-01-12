@@ -117,7 +117,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 			mDone++;
 
 			RemoveFileSend(uuid);
-			delete file->data;
+			delete file->buffer;
 			std::cerr << ns->Hostname() << "Clean " << file->name << "[" << file->filePosition << "]" << "\n";
 		}
 
@@ -128,7 +128,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 				try
 				{
 					std::cerr << std::this_thread::get_id() << " | Run Thread for network\n";
-					boost::unordered_map<boost::uuids::uuid, std::vector<unsigned char>*> filesToSend;
+					boost::unordered_map<boost::uuids::uuid, MemoryFileBuffer*> filesToSend;
 					auto ocr = mOcrFactory.CreateNew();
 					int i = 0;
 					while ([this, slave]() -> bool
@@ -177,7 +177,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 							}
 							else
 							{
-								filesToSend[id] = file->data;
+								filesToSend[id] = file->buffer;
 								i++;
 							}
 						}
@@ -223,7 +223,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 		}
 		std::lock_guard<std::mutex> lock(slave->ClientMutex);
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::debug) << "Synchro Ack";
-		ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, slave->PendingNotProcessed, boost::unordered_map<boost::uuids::uuid, std::vector<unsigned char>*>());
+		ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, slave->PendingNotProcessed, boost::unordered_map<boost::uuids::uuid, Docapost::IA::Tesseract::MemoryFileBuffer*>());
 	}
 	catch (std::exception& e)
 	{
@@ -434,7 +434,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::_AddFolder(fs::path folder
 			std::mutex* mutex_siblings = new std::mutex();
 			try
 			{
-				MuPDF pdf;
+				MuPDF::MuPDF pdf;
 				auto nbPages = pdf.GetNbPage(path.string());
 
 				/*PoDoFo::PdfMemDocument document;
@@ -589,7 +589,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 		exifData["Exif.Image.ImageID"] = fs::relative(file->name, mInput).string();
 		exifData["Exif.Image.ProcessingSoftware"] = mSoftName;
 
-		auto o_image = Exiv2::ImageFactory::open(file->data->data(), file->fileSize);
+		auto o_image = Exiv2::ImageFactory::open(file->buffer->data(), file->buffer->len());
 		o_image->setExifData(exifData);
 		o_image->writeMetadata();
 		auto buffersize = o_image->io().size();
@@ -668,7 +668,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 			}
 
 
-			if (!ocr->ProcessThroughOcr(file->data, file->result))
+			if (!ocr->ProcessThroughOcr(file->buffer, file->result))
 			{
 				AddFileBack(file);
 				continue;
@@ -678,7 +678,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 
 			MergeResult(file);
 
-			delete file->data;
+			delete file->buffer;
 
 			mDone++;
 

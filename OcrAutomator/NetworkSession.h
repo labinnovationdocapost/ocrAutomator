@@ -12,6 +12,7 @@
 #include <boost/signals2.hpp>
 #include "Protobuf_all.h"
 #include <queue>
+#include "MemoryFileBuffer.h"
 
 namespace ip = boost::asio::ip;
 
@@ -45,7 +46,7 @@ public:
 	void Start();
 	void Stop();
 	void SendStatus(int done, int skip, int total, int psm, int oem, std::string lang);
-	void SendSynchro(int thread, int done, int skip, int total, bool isEnd, int pending, boost::unordered_map<boost::uuids::uuid, std::vector<unsigned char>*> files);
+	void SendSynchro(int thread, int done, int skip, int total, bool isEnd, int pending, boost::unordered_map<boost::uuids::uuid, Docapost::IA::Tesseract::MemoryFileBuffer*> files);
 
 	boost::uuids::uuid& Id() { return mId; }
 	boost::unordered_map<boost::uuids::uuid, bool> FileState() const { return mFileSend; }

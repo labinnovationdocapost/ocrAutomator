@@ -417,12 +417,16 @@ int main(int argc, char* argv[])
 
 	if (vm.count("slave"))
 	{
-		//freopen("/var/log/TesseractAutomatorStdErr_Slave.log", "w", stderr);
+#ifdef __linux__
+		freopen("/var/log/TesseractAutomatorStdErr_Slave.log", "w", stderr);
+#endif
 		Slave(argv, vm);
 	}
 	else
 	{
-		//freopen("/var/log/TesseractAutomatorStdErr_Master.log", "w", stderr);
+#ifdef __linux__
+		freopen("/var/log/TesseractAutomatorStdErr_Master.log", "w", stderr);
+#endif
 		Master(argv, vm);
 	}
 

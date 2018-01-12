@@ -9,9 +9,10 @@
 
 #include "MuPDF.h"
 #include "Error.h"
+#include "ArrayMemoryFileBuffer.h"
 
 #ifdef MAGICK
-std::vector<unsigned char>* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromImageMagick(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile)
+Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromImageMagick(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile)
 {
 	try
 	{
@@ -69,23 +70,24 @@ std::vector<unsigned char>* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromIm
 	return nullptr;
 }
 
-std::vector<unsigned char>* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromMuPdf(MasterFileStatus * file, const std::function<void(MasterFileStatus*)>& AddFile) { return nullptr; }
+Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromMuPdf(MasterFileStatus * file, const std::function<void(MasterFileStatus*)>& AddFile) { return nullptr; }
 #endif
 
 #ifndef MAGICK
-std::vector<unsigned char>* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromImageMagick(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile) { return nullptr; }
-std::vector<unsigned char>* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromMuPdf(MasterFileStatus * file, const std::function<void(MasterFileStatus*)>& AddFile)
+Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromImageMagick(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile) { return nullptr; }
+
+Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromMuPdf(MasterFileStatus * file, const std::function<void(MasterFileStatus*)>& AddFile)
 {
 	std::lock_guard<std::mutex> lock(*file->mutex_siblings);
-	if (file->fileSize > 0)
+	if (file->buffer->len() > 0)
 	{
-		return file->data;
+		return file->buffer;
 	}
 
 	try
 	{
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Extract PDF file " << file->name;
-		MuPDF pdf;
+		Docapost::IA::MuPDF::MuPDF pdf;
 		pdf.Extract(file, mImageFormat);
 	}
 	catch(std::exception &e)
@@ -109,7 +111,7 @@ std::vector<unsigned char>* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromMu
 		}
 	}
 
-	return file->data;
+	return file->buffer;
 }
 #endif
 
@@ -127,7 +129,7 @@ Docapost::IA::Tesseract::Tesseract::Tesseract(tesseract::PageSegMode psm, tesser
 	mTessBaseAPI.SetPageSegMode(mPsm);
 }
 
-std::vector<unsigned char>* Docapost::IA::Tesseract::Tesseract::LoadFile(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile) {
+Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::LoadFile(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile) {
 	if (file->filePosition >= 0)
 	{
 
@@ -151,20 +153,18 @@ std::vector<unsigned char>* Docapost::IA::Tesseract::Tesseract::LoadFile(MasterF
 		fseek(f, 0, SEEK_END);
 		size_t size = ftell(f);
 
-		file->data = new std::vector<l_uint8>(size);
+		file->buffer = new ArrayMemoryFileBuffer(size);
 
 		rewind(f);
-		fread(file->data->data(), sizeof(l_uint8), size, f);
+		fread(file->buffer->data(), sizeof(unsigned char), size, f);
 		fclose(f);
 
-		file->fileSize = file->data->size();
-
-		return file->data;
+		return file->buffer;
 	}
 }
 
-bool Docapost::IA::Tesseract::Tesseract::ProcessThroughOcr(std::vector<l_uint8>* imgData, std::string& text) {
-	Pix *image = pixReadMem(imgData->data(), imgData->size());
+bool Docapost::IA::Tesseract::Tesseract::ProcessThroughOcr(Docapost::IA::Tesseract::MemoryFileBuffer* imgData, std::string& text) {
+	Pix *image = pixReadMem(imgData->data(), imgData->len());
 	if (image == nullptr)
 	{
 		return false;

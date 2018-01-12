@@ -4,6 +4,7 @@
 #include "Version.h"
 #include <boost/uuid/uuid_io.hpp>
 #include "Error.h"
+#include "StringMemoryFileBuffer.h"
 
 NetworkClient::NetworkClient(int port, std::string ip) :
 	mSynchroWaiting(0),
@@ -128,12 +129,12 @@ void NetworkClient::ReceiveData(int length)
 			}
 			else if (m.has_synchro())
 			{
-				boost::unordered_map<std::string, std::vector<unsigned char>*> dict;
-				for (auto& d : m.synchro().data())
+				boost::unordered_map<std::string, Docapost::IA::Tesseract::MemoryFileBuffer*> dict;
+				for (auto& d : *m.mutable_synchro()->mutable_data())
 				{
 					if (d.has_file())
 					{
-						dict[d.uuid()] = new std::vector<unsigned char>(d.file().begin(), d.file().end());
+						dict[d.uuid()] = new Docapost::IA::Tesseract::StringMemoryFileBuffer(d.release_file());
 					}
 				}
 				onMasterSynchro(m.synchro().totalthread(), m.synchro().done(), m.synchro().skip(), m.synchro().total(), m.synchro().isend(), m.synchro().pending(), dict);

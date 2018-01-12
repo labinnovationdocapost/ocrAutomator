@@ -10,6 +10,7 @@ using std::string;
 #include "BaseFileStatus.h"
 #include "MasterFileStatus.h"
 #include "ImageFormatEnum.h"
+#include "MemoryFileBuffer.h"
 
 
 namespace Docapost {
@@ -22,13 +23,13 @@ namespace Docapost {
 				std::string mLang;
 				tesseract::TessBaseAPI mTessBaseAPI;
 
-				std::vector<unsigned char>* ExtractPdfFromImageMagick(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile);
-				std::vector<unsigned char>* ExtractPdfFromMuPdf(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile);
+				MemoryFileBuffer* ExtractPdfFromImageMagick(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile);
+				MemoryFileBuffer* ExtractPdfFromMuPdf(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile);
 			public:
 				Tesseract(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang, ImageFormatEnum format);
 
-				std::vector<unsigned char>* LoadFile(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile) override;
-				bool ProcessThroughOcr(std::vector<unsigned char>* imgData, std::string& text) override;
+				MemoryFileBuffer* LoadFile(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile) override;
+				bool ProcessThroughOcr(MemoryFileBuffer* imgData, std::string& text) override;
 
 				~Tesseract();
 			};

@@ -2,10 +2,12 @@
 #include <boost/thread.hpp>
 #include "Error.h"
 #include <mupdf/fitz.h>
+#include "ArrayMemoryFileBuffer.h"
+#include "JpegTurboMemoryFileBuffer.h"
 
-std::mutex MuPDF::mStaticContextMutex;
+std::mutex Docapost::IA::MuPDF::MuPDF::mStaticContextMutex;
 
-MuPDF::MuPDF()
+Docapost::IA::MuPDF::MuPDF::MuPDF()
 {
 	mDrawLocks.lock = &MuPDF::s_lock;
 
@@ -32,12 +34,12 @@ MuPDF::MuPDF()
 	}
 }
 
-MuPDF::~MuPDF()
+Docapost::IA::MuPDF::MuPDF::~MuPDF()
 {
 	fz_drop_context(mContext);
 }
 
-int MuPDF::GetNbPage(std::string path)
+int Docapost::IA::MuPDF::MuPDF::GetNbPage(std::string path)
 {
 	std::lock_guard<std::mutex> lock(mContextMutex);
 	fz_document *doc = nullptr;
@@ -65,7 +67,7 @@ int MuPDF::GetNbPage(std::string path)
 	return pageCount;
 }
 
-void MuPDF::Extract(MasterFileStatus* file, Docapost::IA::Tesseract::ImageFormatEnum format)
+void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::Tesseract::ImageFormatEnum format)
 {
 	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Begin extract PDF file";
 	//std::lock_guard<std::mutex> lock(mContextMutex);
@@ -174,7 +176,7 @@ void MuPDF::Extract(MasterFileStatus* file, Docapost::IA::Tesseract::ImageFormat
 
 }
 
-void MuPDF::s_lock(void* user, int lock)
+void Docapost::IA::MuPDF::MuPDF::s_lock(void* user, int lock)
 {
 	if (user == nullptr)
 		return;
@@ -186,7 +188,7 @@ void MuPDF::s_lock(void* user, int lock)
 
 	mupdf->lock(user, lock);
 }
-void MuPDF::s_unlock(void* user, int lock)
+void Docapost::IA::MuPDF::MuPDF::s_unlock(void* user, int lock)
 {
 	if (user == nullptr)
 		return;
@@ -199,32 +201,22 @@ void MuPDF::s_unlock(void* user, int lock)
 	mupdf->unlock(user, lock);
 }
 
-void MuPDF::lock(void* user, int lock)
+void Docapost::IA::MuPDF::MuPDF::lock(void* user, int lock)
 {
 	mMutexes[lock].lock();
 }
 
-void MuPDF::unlock(void* user, int lock)
+void Docapost::IA::MuPDF::MuPDF::unlock(void* user, int lock)
 {
 	mMutexes[lock].unlock();
 }
 
-void MuPDF::initLocks()
+void Docapost::IA::MuPDF::MuPDF::initLocks()
 {
-	int i;
 	int failed = 0;
 }
 
-
-struct fz_buffer_s
-{
-	int refs;
-	unsigned char *data;
-	size_t cap, len;
-	int unused_bits;
-	int shared;
-};
-void MuPDF::Worker(WorkerParam wp, MasterFileStatus* file)
+void Docapost::IA::MuPDF::MuPDF::Worker(WorkerParam wp, MasterFileStatus* file)
 {
 	CatchAllErrorSignals();
 	CatchAllExceptions();
@@ -255,20 +247,17 @@ void MuPDF::Worker(WorkerParam wp, MasterFileStatus* file)
 
 	 if(wp.format == Docapost::IA::Tesseract::ImageFormatEnum::JPG)
 	 {
-		 file->data = WriteToJPEG(wp);
-		 file->fileSize = file->data->size();
+		 file->buffer = WriteToJPEG(wp);
 	 }
 	 else if (wp.format == Docapost::IA::Tesseract::ImageFormatEnum::PNG)
 	 {
 		 auto buffer = fz_new_buffer_from_pixmap_as_png(local_ctx, wp.pixmap, fz_default_color_params(local_ctx));
-		 file->fileSize = buffer->len;
-		 file->data = new std::vector<unsigned char>(buffer->data, buffer->data+buffer->len);
+		 file->buffer = new Tesseract::FzBufferMemoryFileBuffer(local_ctx, buffer);
 	 }
 	 else
 	 {
 		 BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Cannot convert to specified format, rollback to jpg";
-		 file->data = WriteToJPEG(wp);
-		 file->fileSize = file->data->size();
+		 file->buffer = WriteToJPEG(wp);
 	 }
 
 	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "clean";
@@ -281,19 +270,19 @@ void MuPDF::Worker(WorkerParam wp, MasterFileStatus* file)
 }
 
 // Copier de https://github.com/chris-allan/libjpeg-turbo/blob/master/turbojpeg.c ligne 421 -> tjCompress2
-std::vector<unsigned char>* MuPDF::WriteToJPEG(WorkerParam& wp)
+Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::MuPDF::MuPDF::WriteToJPEG(WorkerParam& wp) const
 {
 	long unsigned int _jpegSize = 0;
-	unsigned char* _compressedImage = NULL;
+	unsigned char* _compressedImage = nullptr;
 	tjhandle _jpegCompressor = tjInitCompress();
 	tjCompress2(_jpegCompressor, wp.pixmap->samples, wp.area.x1, 0, wp.area.y1, TJPF_RGB,
 		&_compressedImage, &_jpegSize, TJSAMP_444, 80,
 		TJFLAG_FASTDCT);
 
-	auto res = new std::vector<unsigned char>(_compressedImage, _compressedImage + _jpegSize);
+	//auto res = new std::vector<unsigned char>(_compressedImage, _compressedImage + _jpegSize);
 
 	tjDestroy(_jpegCompressor);
 	tjFree(_compressedImage);
 
-	return res;
+	return new Tesseract::JpegTurboMemoryFileBuffer(_compressedImage, _jpegSize);
 }

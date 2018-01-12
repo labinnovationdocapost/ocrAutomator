@@ -49,6 +49,12 @@
     <Filter Include="Header Files\Protobuf">
       <UniqueIdentifier>{b6e56506-4374-40b0-93e6-a305d2eb3ef9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Buffer">
+      <UniqueIdentifier>{530d5daf-a441-4732-9a44-458a9a454e85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Buffer">
+      <UniqueIdentifier>{7a6105de-8fa4-4ee0-a1c5-8cdf63eb6cc5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)BaseFileStatus.h">
@@ -147,6 +153,24 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)BaseDisplay.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)MemoryFileBuffer.h">
+      <Filter>Header Files\Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\Project\LinuxTesseract\OcrAutomator\ArrayMemoryFileBuffer.h">
+      <Filter>Header Files\Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)JpegTurboMemoryFileBuffer.h">
+      <Filter>Header Files\Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)FzBufferMemoryFileBuffer.h">
+      <Filter>Header Files\Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)fz_buffer_impl.h">
+      <Filter>Header Files\Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)StringMemoryFileBuffer.h">
+      <Filter>Header Files\Buffer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Broadcast.pb.cc">
@@ -201,5 +225,17 @@
       <Filter>Source Files\Ocr\Tesseract</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Main.cpp" />
+    <ClCompile Include="E:\Project\LinuxTesseract\OcrAutomator\ArrayMemoryFileBuffer.cpp">
+      <Filter>Source Files\Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)JpegTurboMemoryFileBuffer.cpp">
+      <Filter>Source Files\Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)FzBufferMemoryFileBuffer.cpp">
+      <Filter>Source Files\Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)StringMemoryFileBuffer.cpp">
+      <Filter>Source Files\Buffer</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

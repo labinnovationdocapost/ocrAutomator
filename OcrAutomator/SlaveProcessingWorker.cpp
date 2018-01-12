@@ -76,7 +76,7 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterStatusChangedHandle
 	//mNetworkThread->detach();
 
 }
-void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterSynchroHandler(int thread, int done, int skip, int total, bool end, int pending, boost::unordered_map<std::string, std::vector<unsigned char>*> files)
+void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterSynchroHandler(int thread, int done, int skip, int total, bool end, int pending, boost::unordered_map<std::string, MemoryFileBuffer*> files)
 {
 	this->mSkip = skip;
 	this->mTotal = total;
@@ -91,7 +91,6 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterSynchroHandler(int 
 	for (auto& file : files)
 	{
 		auto f = new SlaveFileStatus(file.first, file.second);
-		f->fileSize = file.second->size();
 		AddFileBack(f);
 		onStartProcessFile(f);
 	}
@@ -176,14 +175,14 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::ThreadLoop(int id)
 			file->start = boost::posix_time::microsec_clock::local_time();
 
 			std::string outText;
-			if (!ocr->ProcessThroughOcr(file->data, file->result))
+			if (!ocr->ProcessThroughOcr(file->buffer, file->result))
 			{
 				std::cerr << "Get Tesseract Error" << std::endl;
 
 				continue;
 			}
 
-			delete file->data;
+			delete file->buffer;
 
 			mDone++;
 

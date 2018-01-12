@@ -20,9 +20,14 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)BaseProcessingWorker.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Error.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)FileSum.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)FzBufferMemoryFileBuffer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)fz_buffer_impl.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ImageFormatEnum.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)ArrayMemoryFileBuffer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)JpegTurboMemoryFileBuffer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MasterFileStatus.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MasterProcessingWorker.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)MemoryFileBuffer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MuPDF.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Network.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)NetworkClient.h" />
@@ -42,12 +47,16 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)SlaveFileStatus.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)SlaveProcessingWorker.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)SlaveState.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)StringMemoryFileBuffer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Tesseract.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TesseractFactory.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)UninitializedOcrException.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Version.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)ArrayMemoryFileBuffer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)FzBufferMemoryFileBuffer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)JpegTurboMemoryFileBuffer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Main.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)MasterProcessingWorker.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)MuPDF.cpp" />
@@ -65,6 +74,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Synchro_Master.pb.cc" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Synchro_Slave.pb.cc" />
     <ClCompile Include="$(MSBuildThisFileDirectory)SlaveProcessingWorker.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)StringMemoryFileBuffer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Tesseract.cpp" />
   </ItemGroup>
 </Project>

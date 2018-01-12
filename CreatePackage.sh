@@ -4,7 +4,7 @@ VERSION=1.4.0
 mkdir -p "/tmp/Package/DEBIAN"
 mkdir -p "/tmp/Package/usr/bin"
 touch "/tmp/Package/DEBIAN/control"
-cp "TesseractAutomator/bin/x64/Release/TesseractAutomator" "/tmp/Package/usr/bin/"
+cp "OcrAutomatorLinux/bin/x64/Release/TesseractAutomator" "/tmp/Package/usr/bin/"
 echo "" > "/tmp/Package/DEBIAN/control"
 echo "Package: TesseractAutomator
 Version: $VERSION

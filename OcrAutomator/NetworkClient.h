@@ -17,6 +17,7 @@
 #include "SlaveFileStatus.h"
 #include <mutex>
 #include <queue>
+#include "MemoryFileBuffer.h"
 
 namespace ip = boost::asio::ip;
 
@@ -57,7 +58,7 @@ public:
 	// threadToRun, done, skip, total, psm, oem, lang
 	boost::signals2::signal<void(int, int, int, int, int, int, std::string)> onMasterStatusChanged;
 	// thread, files
-	boost::signals2::signal<void(int, int, int, int ,bool, int, boost::unordered_map<std::string, std::vector<unsigned char>*>&)> onMasterSynchro;
+	boost::signals2::signal<void(int, int, int, int ,bool, int, boost::unordered_map<std::string, Docapost::IA::Tesseract::MemoryFileBuffer*>&)> onMasterSynchro;
 
 	explicit NetworkClient(int port, std::string ip);
 	google::protobuf::uint32 readHeader(char* buf);

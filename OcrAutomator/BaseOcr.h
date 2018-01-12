@@ -27,8 +27,8 @@ namespace Docapost {
 
 				}
 
-				virtual std::vector<unsigned char>* LoadFile(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile) = 0;
-				virtual bool ProcessThroughOcr(std::vector<unsigned char>* imgData, std::string& text) = 0;
+				virtual MemoryFileBuffer* LoadFile(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile) = 0;
+				virtual bool ProcessThroughOcr(MemoryFileBuffer* imgData, std::string& text) = 0;
 			};
 			class OcrFactory
 			{
