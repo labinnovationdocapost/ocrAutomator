@@ -282,7 +282,7 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::MuPDF::MuPDF::WriteToJP
 	//auto res = new std::vector<unsigned char>(_compressedImage, _compressedImage + _jpegSize);
 
 	tjDestroy(_jpegCompressor);
-	tjFree(_compressedImage);
+	//tjFree(_compressedImage);
 
 	return new Tesseract::JpegTurboMemoryFileBuffer(_compressedImage, _jpegSize);
 }

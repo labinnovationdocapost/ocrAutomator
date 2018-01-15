@@ -18,7 +18,7 @@ namespace Docapost {
 				unsigned char* data() override;
 				int len() override;
 
-				~FzBufferMemoryFileBuffer() override;
+				virtual ~FzBufferMemoryFileBuffer();
 			};
 		}
 	}

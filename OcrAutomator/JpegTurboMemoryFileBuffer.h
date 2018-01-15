@@ -14,7 +14,7 @@ namespace Docapost {
 				unsigned char* data() override;
 				int len() override;
 
-				~JpegTurboMemoryFileBuffer() override;
+				virtual ~JpegTurboMemoryFileBuffer();
 			};
 		}
 	}

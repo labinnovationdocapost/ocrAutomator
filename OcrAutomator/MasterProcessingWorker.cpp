@@ -105,20 +105,21 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 				continue;
 			}
 
-			std::cerr << ns->Hostname() << "Getting back " << file->name << "[" << file->filePosition << "]" << "\n";
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << ns->Hostname() << "Getting back " << file->name << "[" << file->filePosition << "]" << "\n";
 
 			std::tie(uuid, file->thread, file->start, file->end, file->ellapsed, result) = res;
 			file->isEnd = true;
 			file->hostname = ns->Hostname();
 
-			std::cerr << ns->Hostname() << "Writing Output " << file->name << "[" << file->filePosition << "]" << "\n";
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << ns->Hostname() << "Writing Output " << file->name << "[" << file->filePosition << "]" << "\n";
 			CreateOutput(file, result);
 			MergeResult(file);
 			mDone++;
 
 			RemoveFileSend(uuid);
 			delete file->buffer;
-			std::cerr << ns->Hostname() << "Clean " << file->name << "[" << file->filePosition << "]" << "\n";
+			file->buffer = nullptr;
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << ns->Hostname() << "Clean " << file->name << "[" << file->filePosition << "]" << "\n";
 		}
 
 		if (slave->PendingNotProcessed > 0 && slave->PendingProcessed > 0)
@@ -187,6 +188,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 							++slave->PendingProcessed;
 						}
 					}
+					delete ocr;
 
 					if (filesToSend.size() == 0)
 						return;
@@ -200,7 +202,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 					else
 					{
 						BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << std::this_thread::get_id() << " | Netowrk interface closed -> rollback\n";
-						std::lock_guard<std::mutex> lock(mNetworkMutex);
+						std::lock_guard<std::mutex> lock2(mNetworkMutex);
 						for (auto fileToSend : filesToSend)
 						{
 							auto file = GetFileSend(fileToSend.first);
@@ -679,6 +681,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 			MergeResult(file);
 
 			delete file->buffer;
+			file->buffer = nullptr;
 
 			mDone++;
 
@@ -773,7 +776,10 @@ Docapost::IA::Tesseract::MasterProcessingWorker::~MasterProcessingWorker()
 	mIsTerminated = true;
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Destroying MasterProcessingWorker";
 
-	for (auto th : mThreads)
+	boost::lock_guard<std::mutex> lock(mThreadMutex);
+	const auto ths = mThreads;
+	lock.~lock_guard();
+	for (auto th : ths)
 	{
 		th.second->join();
 	}

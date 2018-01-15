@@ -77,10 +77,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>..\Includes\Linux;..\Includes\Exiv2;..\Includes\MuPDF;$(IncludePath)</IncludePath>
     <TargetExt />
+    <TargetName>TesseractAutomator</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>..\Includes\Linux;..\Includes\Exiv2;..\Includes\MuPDF;$(IncludePath)</IncludePath>
     <TargetExt />
+    <TargetName>TesseractAutomator</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

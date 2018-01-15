@@ -79,7 +79,7 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::E
 Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromMuPdf(MasterFileStatus * file, const std::function<void(MasterFileStatus*)>& AddFile)
 {
 	std::lock_guard<std::mutex> lock(*file->mutex_siblings);
-	if (file->buffer->len() > 0)
+	if (file->buffer != nullptr && file->buffer->len() > 0)
 	{
 		return file->buffer;
 	}

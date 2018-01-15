@@ -185,7 +185,7 @@ void NetworkSession::SendStatus(int done, int skip, int total, int psm, int oem,
 void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool isEnd, int pending, boost::unordered_map<boost::uuids::uuid, Docapost::IA::Tesseract::MemoryFileBuffer*> files)
 {
 	auto self(shared_from_this());
-
+	
 	Docapost::IA::Tesseract::Proto::Synchro_Master* s = new Docapost::IA::Tesseract::Proto::Synchro_Master{};
 	s->set_totalthread(thread);
 	s->set_done(done);
@@ -200,7 +200,6 @@ void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool
 		f->set_uuid(boost::uuids::to_string(file.first));
 		f->set_file(file.second->data(), file.second->len());
 		mFileSend[file.first] = false;
-		//delete file.second;
 	}
 
 	Docapost::IA::Tesseract::Proto::Message_Master m;
@@ -212,6 +211,10 @@ void NetworkSession::SendSynchro(int thread, int done, int skip, int total, bool
 	google::protobuf::io::CodedOutputStream coded_output(&aos);
 	coded_output.WriteLittleEndian32(m.ByteSize());
 	m.SerializePartialToCodedStream(&coded_output);
+	
+	// SHOULD BE DONE BECAUSE PROTOBUF IMPLEMENTATION 
+
+	s->clear_data();
 
 	mStrand.dispatch(
 		boost::bind(

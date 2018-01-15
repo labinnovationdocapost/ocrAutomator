@@ -156,9 +156,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)MemoryFileBuffer.h">
       <Filter>Header Files\Buffer</Filter>
     </ClInclude>
-    <ClInclude Include="E:\Project\LinuxTesseract\OcrAutomator\ArrayMemoryFileBuffer.h">
-      <Filter>Header Files\Buffer</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)JpegTurboMemoryFileBuffer.h">
       <Filter>Header Files\Buffer</Filter>
     </ClInclude>
@@ -171,6 +168,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)StringMemoryFileBuffer.h">
       <Filter>Header Files\Buffer</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)ArrayMemoryFileBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Broadcast.pb.cc">
@@ -225,9 +223,6 @@
       <Filter>Source Files\Ocr\Tesseract</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Main.cpp" />
-    <ClCompile Include="E:\Project\LinuxTesseract\OcrAutomator\ArrayMemoryFileBuffer.cpp">
-      <Filter>Source Files\Buffer</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)JpegTurboMemoryFileBuffer.cpp">
       <Filter>Source Files\Buffer</Filter>
     </ClCompile>
@@ -237,5 +232,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)StringMemoryFileBuffer.cpp">
       <Filter>Source Files\Buffer</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)ArrayMemoryFileBuffer.cpp" />
   </ItemGroup>
 </Project>
