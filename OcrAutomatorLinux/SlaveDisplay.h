@@ -23,6 +23,7 @@ private:
 	int mTotalView = 1;
 
 	std::mutex mThreadMutex;
+	std::mutex mLoopMutex;
 	bool mIsTerminated = false;
 
 	Docapost::IA::Tesseract::SlaveProcessingWorker& mTesseractRunner;

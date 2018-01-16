@@ -12,7 +12,7 @@
 
 void Display::Init(bool create)
 {
-	boost::lock_guard<std::mutex> lock(mThreadMutex);
+	boost::lock_guard<std::mutex> lock(mLoopMutex);
 	if (!create)
 	{
 		delwin(mTopWindow);
@@ -45,7 +45,7 @@ void Display::Init(bool create)
 
 void Display::OnEnd()
 {
-	boost::lock_guard<std::mutex> lock(mThreadMutex);
+	boost::lock_guard<std::mutex> lock(mLoopMutex);
 	if (mIsEnd == true || mIsTerminated == true)
 		return;
 	mTimeEnd = boost::posix_time::second_clock::local_time();
@@ -79,7 +79,7 @@ Display::Display(Docapost::IA::Tesseract::MasterProcessingWorker& tessR) : mTess
 
 Display::~Display()
 {
-	boost::lock_guard<std::mutex> lock(mThreadMutex);
+	boost::lock_guard<std::mutex> lock(mLoopMutex);
 	mStartProcessFileSignalConnection.disconnect();
 	mProcessEndSignalConnection.disconnect();
 	mFileCanceledSignalConnection.disconnect();
@@ -126,10 +126,10 @@ void Display::DrawHeader() const
 
 int Display::GetAverageSize() const
 {
-	return std::floor(pow(log(mTesseractRunner.NbThreads() + mTesseractRunner.TotalRemoteThreads()), 3.5)) + 10;
+	return std::floor(pow(log(mTesseractRunner.NbThreads() + mTesseractRunner.TotalRemoteThreads()), 3.2)) + 20;
 }
 
-void Display::DrawBody(const std::list<MasterFileStatus*> files, FileSum& s) const
+void Display::DrawBody(const std::unordered_set<MasterFileStatus*> files, FileSum& s)
 {
 	mvwprintw(mHeaderWindow, 0, 0, "%-15s %-6s %s\n", "Ellapsed", "Thread", "Origin");
 	wrefresh(mHeaderWindow);
@@ -138,12 +138,21 @@ void Display::DrawBody(const std::list<MasterFileStatus*> files, FileSum& s) con
 	auto start = std::max(static_cast<int>(files.size()) - mScreenHeight, 0);
 	auto fileToPrint = files.size();
 
-	for (auto j = std::prev(files.end(), std::min(static_cast<int>(files.size()), mScreenHeight)); j != files.end(); ++j)
+	for (auto j = files.cbegin(); j != files.cend(); ++j)
 	{
 		if (*j == nullptr)
 			break;
+		
 		if ((*j)->isEnd)
 		{
+			if((boost::posix_time::microsec_clock::local_time() - (*j)->end).total_seconds() > 5)
+			{
+				boost::lock_guard<std::mutex> lock(mThreadMutex);
+				mFiles.erase(*j);
+				mFilesCompleted.push_back(*j);
+				continue;
+			}
+
 			std::stringstream cstring;
 			cstring << "" << (*j)->ellapsed;
 			//wprintw(win, "%-15s %-6d %s -> %s\n", cstring.str().c_str(), files[j]->thread, files[j]->relative_name.c_str(), boost::algorithm::join(files[j]->relative_output, " | ").c_str());
@@ -157,7 +166,7 @@ void Display::DrawBody(const std::list<MasterFileStatus*> files, FileSum& s) con
 	}
 
 	auto max = GetAverageSize();
-	for (auto j = files.rbegin(); j != files.rend() && s.count < max; ++j)
+	for (auto j = mFilesCompleted.rbegin(); j != mFilesCompleted.rend() && s.count < max; ++j)
 	{
 		if ((*j)->isEnd)
 		{
@@ -168,14 +177,14 @@ void Display::DrawBody(const std::list<MasterFileStatus*> files, FileSum& s) con
 	wrefresh(mMainWindow);
 }
 
-void Display::DrawBodyNetwork(const std::list<MasterFileStatus*> files, FileSum& s) const
+void Display::DrawBodyNetwork(const std::unordered_set<MasterFileStatus*> files, FileSum& s)
 {
 	mvwprintw(mHeaderWindow, 0, 0, "%-20s %-6s\n", "Hostname", "Thread");
 	wrefresh(mTopWindow);
 
 	wmove(mMainWindow, 0, 0);
 	auto max = GetAverageSize();
-	for (auto j = files.rbegin(); j != files.rend() && s.count < max; ++j)
+	for (auto j = mFilesCompleted.rbegin(); j != mFilesCompleted.rend() && s.count < max; ++j)
 	{
 		if ((*j)->isEnd)
 		{
@@ -190,7 +199,7 @@ void Display::DrawBodyNetwork(const std::list<MasterFileStatus*> files, FileSum&
 	wrefresh(mMainWindow);
 }
 
-void Display::DrawFooter(const std::list<MasterFileStatus*> cfiles, FileSum s) const
+void Display::DrawFooter(const std::unordered_set<MasterFileStatus*> cfiles, FileSum s)
 {
 	if (s.count > 0 && mIsEnd)
 	{
@@ -212,8 +221,8 @@ void Display::DrawFooter(const std::list<MasterFileStatus*> cfiles, FileSum s) c
 		std::stringstream cstring;
 
 
-		auto remaining = (s.sum / s.count / (mTesseractRunner.NbThreads() + mTesseractRunner.TotalRemoteThreads())) * (mTesseractRunner.Total() - cfiles.size());
-		auto average = s.sum / s.count / (mTesseractRunner.NbThreads() + mTesseractRunner.TotalRemoteThreads());
+		auto average = (s.sum / s.count) / (mTesseractRunner.NbThreads() + mTesseractRunner.TotalRemoteThreads());
+		auto remaining = average * (mTesseractRunner.Total() - cfiles.size());
 		cstring << "files: " << mTesseractRunner.Done() << "/" << mTesseractRunner.Total()
 			<< "\t Average: " << std::setw(2) << std::setfill('0') << average.hours() << ":"
 			<< std::setw(2) << std::setfill('0') << average.minutes() << ":"
@@ -248,17 +257,22 @@ void Display::DrawCommand() const
 
 void Display::Draw()
 {
-	boost::lock_guard<std::mutex> lock(mThreadMutex);
+	boost::lock_guard<std::mutex> lockLoop(mLoopMutex);
 	DrawHeader();
 
+	boost::lock_guard<std::mutex> lock(mThreadMutex);
+	const auto files = mFiles;
+	lock.~lock_guard();
+
 	FileSum s{};
+	werase(mMainWindow);
 
 	if (mCurrentView == 0)
-		DrawBody(mFiles, s);
+		DrawBody(files, s);
 	if (mCurrentView == 1)
-		DrawBodyNetwork(mFiles, s);
+		DrawBodyNetwork(files, s);
 
-	DrawFooter(mFiles, s);
+	DrawFooter(files, s);
 
 	DrawCommand();
 }
@@ -277,14 +291,14 @@ void Display::ShowFile(MasterFileStatus* file)
 void Display::OnCanceled(MasterFileStatus* str)
 {
 	boost::lock_guard<std::mutex> lock(mThreadMutex);
-	mFiles.remove(str);
-	werase(mMainWindow);
+	mFiles.erase(str);
+	//werase(mMainWindow);
 }
 
 void Display::AddFile(MasterFileStatus* file)
 {
 	boost::lock_guard<std::mutex> lock(mThreadMutex);
-	mFiles.push_back(file);
+	mFiles.insert(file);
 }
 
 void Display::Run()

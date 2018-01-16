@@ -781,7 +781,8 @@ Docapost::IA::Tesseract::MasterProcessingWorker::~MasterProcessingWorker()
 	lock.~lock_guard();
 	for (auto th : ths)
 	{
-		th.second->join();
+		if(th.second->joinable())
+			th.second->join();
 	}
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Stoping network";
 	mNetwork->Stop();

@@ -13,6 +13,7 @@ class Display
 private:
 	int mScreenHeight, mScreenWidth;
 	std::list<MasterFileStatus*> mFiles{};
+	std::list<MasterFileStatus*> mFilesCompleted{};
 
 	int mCurrentView = 0;
 	int mTotalView = 2;

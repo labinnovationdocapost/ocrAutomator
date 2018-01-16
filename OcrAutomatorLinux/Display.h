@@ -5,6 +5,7 @@
 #include <vector>
 #include "MasterFileStatus.h"
 #include "FileSum.h"
+#include <unordered_set>
 struct FileSum;
 using std::string;
 #include "MasterProcessingWorker.h"
@@ -18,12 +19,14 @@ private:
 	WINDOW * mFooterWindow;
 	WINDOW * mControlWindow;
 	int mScreenHeight, mScreenWidth;
-	std::list<MasterFileStatus*> mFiles{};
+	std::unordered_set<MasterFileStatus*> mFiles;
+	std::list<MasterFileStatus*> mFilesCompleted;
 
 	int mCurrentView = 0;
 	int mTotalView = 2;
 
 	std::mutex mThreadMutex;
+	std::mutex mLoopMutex;
 
 	Docapost::IA::Tesseract::MasterProcessingWorker& mTesseractRunner;
 
@@ -43,9 +46,9 @@ public:
 	~Display();
 
 	void DrawHeader() const;
-	void DrawBody(const std::list<MasterFileStatus*> files, FileSum& s) const;
-	void DrawBodyNetwork(const std::list<MasterFileStatus*> files, FileSum& s) const;
-	void DrawFooter(const std::list<MasterFileStatus*> cfiles, FileSum s) const;
+	void DrawBody(const std::unordered_set<MasterFileStatus*> files, FileSum& s);
+	void DrawBodyNetwork(const std::unordered_set<MasterFileStatus*> files, FileSum& s);
+	void DrawFooter(const std::unordered_set<MasterFileStatus*> files, FileSum s);
 	void DrawCommand() const;
 	void Draw();
 

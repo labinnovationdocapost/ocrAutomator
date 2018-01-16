@@ -12,7 +12,7 @@
 
 void SlaveDisplay::Init(bool create)
 {
-	boost::lock_guard<std::mutex> lock(mThreadMutex);
+	boost::lock_guard<std::mutex> lock(mLoopMutex);
 	if (!create)
 	{
 		delwin(mTopWindow);
@@ -86,7 +86,7 @@ SlaveDisplay::SlaveDisplay(Docapost::IA::Tesseract::SlaveProcessingWorker& tessR
 
 SlaveDisplay::~SlaveDisplay()
 {
-	boost::lock_guard<std::mutex> lock(mThreadMutex);
+	boost::lock_guard<std::mutex> lock(mLoopMutex);
 	mStartProcessFileSignalConnection.disconnect();
 	mProcessEndSignalConnection.disconnect();
 	mNewBatchSignalConnection.disconnect();
@@ -166,12 +166,18 @@ void SlaveDisplay::DrawCommand() const
 
 void SlaveDisplay::Draw()
 {
+	boost::lock_guard<std::mutex> lockLoop(mLoopMutex);
+
+
 	boost::lock_guard<std::mutex> lock(mThreadMutex);
+	const auto files = mFiles;
+	lock.~lock_guard();
+
 	DrawHeader();
 
-	DrawBody(mFiles);
+	DrawBody(files);
 
-	DrawFooter(mFiles);
+	DrawFooter(files);
 
 	DrawCommand();
 }
@@ -185,6 +191,7 @@ void SlaveDisplay::Resize()
 
 void SlaveDisplay::ShowFile(SlaveFileStatus* str)
 {
+	boost::lock_guard<std::mutex> lock(mThreadMutex);
 	mFiles.insert(mFiles.end(), str);
 }
 
