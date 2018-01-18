@@ -1,5 +1,10 @@
 
-VERSION=1.4.0
+VERSION=$(OcrAutomatorLinux/bin/x64/Release/TesseractAutomator -v | grep Version | cut -d ':' -f 2 | cut -d " " -f 2)
+echo "Version: ${VERSION}"
+if [ -z $VERSION ]
+then
+	exit
+fi
 
 mkdir -p "/tmp/Package/DEBIAN"
 mkdir -p "/tmp/Package/usr/bin"
@@ -10,7 +15,7 @@ echo "Package: TesseractAutomator
 Version: $VERSION
 Section: base
 Priority: optional
-Architecture: all
+Architecture: amd64
 Depends: libtesseract4 (>= 4), libncurses5 (>= 6.0), libexiv2-14 (>= 0.25), libprotobuf-lite9v5 (>= 2.6.1), libprotobuf9v5 (>=2.6.1), libmagick++-6.q16-5v5 (>=6.8.9.9)
 Maintainer: Innovation <cyril.tisserand@docapost.fr>
 Description: Automatise l'Ocr par Tesseract sur plusieur thread et dans plusieur modes différents
