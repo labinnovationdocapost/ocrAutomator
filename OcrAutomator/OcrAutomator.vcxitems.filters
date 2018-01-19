@@ -233,5 +233,8 @@
       <Filter>Source Files\Buffer</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)ArrayMemoryFileBuffer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)MasterProcessingWorker_SignalHandler.cpp">
+      <Filter>Source Files\Master</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

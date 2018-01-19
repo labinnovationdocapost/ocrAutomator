@@ -106,6 +106,9 @@ namespace Docapost {
 				void RemoveFileSend(boost::uuids::uuid uuid) { std::lock_guard<std::mutex> lock(mNetworkMutex); mFileSend.erase(uuid); }
 
 
+				void SendFilesToClient(NetworkSession* ns);
+				bool HasFileToSend(std::shared_ptr<SlaveState> slave);
+
 				void OnSlaveConnectHandler(NetworkSession* ns, int thread, std::string hostname);
 				void OnSlaveDisconnectHandler(NetworkSession* ns, boost::unordered_map<boost::uuids::uuid, bool>& noUsed);
 				void OnSlaveSynchroHandler(NetworkSession* ns, int thread, int required, std::vector<std::tuple<boost::uuids::uuid, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>& results);

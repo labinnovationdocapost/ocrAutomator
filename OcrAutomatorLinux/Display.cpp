@@ -135,8 +135,6 @@ void Display::DrawBody(const std::unordered_set<MasterFileStatus*> files, FileSu
 	wrefresh(mHeaderWindow);
 
 	wmove(mMainWindow, 0, 0);
-	auto start = std::max(static_cast<int>(files.size()) - mScreenHeight, 0);
-	auto fileToPrint = files.size();
 
 	for (auto j = files.cbegin(); j != files.cend(); ++j)
 	{

@@ -18,6 +18,12 @@ extern "C" {
 namespace Docapost {
 	namespace IA {
 		namespace MuPDF {
+			struct ImageQuality
+			{
+				int jpegQuality;
+				ImageQuality() : jpegQuality(80) {};
+				explicit ImageQuality(int jpeg) : jpegQuality(jpeg) {}
+			};
 			class MuPDF
 			{
 				static void s_lock(void *user, int lock);
@@ -27,6 +33,7 @@ namespace Docapost {
 
 				std::mutex mMutexes[FZ_LOCK_MAX];
 				std::mutex mContextMutex;
+
 				static std::mutex mStaticContextMutex;
 
 				void lock(void *user, int lock);
@@ -44,17 +51,18 @@ namespace Docapost {
 					fz_display_list * displayList;
 					fz_rect area;
 					int pageNumber;
+					ImageQuality quality;
 					Tesseract::ImageFormatEnum format;
 				};
 
 				void Worker(WorkerParam, MasterFileStatus*);
-				Tesseract::MemoryFileBuffer* WriteToJPEG(WorkerParam& pix) const;
+				Tesseract::MemoryFileBuffer* WriteToJPEG(WorkerParam& pix, int quality) const;
 			public:
 				MuPDF();
 				~MuPDF();
 
 				int GetNbPage(std::string);
-				void Extract(MasterFileStatus*, Tesseract::ImageFormatEnum format);
+				void Extract(MasterFileStatus*, Tesseract::ImageFormatEnum format, ImageQuality quality = ImageQuality());
 			};
 		}
 	}

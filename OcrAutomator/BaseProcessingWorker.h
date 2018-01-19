@@ -33,13 +33,14 @@ namespace Docapost {
 
 				std::mutex mStackMutex;
 				std::mutex mThreadMutex;
+				std::mutex mThreadManagementMutex;
 				std::map<int, boost::thread*> mThreads;
 
 				const std::string mSoftName = "Docapost Tesseract Automator";
 
 				std::deque<T*> mFiles;
 
-				int mNbThreadToStop = 0;
+				std::atomic_int mNbThreadToStop{ 0 };
 				int mTotal = 0;
 				int mSkip = 0;
 				int mDone = 0;
@@ -110,10 +111,12 @@ namespace Docapost {
 				void AddThread()
 				{
 					int id = mNextId++;
+					boost::lock_guard<std::mutex> lockManagement(mThreadManagementMutex);
 					mThreads[id] = new boost::thread(&BaseProcessingWorker<T>::ThreadLoop, this, id);
 				}
 				void RemoveThread()
 				{
+					boost::lock_guard<std::mutex> lockManagement(mThreadManagementMutex);
 					boost::lock_guard<std::mutex> lock(mThreadMutex);
 
 					if (mThreads.size() > mNbThreadToStop + 1)

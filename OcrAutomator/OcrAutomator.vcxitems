@@ -59,6 +59,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)JpegTurboMemoryFileBuffer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Main.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)MasterProcessingWorker.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)MasterProcessingWorker_SignalHandler.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)MuPDF.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Network.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)NetworkClient.cpp" />

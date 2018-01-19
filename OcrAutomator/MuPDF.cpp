@@ -67,7 +67,7 @@ int Docapost::IA::MuPDF::MuPDF::GetNbPage(std::string path)
 	return pageCount;
 }
 
-void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::Tesseract::ImageFormatEnum format)
+void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::Tesseract::ImageFormatEnum format, ImageQuality quality)
 {
 	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Begin extract PDF file";
 	//std::lock_guard<std::mutex> lock(mContextMutex);
@@ -162,6 +162,7 @@ void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::T
 		wp.displayList = list;
 		wp.pageNumber = pageNumber;
 		wp.format = format;
+		wp.quality = quality;
 		fz_rect_from_irect(&wp.area, &irect);
 
 		//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "create thread";
@@ -213,7 +214,6 @@ void Docapost::IA::MuPDF::MuPDF::unlock(void* user, int lock)
 
 void Docapost::IA::MuPDF::MuPDF::initLocks()
 {
-	int failed = 0;
 }
 
 void Docapost::IA::MuPDF::MuPDF::Worker(WorkerParam wp, MasterFileStatus* file)
@@ -247,7 +247,7 @@ void Docapost::IA::MuPDF::MuPDF::Worker(WorkerParam wp, MasterFileStatus* file)
 
 	 if(wp.format == Docapost::IA::Tesseract::ImageFormatEnum::JPG)
 	 {
-		 file->buffer = WriteToJPEG(wp);
+		 file->buffer = WriteToJPEG(wp, wp.quality.jpegQuality);
 	 }
 	 else if (wp.format == Docapost::IA::Tesseract::ImageFormatEnum::PNG)
 	 {
@@ -257,7 +257,7 @@ void Docapost::IA::MuPDF::MuPDF::Worker(WorkerParam wp, MasterFileStatus* file)
 	 else
 	 {
 		 BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Cannot convert to specified format, rollback to jpg";
-		 file->buffer = WriteToJPEG(wp);
+		 file->buffer = WriteToJPEG(wp, wp.quality.jpegQuality);
 	 }
 
 	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "clean";
@@ -270,13 +270,13 @@ void Docapost::IA::MuPDF::MuPDF::Worker(WorkerParam wp, MasterFileStatus* file)
 }
 
 // Copier de https://github.com/chris-allan/libjpeg-turbo/blob/master/turbojpeg.c ligne 421 -> tjCompress2
-Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::MuPDF::MuPDF::WriteToJPEG(WorkerParam& wp) const
+Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::MuPDF::MuPDF::WriteToJPEG(WorkerParam& wp, int quality) const
 {
 	long unsigned int _jpegSize = 0;
 	unsigned char* _compressedImage = nullptr;
 	tjhandle _jpegCompressor = tjInitCompress();
 	tjCompress2(_jpegCompressor, wp.pixmap->samples, wp.area.x1, 0, wp.area.y1, TJPF_RGB,
-		&_compressedImage, &_jpegSize, TJSAMP_444, 80,
+		&_compressedImage, &_jpegSize, TJSAMP_444, quality,
 		TJFLAG_FASTDCT);
 
 	//auto res = new std::vector<unsigned char>(_compressedImage, _compressedImage + _jpegSize);

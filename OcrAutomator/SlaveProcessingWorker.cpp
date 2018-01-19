@@ -273,8 +273,13 @@ Docapost::IA::Tesseract::SlaveProcessingWorker::~SlaveProcessingWorker()
 		/*BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Join" << " file(s)";
 		mNetworkThread->join();*/
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Delete Network thread";
-		mNetworkThread->join();
-		delete mNetworkThread; 
+		if(mNetworkThread != nullptr)
+		{
+			if (mNetworkThread->joinable())
+				mNetworkThread->join();
+
+			delete mNetworkThread;
+		}
 
 
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Join : " << mAsioThread->joinable();
