@@ -142,7 +142,7 @@ void Network::Stop()
 		});
 	}
 
-	while (mTcpAcceptor.is_open() || mUdpSocket.is_open()) {}
+	//while (mTcpAcceptor.is_open() || mUdpSocket.is_open()) {}
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Stoping ASIO service";
 	mService.stop();
 	std::lock_guard<std::mutex> lock(mStateMutex);

@@ -11,6 +11,7 @@
 #include "UninitializedOcrException.h"
 #include <boost/algorithm/string.hpp>
 #include "MuPDF.h"
+#include "ExivMemoryFileBuffer.h"
 
 
 Docapost::IA::Tesseract::MasterProcessingWorker::MasterProcessingWorker(OcrFactory& ocr, Docapost::IA::Tesseract::OutputFlags types, int port) :
@@ -403,22 +404,29 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 		o_image->io().seek(0, Exiv2::BasicIo::beg);
 		auto exif_data = o_image->io().read(buffersize);
 
-		new_path = ConstructNewExifFilePath(file->new_name);
-		auto it = mOutputs.find(OutputFlags::Exif);
-		if (it != mOutputs.end() && it->second != mInput)
+		if (!(mOutputTypes & OutputFlags::MemoryImage))
 		{
-			fs::create_directories(new_path.parent_path());
-			if (fs::exists(new_path))
+			new_path = ConstructNewExifFilePath(file->new_name);
+			auto it = mOutputs.find(OutputFlags::Exif);
+			if (it != mOutputs.end() && it->second != mInput)
 			{
-				fs::remove(new_path);
+				fs::create_directories(new_path.parent_path());
+				if (fs::exists(new_path))
+				{
+					fs::remove(new_path);
+				}
 			}
+			std::ofstream stream(new_path.string(), std::ios_base::out | std::ios_base::binary);
+			stream.write((char*)exif_data.pData_, buffersize);
+
+			file->output.push_back(new_path.string());
+			file->relative_output.push_back(fs::relative(new_path, mOutputs[OutputFlags::Exif]).string());
 		}
-		std::ofstream stream(new_path.string(), std::ios_base::out | std::ios_base::binary);
-		stream.write((char*)exif_data.pData_, buffersize);
-
-
-		file->output.push_back(new_path.string());
-		file->relative_output.push_back(fs::relative(new_path, mOutputs[OutputFlags::Exif]).string());
+		else
+		{
+			delete file->buffer;
+			file->buffer = new ExivMemoryFileBuffer(exif_data);
+		}
 	}
 }
 

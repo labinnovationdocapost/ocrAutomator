@@ -220,7 +220,7 @@ void Display::DrawFooter(const std::unordered_set<MasterFileStatus*> cfiles, Fil
 
 
 		auto average = (s.sum / s.count) / (mTesseractRunner.NbThreads() + mTesseractRunner.TotalRemoteThreads());
-		auto remaining = average * (mTesseractRunner.Total() - cfiles.size());
+		auto remaining = average * (mTesseractRunner.Total() - mFilesCompleted.size());
 		cstring << "files: " << mTesseractRunner.Done() << "/" << mTesseractRunner.Total()
 			<< "\t Average: " << std::setw(2) << std::setfill('0') << average.hours() << ":"
 			<< std::setw(2) << std::setfill('0') << average.minutes() << ":"

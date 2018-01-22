@@ -169,6 +169,9 @@
       <Filter>Header Files\Buffer</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)ArrayMemoryFileBuffer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)ExivMemoryFileBuffer.h">
+      <Filter>Header Files\Buffer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Broadcast.pb.cc">
@@ -235,6 +238,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)ArrayMemoryFileBuffer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)MasterProcessingWorker_SignalHandler.cpp">
       <Filter>Source Files\Master</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)ExivMemoryFileBuffer.cpp">
+      <Filter>Source Files\Buffer</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -6,6 +6,8 @@ namespace Docapost {
 
 			enum OutputFlags
 			{
+				MemoryImage = 16,
+				MemoryText = 8,
 				Flattern = 4,
 				Exif = 2,
 				Text = 1,
