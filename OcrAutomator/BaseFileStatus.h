@@ -18,6 +18,10 @@ struct BaseFileStatus
 	boost::posix_time::ptime::time_duration_type ellapsed;
 	// Position of the file in it's conteneur
 	Docapost::IA::Tesseract::MemoryFileBuffer* buffer = nullptr;
+	/**
+	* \brief Contain the result as text. Should be a pointer to be deletable after use
+	*/
+	std::unique_ptr<std::string> result;
 
 	BaseFileStatus() : thread(0) {}
 	explicit BaseFileStatus(std::string uuid) : thread(0) { this->uuid = boost::lexical_cast<boost::uuids::uuid>(uuid); }

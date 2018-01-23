@@ -126,7 +126,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::MergeResult(MasterFileStat
 				auto item = (*file->siblings)[i];
 				if (item != nullptr)
 				{
-					stream << item->result << std::endl;
+					stream << *(item->result) << std::endl;
 				}
 				else
 				{
@@ -368,7 +368,7 @@ std::thread* Docapost::IA::Tesseract::MasterProcessingWorker::Run(int nbThread)
 	return nullptr;
 }
 
-void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileStatus* file, std::string outText)
+void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileStatus* file, std::string& outText)
 {
 	fs::path new_path;
 	if (mOutputTypes & OutputFlags::Text)
@@ -430,6 +430,22 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 	}
 }
 
+void Docapost::IA::Tesseract::MasterProcessingWorker::FreeBuffers(MasterFileStatus* file, int memoryImage, int memoryText)
+{
+	if (file->buffer == nullptr)
+		return;
+
+	if (!memoryImage)
+	{
+		delete file->buffer;
+		file->buffer = nullptr;
+	}
+	/*if (!memoryText)
+	{
+		file->result.reset();
+	}*/
+}
+
 void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 {
 	CatchAllErrorSignals();
@@ -482,19 +498,18 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 				continue;
 			}
 
-
-			if (!ocr->ProcessThroughOcr(file->buffer, file->result))
+			file->result = ocr->ProcessThroughOcr(file->buffer);
+			if (!file->result)
 			{
 				AddFileBack(file);
 				continue;
 			}
 
-			CreateOutput(file, file->result);
+			CreateOutput(file, *file->result);
 
 			MergeResult(file);
 
-			delete file->buffer;
-			file->buffer = nullptr;
+			FreeBuffers(file, mOutputTypes & OutputFlags::MemoryImage, mOutputTypes & OutputFlags::MemoryText);
 
 			mDone++;
 

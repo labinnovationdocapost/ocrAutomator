@@ -5,6 +5,9 @@
 namespace Docapost {
 	namespace IA {
 		namespace Tesseract {
+			/**
+			 * \brief Wrapper for the internal buffer containing the file.
+			 */
 			class MemoryFileBuffer
 			{
 			public:

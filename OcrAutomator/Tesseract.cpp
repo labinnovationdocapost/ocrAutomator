@@ -163,22 +163,22 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::L
 	}
 }
 
-bool Docapost::IA::Tesseract::Tesseract::ProcessThroughOcr(Docapost::IA::Tesseract::MemoryFileBuffer* imgData, std::string& text) {
+std::unique_ptr<std::string> Docapost::IA::Tesseract::Tesseract::ProcessThroughOcr(Docapost::IA::Tesseract::MemoryFileBuffer* imgData) {
 	Pix *image = pixReadMem(imgData->data(), imgData->len());
 	if (image == nullptr)
 	{
-		return false;
+		return nullptr;
 	}
 
 	mTessBaseAPI.SetImage(image);
 	auto outtext = mTessBaseAPI.GetUTF8Text();
 
-	text = string(outtext);
+	auto text = std::unique_ptr<std::string>{ new string(outtext) };
 
 	pixDestroy(&image);
 	delete[] outtext;
 
-	return true;
+	return text;
 }
 
 Docapost::IA::Tesseract::Tesseract::~Tesseract()

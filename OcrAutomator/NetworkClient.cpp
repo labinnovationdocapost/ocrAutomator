@@ -335,7 +335,9 @@ void NetworkClient::SendSynchro(int thread, int threadId, int req, std::vector<S
 	{
 		auto f = s->add_data();
 		f->set_uuid(boost::uuids::to_string(file->uuid));
-		f->set_result(file->result.data(), files.size());
+		//f->set_allocated_result(file->result.get());
+		//f->release_result();
+		f->set_result(*file->result);
 		f->set_start(boost::posix_time::to_time_t(file->start));
 		f->set_end(boost::posix_time::to_time_t(file->end));
 		f->set_ellapsed(file->ellapsed.ticks());

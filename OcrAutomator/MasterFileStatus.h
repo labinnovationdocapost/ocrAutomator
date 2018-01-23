@@ -12,7 +12,6 @@ struct MasterFileStatus : BaseFileStatus
 	int filePosition = -1;
 	std::vector<MasterFileStatus*>* siblings;
 	std::mutex* mutex_siblings;
-	std::string result;
 	bool isCompleted = false;
 
 	//(new_path.parent_path() / fs::change_extension(new_path.filename(), "")).string() + std::to_string(file->filePosition) + new_path.extension()

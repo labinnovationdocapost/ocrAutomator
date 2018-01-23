@@ -29,7 +29,7 @@ namespace Docapost {
 				Tesseract(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang, ImageFormatEnum format);
 
 				MemoryFileBuffer* LoadFile(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile) override;
-				bool ProcessThroughOcr(MemoryFileBuffer* imgData, std::string& text) override;
+				std::unique_ptr<std::string> ProcessThroughOcr(MemoryFileBuffer* imgData) override;
 
 				~Tesseract();
 			};

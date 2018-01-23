@@ -89,7 +89,8 @@ namespace Docapost {
 
 				void MergeResult(MasterFileStatus* file);
 
-				void CreateOutput(MasterFileStatus* file, std::string outText);
+				void CreateOutput(MasterFileStatus* file, std::string& outText);
+				void FreeBuffers(MasterFileStatus* file, int memoryImage, int memoryText);
 
 				void TerminateThread(int id);
 

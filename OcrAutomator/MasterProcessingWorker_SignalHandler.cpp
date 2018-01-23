@@ -27,7 +27,6 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 	{
 		for (auto& res : results)
 		{
-			std::string result;
 			boost::uuids::uuid uuid;
 			boost::posix_time::ptime start, end;
 			boost::posix_time::time_duration ellapsed;
@@ -41,22 +40,26 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 
 			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << ns->Hostname() << "Getting back " << file->name << "[" << file->filePosition << "]" << "\n";
 
-			std::tie(uuid, file->thread, file->start, file->end, file->ellapsed, result) = res;
+			auto str = new std::string();
+			std::tie(uuid, file->thread, file->start, file->end, file->ellapsed, *str) = res;
 			file->isEnd = true;
 			file->hostname = ns->Hostname();
 
+			file->result = std::unique_ptr<std::string>(str);
+
 			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << ns->Hostname() << "Writing Output " << file->name << "[" << file->filePosition << "]" << "\n";
-			CreateOutput(file, result);
+			CreateOutput(file, *file->result);
 			MergeResult(file);
 			mDone++;
 
 			RemoveFileSend(uuid);
-			delete file->buffer;
-			file->buffer = nullptr;
+
+			FreeBuffers(file, mOutputTypes & OutputFlags::MemoryImage, mOutputTypes & OutputFlags::MemoryText);
+
 			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << ns->Hostname() << "Clean " << file->name << "[" << file->filePosition << "]" << "\n";
 		}
 
-		if (slave->PendingNotProcessed > 0 && slave->PendingProcessed > 0)
+		if (slave->PendingNotProcessed > 0 && slave->PendingProcessed > 0 && !mIsTerminated)
 		{
 			auto th = new std::thread(&MasterProcessingWorker::SendFilesToClient, this, ns);
 			th->detach();
