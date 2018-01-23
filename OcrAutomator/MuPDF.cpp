@@ -106,12 +106,22 @@ void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::T
 		fz_irect irect;
 
 		fz_matrix ctm = fz_identity;
-		fz_pre_scale(&ctm, 4, 4);
 
 
 		//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "LoadPage";
-		auto* page = fz_load_page(mContext, doc, pageNumber);;
+		auto* page = fz_load_page(mContext, doc, pageNumber);
 		fz_bound_page(mContext, page, &rect);
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Bound Page | x: " << rect.x1 - rect.x0 << " | y: " << rect.y1 - rect.y0;
+
+		float ratioX = mMaxResolution / (rect.x1 - rect.x0);
+		float ratioY = mMaxResolution / (rect.y1 - rect.y0);
+		float ratio = std::min(ratioX, ratioY);
+		ratio = std::min(ratio, 4.0f);
+
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Ratio | x: " << ratioX << " | y: " << ratioY;
+		fz_pre_scale(&ctm, ratio, ratio);
+
+
 		fz_transform_rect(&rect, &ctm);
 		fz_round_rect(&irect, &rect);
 

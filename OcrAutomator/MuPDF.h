@@ -56,6 +56,7 @@ namespace Docapost {
 					Tesseract::ImageFormatEnum format;
 				};
 
+				int mMaxResolution = 3500;
 				void Worker(WorkerParam, MasterFileStatus*);
 				Tesseract::MemoryFileBuffer* WriteToJPEG(WorkerParam& pix, int quality) const;
 			public:
