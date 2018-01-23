@@ -454,6 +454,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 	try
 	{
 		ocr = mOcrFactory.CreateNew();
+		ocr->InitEngine();
 	}
 	catch (UninitializedOcrException& e)
 	{
@@ -486,17 +487,24 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 			}
 			file->uuid = boost::uuids::uuid();
 			file->thread = id;
-			onStartProcessFile(file);
 			file->start = boost::posix_time::microsec_clock::local_time();
 
-			if (nullptr == ocr->LoadFile(file, [this](MasterFileStatus* file)
+			try
 			{
-				this->AddFile(file);
-			}))
+				if (nullptr == ocr->LoadFile(file, boost::bind(&MasterProcessingWorker::AddFile, this, _1)))
+				{
+					BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "LoadFile null waiting 1000ms";
+					std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+					//AddFileBack(file);
+					continue;
+				}
+			}
+			catch(std::runtime_error& e)
 			{
 				AddFileBack(file);
 				continue;
 			}
+			onStartProcessFile(file);
 
 			file->result = ocr->ProcessThroughOcr(file->buffer);
 			if (!file->result)

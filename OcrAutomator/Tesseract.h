@@ -25,11 +25,20 @@ namespace Docapost {
 
 				MemoryFileBuffer* ExtractPdfFromImageMagick(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile);
 				MemoryFileBuffer* ExtractPdfFromMuPdf(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile);
+				MemoryFileBuffer* GetImage(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile);
 			public:
 				Tesseract(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang, ImageFormatEnum format);
 
+				/**
+				 * \brief 
+				 * \param file 
+				 * \param AddFile When in asynchrone task, if processed file is return by this function
+				 * \return Return nullptr if the processing il delegate to an asynchrone task, else return the file content
+				 */
 				MemoryFileBuffer* LoadFile(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile) override;
 				std::unique_ptr<std::string> ProcessThroughOcr(MemoryFileBuffer* imgData) override;
+
+				void InitEngine() override;
 
 				~Tesseract();
 			};

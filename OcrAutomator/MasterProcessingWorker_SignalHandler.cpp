@@ -129,22 +129,8 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::SendFilesToClient(NetworkS
 	try
 	{
 		std::cerr << std::this_thread::get_id() << " | Run Thread for network\n";
-		boost::unordered_map<boost::uuids::uuid, MemoryFileBuffer*> filesToSend;
 		auto ocr = mOcrFactory.CreateNew();
-		int i = 0;
-		while ([this, slave]() -> bool
-		{
-			if (slave->Terminated)
-				return false;
-			// Cette lambda expression permet de boucler sans conflit par client
-			std::lock_guard<std::mutex> lock(slave->ClientMutex);
-			if (slave->PendingProcessed > 0)
-			{
-				--slave->PendingProcessed;
-				return true;
-			}
-			return false;
-		}())
+		while (HasFileToSend(slave))
 		{
 			std::cerr << std::this_thread::get_id() << " | Begining Loading\n";
 			MasterFileStatus*  file = GetFile();
@@ -162,9 +148,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::SendFilesToClient(NetworkS
 
 			file->uuid = id;
 			file->hostname = ns->Hostname();
-			onStartProcessFile(file);
 
-			AddFileSend(file);
 
 			//mFileSend[id] = file;
 			std::cerr << std::this_thread::get_id() << " | Loading\n";
@@ -176,47 +160,49 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::SendFilesToClient(NetworkS
 					this->AddFile(file);
 					break;
 				}
+
+				boost::unordered_map<boost::uuids::uuid, MemoryFileBuffer*> filesToSend;
+				filesToSend[id] = file->buffer;
+				AddFileSend(file);
+
+
+				if (filesToSend.size() == 0)
+					return;
+				std::lock_guard<std::mutex> lock(slave->ClientMutex);
+				if (!slave->Terminated)
+				{
+					onStartProcessFile(file);
+					BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::debug) << std::this_thread::get_id() << " | Netowrk interface is open -> sending 1 files\n";
+					--slave->PendingNotProcessed;
+					ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, slave->PendingNotProcessed, filesToSend);
+				}
 				else
 				{
-					filesToSend[id] = file->buffer;
-					i++;
+					BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << std::this_thread::get_id() << " | Netowrk interface closed -> rollback\n";
+					std::lock_guard<std::mutex> lock2(mNetworkMutex);
+					for (auto fileToSend : filesToSend)
+					{
+						auto file = GetFileSend(fileToSend.first);
+
+						file->hostname = "";
+						this->AddFile(file);
+						onFileCanceled(file);
+						RemoveFileSend(fileToSend.first);
+					}
 				}
 			}
 			else
 			{
 				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << std::this_thread::get_id() << " | Rollback PendingProcessed " << slave->PendingProcessed << "\n";
 				++slave->PendingProcessed;
+				std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 			}
 		}
 		delete ocr;
-
-		if (filesToSend.size() == 0)
-			return;
-		std::lock_guard<std::mutex> lock(slave->ClientMutex);
-		if (!slave->Terminated)
-		{
-			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::debug) << std::this_thread::get_id() << " | Netowrk interface is open -> sending " << i << " files\n";
-			slave->PendingNotProcessed -= i;
-			ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, slave->PendingNotProcessed, filesToSend);
-		}
-		else
-		{
-			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << std::this_thread::get_id() << " | Netowrk interface closed -> rollback\n";
-			std::lock_guard<std::mutex> lock2(mNetworkMutex);
-			for (auto fileToSend : filesToSend)
-			{
-				auto file = GetFileSend(fileToSend.first);
-
-				file->hostname = "";
-				this->AddFile(file);
-				onFileCanceled(file);
-				RemoveFileSend(fileToSend.first);
-			}
-		}
 	}
 	catch (std::exception& e)
 	{
 		std::cout << "ERROR !!! : " << e.what() << std::endl;
 	}
-	
+
 }

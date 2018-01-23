@@ -29,6 +29,7 @@ namespace Docapost {
 
 				virtual MemoryFileBuffer* LoadFile(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile) = 0;
 				virtual std::unique_ptr<std::string> ProcessThroughOcr(MemoryFileBuffer* imgData) = 0;
+				virtual void InitEngine() = 0;
 			};
 			class OcrFactory
 			{

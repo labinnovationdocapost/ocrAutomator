@@ -78,11 +78,6 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::E
 
 Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromMuPdf(MasterFileStatus * file, const std::function<void(MasterFileStatus*)>& AddFile)
 {
-	std::lock_guard<std::mutex> lock(*file->mutex_siblings);
-	if (file->buffer != nullptr && file->buffer->len() > 0)
-	{
-		return file->buffer;
-	}
 
 	try
 	{
@@ -105,13 +100,23 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::E
 	for(auto s : *file->siblings)
 	{
 		if (s == nullptr) continue;
-		if(file->filePosition != s->filePosition)
-		{
+		/*if(file->filePosition != s->filePosition)
+		{*/
 			AddFile(s);
-		}
+		//}
 	}
 
 	return file->buffer;
+}
+Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::GetImage(MasterFileStatus * file, const std::function<void(MasterFileStatus*)>& AddFile)
+{
+	std::lock_guard<std::mutex> lock(*file->mutex_siblings);
+	if (file->buffer != nullptr && file->buffer->len() > 0)
+	{
+		return file->buffer;
+	}
+	boost::thread(boost::bind(&Tesseract::Tesseract::ExtractPdfFromMuPdf, this, file, AddFile)).detach();
+	return nullptr;
 }
 #endif
 
@@ -122,11 +127,6 @@ Docapost::IA::Tesseract::Tesseract::Tesseract(tesseract::PageSegMode psm, tesser
 	mTessBaseAPI.SetVariable("debug_file", "/dev/null");
 	mTessBaseAPI.SetVariable("out", "quiet");
 
-	int res;
-	if ((res = mTessBaseAPI.Init(nullptr, mLang.c_str(), mOem))) {
-		throw UninitializedOcrException((boost::format("Could not initialize tesseract : %d") % res).str());
-	}
-	mTessBaseAPI.SetPageSegMode(mPsm);
 }
 
 Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::LoadFile(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile) {
@@ -137,7 +137,7 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::L
 		return ExtractPdfFromImageMagick(file, AddFile);
 #endif
 #ifndef MAGICK
-		return ExtractPdfFromMuPdf(file, AddFile);
+		return GetImage(file, AddFile);
 #endif
 	}
 	else
@@ -146,7 +146,7 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::L
 		if (f == nullptr)
 		{
 			std::cerr << "Impossible d'ouvrir le fichier " << file->name << std::endl;
-			return nullptr;
+			throw std::runtime_error("Impossible d'ouvrir le fichier " + file->name);
 		}
 
 		// Determine file size
@@ -179,6 +179,15 @@ std::unique_ptr<std::string> Docapost::IA::Tesseract::Tesseract::ProcessThroughO
 	delete[] outtext;
 
 	return text;
+}
+
+void Docapost::IA::Tesseract::Tesseract::InitEngine()
+{
+	int res;
+	if ((res = mTessBaseAPI.Init(nullptr, mLang.c_str(), mOem))) {
+		throw UninitializedOcrException((boost::format("Could not initialize tesseract : %d") % res).str());
+	}
+	mTessBaseAPI.SetPageSegMode(mPsm);
 }
 
 Docapost::IA::Tesseract::Tesseract::~Tesseract()

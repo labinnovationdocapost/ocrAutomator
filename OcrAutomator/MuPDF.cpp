@@ -41,7 +41,7 @@ Docapost::IA::MuPDF::MuPDF::~MuPDF()
 
 int Docapost::IA::MuPDF::MuPDF::GetNbPage(std::string path)
 {
-	std::lock_guard<std::mutex> lock(mContextMutex);
+	//std::lock_guard<std::mutex> lock(mContextMutex);
 	fz_document *doc = nullptr;
 	/* Open the document. */
 	fz_try(mContext)

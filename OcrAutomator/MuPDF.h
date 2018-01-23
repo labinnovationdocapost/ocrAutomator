@@ -5,6 +5,7 @@
 #include "ImageFormatEnum.h"
 #include "JpegTurboMemoryFileBuffer.h"
 #include "FzBufferMemoryFileBuffer.h"
+#include <condition_variable>
 
 
 extern "C" {
@@ -33,7 +34,7 @@ namespace Docapost {
 
 				std::mutex mMutexes[FZ_LOCK_MAX];
 				std::mutex mContextMutex;
-
+				
 				static std::mutex mStaticContextMutex;
 
 				void lock(void *user, int lock);
