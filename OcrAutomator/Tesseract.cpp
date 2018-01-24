@@ -11,6 +11,8 @@
 #include "Error.h"
 #include "ArrayMemoryFileBuffer.h"
 
+std::mutex Docapost::IA::Tesseract::Tesseract::mCreationThreadMutex{};
+int Docapost::IA::Tesseract::Tesseract::mCurrentPdfCreationThread = 0;
 #ifdef MAGICK
 Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromImageMagick(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile)
 {
@@ -78,6 +80,8 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::E
 
 Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::ExtractPdfFromMuPdf(MasterFileStatus * file, const std::function<void(MasterFileStatus*)>& AddFile)
 {
+	CatchAllErrorSignals();
+	CatchAllExceptions();
 
 	try
 	{
@@ -88,12 +92,16 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::E
 	catch(std::exception &e)
 	{
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cannot extract PDF file " << file->name << " error: " << e.what();
-		return nullptr;
+		std::lock_guard<std::mutex> lock(mCreationThreadMutex);
+		mCurrentPdfCreationThread--;
+		throw std::runtime_error("Cannot extract PDF file " + file->name + " error: " + e.what());
 	}
 	catch (std::runtime_error &e)
 	{
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cannot extract PDF file " << file->name << " error: " << e.what();
-		return nullptr;
+		std::lock_guard<std::mutex> lock(mCreationThreadMutex);
+		mCurrentPdfCreationThread--;
+		throw std::runtime_error("Cannot extract PDF file " + file->name + " error: " + e.what());
 	}
 
 	bool first = false;
@@ -106,6 +114,8 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::E
 		//}
 	}
 
+	std::lock_guard<std::mutex> lock(mCreationThreadMutex);
+	mCurrentPdfCreationThread--;
 	return file->buffer;
 }
 Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::GetImage(MasterFileStatus * file, const std::function<void(MasterFileStatus*)>& AddFile)
@@ -115,6 +125,18 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::G
 	{
 		return file->buffer;
 	}
+
+	std::lock_guard<std::mutex> lockThread(mCreationThreadMutex);
+	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Concurrent PDF Creation " << mCurrentPdfCreationThread;
+	if (mCurrentPdfCreationThread > mMaxPdfCreationThread)
+	{
+		// We put back the file on the list of file to process because we will not process it in this call
+		AddFile(file);
+		return nullptr;
+	}
+
+	mCurrentPdfCreationThread++;
+
 	boost::thread(boost::bind(&Tesseract::Tesseract::ExtractPdfFromMuPdf, this, file, AddFile)).detach();
 	return nullptr;
 }
@@ -132,7 +154,6 @@ Docapost::IA::Tesseract::Tesseract::Tesseract(tesseract::PageSegMode psm, tesser
 Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::Tesseract::LoadFile(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile) {
 	if (file->filePosition >= 0)
 	{
-
 #ifdef MAGICK
 		return ExtractPdfFromImageMagick(file, AddFile);
 #endif

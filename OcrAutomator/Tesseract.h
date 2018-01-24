@@ -18,10 +18,14 @@ namespace Docapost {
 		namespace Tesseract {
 			class Tesseract : public BaseOcr
 			{
+			private:
 				tesseract::PageSegMode mPsm;
 				tesseract::OcrEngineMode mOem;
 				std::string mLang;
 				tesseract::TessBaseAPI mTessBaseAPI;
+				static const int mMaxPdfCreationThread = 4;
+				static int mCurrentPdfCreationThread;
+				static std::mutex mCreationThreadMutex;
 
 				MemoryFileBuffer* ExtractPdfFromImageMagick(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile);
 				MemoryFileBuffer* ExtractPdfFromMuPdf(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile);
