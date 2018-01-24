@@ -20,6 +20,12 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
 - Télécharge Podofo : `wget https://mupdf.com/downloads/mupdf-1.12.0-source.tar.gz -o mupdf-1.12.0-source.tar.gz` puis extraire avec `tar -xf /path/to/mupdf-1.12.0-source.tar.gz`.
 - puis suivre la procédure : (https://mupdf.com/docs/building.html)
 
+## Configuration pour créer un .deb et le deploiyer (Linux)
+- Copier le fichier Env/env-example.config vers Env/env.config et renseiger les informations de connexion
+- Compiler le projet
+- Executer le script CreatePackage.sh
+- Executer le script Deploy.sh
+
 ## Configuration pour compiler un EXE (Windows)
 - Telecharger les trois librairies suivantes : 
   - leptonica (https://github.com/DanBloomberg/leptonica)

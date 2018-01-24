@@ -274,3 +274,5 @@ Package
 !/Libs/*
 !/Libs/*/*
 !/Libs/*/*/*
+
+/Env/env.config
