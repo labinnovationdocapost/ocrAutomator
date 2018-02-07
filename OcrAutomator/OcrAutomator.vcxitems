@@ -20,12 +20,14 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)BaseProcessingWorker.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Error.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ExivMemoryFileBuffer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)ExtraOutput.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)FileSum.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)FzBufferMemoryFileBuffer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)fz_buffer_impl.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ImageFormatEnum.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ArrayMemoryFileBuffer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)JpegTurboMemoryFileBuffer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Main.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MasterFileStatus.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MasterProcessingWorker.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MemoryFileBuffer.h" />
@@ -60,6 +62,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)FzBufferMemoryFileBuffer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)JpegTurboMemoryFileBuffer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Main.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Main_Master.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Main_Slave.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)MasterProcessingWorker.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)MasterProcessingWorker_SignalHandler.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)MuPDF.cpp" />

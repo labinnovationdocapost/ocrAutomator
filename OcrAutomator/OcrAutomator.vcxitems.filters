@@ -168,9 +168,17 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)StringMemoryFileBuffer.h">
       <Filter>Header Files\Buffer</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)ArrayMemoryFileBuffer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ExivMemoryFileBuffer.h">
       <Filter>Header Files\Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)ArrayMemoryFileBuffer.h">
+      <Filter>Header Files\Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)ExtraOutput.h">
+      <Filter>Header Files\Base</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -225,7 +233,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Tesseract.cpp">
       <Filter>Source Files\Ocr\Tesseract</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)Main.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)JpegTurboMemoryFileBuffer.cpp">
       <Filter>Source Files\Buffer</Filter>
     </ClCompile>
@@ -235,12 +242,23 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)StringMemoryFileBuffer.cpp">
       <Filter>Source Files\Buffer</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)ArrayMemoryFileBuffer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)MasterProcessingWorker_SignalHandler.cpp">
       <Filter>Source Files\Master</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)ExivMemoryFileBuffer.cpp">
       <Filter>Source Files\Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)ArrayMemoryFileBuffer.cpp">
+      <Filter>Source Files\Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Main_Master.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Main_Slave.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
