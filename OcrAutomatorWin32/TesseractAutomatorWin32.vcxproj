@@ -92,13 +92,13 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Program Files\leptonica\include;..\Includes\MuPDF;C:\Program Files\tesseract\include;C:\Program Files\libjpeg-turbo64\include;..\Includes\Exiv2;..\Includes\Protobuf;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\A2iA\A2iA TextReader V5.0\Interface;C:\Program Files\leptonica\include;..\Includes\MuPDF;C:\Program Files\tesseract\include;C:\Program Files\libjpeg-turbo64\include;..\Includes\Exiv2;..\Includes\Protobuf;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DISPLAY;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp14</LanguageStandard>
       <AdditionalOptions>-D_WIN32_WINNT=0x0A00 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>C:\Program Files\leptonica\lib\leptonica-1.74.4d.lib;C:\Program Files\libjpeg-turbo64\lib\jpeg.lib;C:\Program Files\libjpeg-turbo64\lib\turbojpeg.lib;C:\Program Files\tesseract\lib\tesseract400d.lib;..\Libs\Win32\Debug\libmupdf.lib;..\Libs\Win32\Debug\libmuthreads.lib;..\Libs\Win32\Debug\libthirdparty.lib;..\Libs\Win32\Debug\libprotobuf.lib;..\Libs\Win32\Debug\libresources.lib;..\Libs\Win32\Debug\libexiv2.lib;..\Libs\Win32\Debug\libexpat.lib;..\Libs\Win32\Debug\xmpsdk.lib;..\Libs\Win32\Debug\zlib1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>C:\Program Files\leptonica\lib\leptonica-1.74.4d.lib;C:\Program Files\libjpeg-turbo64\lib\jpeg.lib;C:\Program Files\libjpeg-turbo64\lib\turbojpeg.lib;C:\Program Files\tesseract\lib\tesseract400d.lib;..\Libs\Win32\Debug\libmupdf.lib;..\Libs\Win32\Debug\libmuthreads.lib;..\Libs\Win32\Debug\libthirdparty.lib;..\Libs\Win32\Debug\libprotobuf.lib;..\Libs\Win32\Debug\libresources.lib;..\Libs\Win32\Debug\libexiv2.lib;..\Libs\Win32\Debug\libexpat.lib;..\Libs\Win32\Debug\xmpsdk.lib;..\Libs\Win32\Debug\zlib1.lib;C:\Program Files\A2iA\A2iA TextReader V5.0\Interface\A2iATextReader.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/NODEFAULTLIB:LIBCMT /VERBOSE:LIB %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
@@ -106,7 +106,8 @@
 xcopy /y /d  "C:\Program Files\tesseract\bin\*d.dll" "$(TargetDir)"
 xcopy /y /d  "C:\Program Files\tesseract\tessdata\*.traineddata" "$(TargetDir)tessdata\"
 xcopy /y /d  "C:\Program Files\leptonica\bin\*d.dll" "$(TargetDir)"
-xcopy /y /d  "C:\Program Files\libjpeg-turbo64\bin\*.dll" "$(TargetDir)"</Command>
+xcopy /y /d  "C:\Program Files\libjpeg-turbo64\bin\*.dll" "$(TargetDir)"
+xcopy /y /d  "C:\Program Files\A2iA\A2iA TextReader V5.0\Interface\*.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -151,12 +152,17 @@ xcopy /y /d  "C:\Program Files\libjpeg-turbo64\bin\*.dll" "$(TargetDir)"</Comman
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="A2IA.cpp" />
+    <ClCompile Include="A2IAFactory.cpp" />
     <ClCompile Include="Display.cpp" />
     <ClCompile Include="DisplayManager.cpp" />
     <ClCompile Include="Error.cpp" />
+    <ClCompile Include="FactorySelector.cpp" />
     <ClCompile Include="SlaveDisplay.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="A2IA.h" />
+    <ClInclude Include="A2IAFactory.h" />
     <ClInclude Include="Display.h" />
     <ClInclude Include="DisplayManager.h" />
     <ClInclude Include="SlaveDisplay.h" />

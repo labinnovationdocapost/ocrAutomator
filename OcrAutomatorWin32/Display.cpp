@@ -15,7 +15,10 @@ void Display::Init(bool create)
 	boost::lock_guard<std::mutex> lock(mThreadMutex);
 	if (!create)
 	{
+		CloseHandle(mConsoleHandler);
 	}
+	mConsoleHandler = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleActiveScreenBuffer(mConsoleHandler);
 }
 
 void Display::OnEnd()
@@ -56,15 +59,77 @@ int Display::GetAverageSize() const
 	return std::floor(pow(log(mTesseractRunner.NbThreads() + mTesseractRunner.TotalRemoteThreads()), 3.5)) + 10;
 }
 
-void Display::DrawBody(const std::list<MasterFileStatus*> files, FileSum& s) const
+void Display::Clear() {
+	COORD topLeft = { 0, 0 };
+	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO screen;
+	DWORD written;
+
+	GetConsoleScreenBufferInfo(console, &screen);
+	FillConsoleOutputCharacterA(
+		console, ' ', screen.dwSize.X * screen.dwSize.Y, topLeft, &written
+	);
+	FillConsoleOutputAttribute(
+		console, FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_BLUE,
+		screen.dwSize.X * screen.dwSize.Y, topLeft, &written
+	);
+	SetConsoleCursorPosition(console, topLeft);
+}
+
+void Display::DrawBody(const std::unordered_set<MasterFileStatus*> files, FileSum& s)
+{
+	int i = 0;
+	for (auto j = files.cbegin(); j != files.cend(); ++j)
+	{
+		if (*j == nullptr)
+			break;
+
+		if ((*j)->isEnd)
+		{
+			if ((boost::posix_time::microsec_clock::local_time() - (*j)->end).total_seconds() > 5)
+			{
+				boost::lock_guard<std::mutex> lock(mThreadMutex);
+				mFiles.erase(*j);
+				mFilesCompleted.push_back(*j);
+				continue;
+			}
+
+			std::stringstream cstring;
+			cstring << "" << (*j)->ellapsed;
+			//wprintw(win, "%-15s %-6d %s -> %s\n", cstring.str().c_str(), files[j]->thread, files[j]->relative_name.c_str(), boost::algorithm::join(files[j]->relative_output, " | ").c_str());
+			//wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", cstring.str().c_str(), (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, (*j)->relative_name.c_str());
+
+			char text[1024];
+			sprintf(text, "%-15s %-6d %-15s %2d %s", cstring.str().c_str(), (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, (*j)->relative_name.c_str());
+			DWORD dwBytesWritten = 0;
+			WriteConsoleOutputCharacter(mConsoleHandler, text, strlen(text), { 0, (SHORT)i++ }, &dwBytesWritten);
+		}
+		else
+		{
+			//wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", "", (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, (*j)->relative_name.c_str());
+			char text[1024];
+			sprintf(text, "%-15s %-6d %-15s %2d %s", "", (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, (*j)->relative_name.c_str());
+			DWORD dwBytesWritten = 0;
+			WriteConsoleOutputCharacter(mConsoleHandler, text, strlen(text), { 0, (SHORT)i++ }, &dwBytesWritten);
+		}
+
+	}
+
+	auto max = GetAverageSize();
+	for (auto j = mFilesCompleted.rbegin(); j != mFilesCompleted.rend() && s.count < max; ++j)
+	{
+		if ((*j)->isEnd)
+		{
+			s(*j);
+		}
+	}
+}
+
+void Display::DrawBodyNetwork(const std::unordered_set<MasterFileStatus*> files, FileSum& s)
 {
 }
 
-void Display::DrawBodyNetwork(const std::list<MasterFileStatus*> files, FileSum& s) const
-{
-}
-
-void Display::DrawFooter(const std::list<MasterFileStatus*> cfiles, FileSum s) const
+void Display::DrawFooter(const std::unordered_set<MasterFileStatus*> cfiles, FileSum s)
 {
 }
 
@@ -74,7 +139,7 @@ void Display::DrawCommand() const
 
 void Display::Draw()
 {
-	boost::lock_guard<std::mutex> lock(mThreadMutex);
+	boost::lock_guard<std::mutex> lockLoop(mLoopMutex);
 	DrawHeader();
 
 	FileSum s{};
@@ -103,20 +168,23 @@ void Display::ShowFile(MasterFileStatus* file)
 void Display::OnCanceled(MasterFileStatus* str)
 {
 	boost::lock_guard<std::mutex> lock(mThreadMutex);
-	mFiles.remove(str);
+	mFiles.erase(str);
 }
 
 void Display::AddFile(MasterFileStatus* file)
 {
 	boost::lock_guard<std::mutex> lock(mThreadMutex);
-	mFiles.push_back(file);
+	mFiles.insert(file);
 }
+
 
 void Display::Run()
 {
+	//Clear();
 	int ch;
 	while (!mIsTerminated)
 	{
+		Draw();
 		std::this_thread::sleep_for(std::chrono::milliseconds(300));
 	}
 }

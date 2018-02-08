@@ -180,6 +180,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)ExtraOutput.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)BaseOcrWithLoader.h">
+      <Filter>Header Files\Ocr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Broadcast.pb.cc">
@@ -259,6 +262,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Main_Slave.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)BaseOcrWithLoader.cpp">
+      <Filter>Source Files\Ocr</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

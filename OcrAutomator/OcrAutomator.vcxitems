@@ -17,6 +17,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)BaseDisplay.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)BaseFileStatus.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)BaseOcr.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)BaseOcrWithLoader.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)BaseProcessingWorker.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Error.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ExivMemoryFileBuffer.h" />
@@ -58,6 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)ArrayMemoryFileBuffer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)BaseOcrWithLoader.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)ExivMemoryFileBuffer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)FzBufferMemoryFileBuffer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)JpegTurboMemoryFileBuffer.cpp" />

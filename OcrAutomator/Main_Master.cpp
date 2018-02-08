@@ -4,6 +4,7 @@
 
 Docapost::IA::Tesseract::MasterProcessingWorker* workerM;
 
+
 void Master(char** argv, po::variables_map& vm)
 {
 	/*boost::interprocess::named_mutex ip_process {boost::interprocess::open_or_create, "OCRAutomator_Mutex"};
@@ -133,29 +134,26 @@ void Master(char** argv, po::variables_map& vm)
 		}
 	}
 
-	Docapost::IA::Tesseract::TesseractFactory factory{};
-	factory.Lang(vm["lang"].as<std::string>());
-	factory.Oem(static_cast<tesseract::OcrEngineMode>(vm["oem"].as<int>()));
-	factory.Psm(static_cast<tesseract::PageSegMode>(vm["psm"].as<int>()));
+	std::unique_ptr<Docapost::IA::Tesseract::OcrFactory> factory = std::unique_ptr<Docapost::IA::Tesseract::OcrFactory>(CreateOcrFactory(vm));
 
 	if (vm.count("image"))
 	{
 		if (vm["image"].as<std::string>() == "png")
 		{
-			factory.ImageFormat(Docapost::IA::Tesseract::ImageFormatEnum::PNG);
+			factory->ImageFormat(Docapost::IA::Tesseract::ImageFormatEnum::PNG);
 		}
 		else if (vm["image"].as<std::string>() == "jpg")
 		{
-			factory.ImageFormat(Docapost::IA::Tesseract::ImageFormatEnum::JPG);
+			factory->ImageFormat(Docapost::IA::Tesseract::ImageFormatEnum::JPG);
 		}
 		else
 		{
 			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Option " << vm["image"].as<std::string>() << " unrecognized for field [image], fallback to jpg";
-			factory.ImageFormat(Docapost::IA::Tesseract::ImageFormatEnum::JPG);
+			factory->ImageFormat(Docapost::IA::Tesseract::ImageFormatEnum::JPG);
 		}
 	}
 
-	workerM = new Docapost::IA::Tesseract::MasterProcessingWorker(factory, types, vm["port"].as<int>());
+	workerM = new Docapost::IA::Tesseract::MasterProcessingWorker(*factory, types, vm["port"].as<int>());
 
 	if (vm.count("prefixe"))
 	{
