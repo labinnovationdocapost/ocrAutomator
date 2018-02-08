@@ -3,6 +3,9 @@
 
 Le projet est compilé grâce à Visual Studio for Linux Development (inclus dans l'installation de Visual Studio 2017)
 
+## Build
+### Linux
+- https://outils.docapost.tech/nexus/#browse/browse/assets:innovation-raw
 
 ## Installation
 - Suivre le tutoriel suivant : https://blogs.msdn.microsoft.com/vcblog/2016/03/30/visual-c-for-linux-development/
@@ -13,7 +16,7 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
 
 ## Configuration pour compiler un ELF (Linux)
 - Installer le package Tesseract 4.0 LSTM : https://launchpad.net/~alex-p/+archive/ubuntu/tesseract-ocr
-- Installer les package libtesseract-dev, libtesseract-ocr-fra, libleptonica-dev, libncurses5-dev, libexiv2-dev, libmagick++-dev et libprotobuf-dev `sudo apt install libtesseract-dev libtesseract-ocr-fra libleptonica-dev libncurses5-dev libexiv2-dev libmagick++-dev libprotobuf-dev`
+- Installer les package libtesseract-dev, tesseract-ocr-fra, libleptonica-dev, libncurses5-dev, libexiv2-dev, libmagick++-dev et libprotobuf-dev `sudo apt install libtesseract-dev libtesseract-ocr-fra libleptonica-dev libncurses5-dev libexiv2-dev libmagick++-dev libprotobuf-dev`
 - Télécharger Boost : `wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.bz2` puis extraire dans `/root/boost_1_65_1` avec `tar --bzip2 -xf /path/to/boost_1_65_1.tar.bz2`.
 - puis suivre la procédure : (http://www.boost.org/doc/libs/1_65_1/more/getting_started/unix-variants.html)
 - Si vous souhaitez utiliser les lib static de Boost, enlever les .so générés précédemments
