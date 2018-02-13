@@ -71,7 +71,12 @@ Docapost::IA::Tesseract::MasterProcessingWorker::MasterProcessingWorker(OcrFacto
 }
 
 
-
+const char* kPathSeparator =
+#ifdef _WIN32
+"\\";
+#else
+"/";
+#endif
 
 fs::path Docapost::IA::Tesseract::MasterProcessingWorker::ConstructNewTextFilePath(fs::path path) const
 {
@@ -88,7 +93,7 @@ fs::path Docapost::IA::Tesseract::MasterProcessingWorker::ConstructNewTextFilePa
 
 		new_path = fs::absolute(relative_path, it->second);
 		if (mOutputTypes & OutputFlags::Flattern)
-			new_path = new_path.parent_path() / boost::replace_all_copy(fs::change_extension(relative_path, ".txt").string(), "/", mSeparator);
+			new_path = new_path.parent_path() / boost::replace_all_copy(fs::change_extension(relative_path, ".txt").string(), kPathSeparator, mSeparator);
 		else
 			new_path = new_path.parent_path() / fs::change_extension(new_path.filename(), ".txt");
 
@@ -166,7 +171,7 @@ fs::path Docapost::IA::Tesseract::MasterProcessingWorker::ConstructNewExifFilePa
 		new_path = fs::absolute(relative_path, it->second);
 
 		if (mOutputTypes & OutputFlags::Flattern)
-			new_path = new_path.parent_path() / boost::replace_all_copy(relative_path.string(), "/", mSeparator);
+			new_path = new_path.parent_path() / boost::replace_all_copy(relative_path.string(), kPathSeparator, mSeparator);
 		else
 			new_path = new_path.parent_path() / new_path.filename();
 

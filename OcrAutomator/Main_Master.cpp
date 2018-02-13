@@ -154,10 +154,10 @@ void Master(char** argv, po::variables_map& vm)
 	}
 
 	workerM = new Docapost::IA::Tesseract::MasterProcessingWorker(*factory, types, vm["port"].as<int>());
-
 	if (vm.count("prefixe"))
 	{
-		workerM->Separator(vm["prefixe"].as<std::string>());
+		auto p = vm["prefixe"].as<std::string>();
+		workerM->Separator(p);
 	}
 
 

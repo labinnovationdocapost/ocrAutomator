@@ -7,15 +7,15 @@ namespace Docapost {
 		namespace Tesseract {
 			class A2IA : public BaseOcrWithLoader
 			{
-				A2iARC_Id mEngineId;
-
-				uint32_t mChannelId;
-				A2iARC_DocumentTable mDocumentTable;
+				uint32_t mChannelId = 0;
+				A2iARC_DocumentTable& mDocumentTable;
 			public:
-				explicit A2IA(ImageFormatEnum format)
-					: BaseOcrWithLoader(format)
+				explicit A2IA(ImageFormatEnum format, A2iARC_DocumentTable& documentTable)
+					: BaseOcrWithLoader(format), mDocumentTable(documentTable)
 				{
 				}
+
+				~A2IA();
 
 				std::unique_ptr<std::string> ProcessThroughOcr(MemoryFileBuffer* imgData) override;
 				void InitEngine() override;

@@ -7,7 +7,9 @@ namespace Docapost {
 		namespace Tesseract {
 			class A2IAFactory : public OcrFactory
 			{
+				A2iARC_DocumentTable mDocumentTable;
 			public:
+				A2IAFactory();
 				A2IA* CreateNew() override;
 			};
 		}

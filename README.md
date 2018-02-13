@@ -6,6 +6,12 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
 ## Build
 ### Linux
 - https://outils.docapost.tech/nexus/#browse/browse/assets:innovation-raw
+- https://outils.docapost.tech/recettenexus/service/rest/repository/browse/innovation-apt/
+  - Ajoutez le repository : ```sudo add-apt-repository https://outils.docapost.tech/recettenexus/repository/innovation-apt/```
+  - Ajoutez les authorisation : ```sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5E0C99EE```
+  - Mettez a jour : ```sudo apt update```
+  - Mettez a jour : ```sudo apt install tesseractautomator```
+  - Verifier l'instalation avec ```TesseractAutomator -v```
 
 ## Installation
 - Suivre le tutoriel suivant : https://blogs.msdn.microsoft.com/vcblog/2016/03/30/visual-c-for-linux-development/
