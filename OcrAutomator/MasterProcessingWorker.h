@@ -1,5 +1,4 @@
 #pragma once
-
 #include "BaseProcessingWorker.h"
 
 
@@ -7,6 +6,9 @@
 #include <mutex>
 #include <thread>
 
+#include <boost/lexical_cast.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/format.hpp>
 #include <boost/program_options.hpp>
 #include <boost/date_time.hpp>
 #include <boost/filesystem.hpp>
@@ -17,6 +19,7 @@
 using std::string;
 #include "Network.h"
 #include "MasterFileStatus.h"
+#include "Export.h"
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
@@ -26,7 +29,7 @@ using boost::program_options::value;
 namespace Docapost {
 	namespace IA {
 		namespace Tesseract {
-			class MasterProcessingWorker : public BaseProcessingWorker<MasterFileStatus> {
+			class EXPOSE MasterProcessingWorker : public BaseProcessingWorker<MasterFileStatus> {
 			private:
 				boost::uuids::basic_random_generator<boost::mt19937> mGen = boost::uuids::basic_random_generator<boost::mt19937>();
 
@@ -85,11 +88,12 @@ namespace Docapost {
 				 * \param path Chemin vers le fichier original
 				 * \return Chemin vers le fichier de sortie
 				 */
-				fs::path ConstructNewTextFilePath(fs::path path) const;
+				fs::path ConstructNewTextFilePath(fs::path path, std::string ext) const;
 
 				void MergeResult(MasterFileStatus* file);
 
-				void CreateOutput(MasterFileStatus* file, std::string& outText);
+				std::string Compress(std::string& str, int compressionlevel);
+				void CreateOutput(MasterFileStatus* file);
 				void FreeBuffers(MasterFileStatus* file, int memoryImage, int memoryText);
 
 				void TerminateThread(int id);
@@ -112,8 +116,9 @@ namespace Docapost {
 
 				void OnSlaveConnectHandler(NetworkSession* ns, int thread, std::string hostname);
 				void OnSlaveDisconnectHandler(NetworkSession* ns, boost::unordered_map<boost::uuids::uuid, bool>& noUsed);
-				void OnSlaveSynchroHandler(NetworkSession* ns, int thread, int required, std::vector<std::tuple<boost::uuids::uuid, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>& results);
+				void OnSlaveSynchroHandler(NetworkSession* ns, int thread, int required, std::vector<std::tuple<boost::uuids::uuid, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::vector<std::string>*>>& results);
 			public:
+				static const std::vector<char*> EXIF_FIELD;
 				MasterProcessingWorker(OcrFactory& ocr, OutputFlags type = OutputFlags::None, int port = 12000);
 
 				void AddFolder(fs::path folder, bool resume = false);

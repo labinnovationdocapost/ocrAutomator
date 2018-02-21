@@ -1,5 +1,6 @@
 #include "Main.h"
 #include <boost/assign/list_of.hpp>
+#include <rttr/registration.h>
 
 boost::thread* th = nullptr;
 std::mutex g_console_mutex;
@@ -77,6 +78,22 @@ int main(int argc, char* argv[])
 
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Starting Logger";
 	//SetCapability();
+	/*using namespace rttr;
+	std::vector<type> classs_type = type::get_by_name("OcrFactory").get_derived_classes();
+	for(type class_type: classs_type)
+	{
+		auto props = class_type.get_properties();
+		auto ctor = class_type.get_constructor();
+		auto obj = class_type.create();
+		auto prop = class_type.get_property("PSM");
+		prop.set_value(obj, tesseract::PageSegMode::PSM_SINGLE_CHAR);
+		auto val = prop.get_value(obj);
+		auto res = val;
+	}*/
+	/*if(class_type)
+	{
+		auto props = class_type.get_properties();
+	}*/
 
 
 	// oblige le buffer desortie a etre thread safe

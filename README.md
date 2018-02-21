@@ -28,6 +28,10 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
 - Si vous souhaitez utiliser les lib static de Boost, enlever les .so générés précédemments
 - Télécharge Podofo : `wget https://mupdf.com/downloads/mupdf-1.12.0-source.tar.gz -o mupdf-1.12.0-source.tar.gz` puis extraire avec `tar -xf /path/to/mupdf-1.12.0-source.tar.gz`.
 - puis suivre la procédure : (https://mupdf.com/docs/building.html)
+- Télécharge Podofo : `wget http://www.rttr.org/releases/rttr-0.9.5-src.tar.gz -o rttr-0.9.5-src.tar.gz` puis extraire avec `tar -xf /path/to/rttr-0.9.5-src.tar.gz`.
+- puis suivre la procédure : (http://www.rttr.org/doc/master/building_install_page.html)
+- Pour compiler une lib static : ```cmake -DBUILD_STATIC=ON```
+- Copier le contenu du dossier ```install``` dans ```/user/local``` (pincipalement ```lib``` et ```include```)
 
 ## Configuration pour créer un .deb et le deploiyer (Linux)
 - Copier le fichier Env/env-example.config vers Env/env.config et renseiger les informations de connexion

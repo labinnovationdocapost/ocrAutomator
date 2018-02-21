@@ -11,6 +11,7 @@ namespace Docapost {
 			public:
 				A2IAFactory();
 				A2IA* CreateNew() override;
+				RTTR_ENABLE(OcrFactory);
 			};
 		}
 	}

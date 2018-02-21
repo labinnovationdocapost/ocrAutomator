@@ -1,15 +1,10 @@
 #pragma once
-#include <string>
-#include "BaseOcr.h"
 #include "BaseOcrWithLoader.h"
 
 using std::string;
 #include <tesseract/baseapi.h>
 
-#include <iostream>
-#include <boost/format.hpp>
 #include "BaseFileStatus.h"
-#include "MasterFileStatus.h"
 #include "ImageFormatEnum.h"
 #include "MemoryFileBuffer.h"
 
@@ -27,7 +22,7 @@ namespace Docapost {
 			public:
 				Tesseract(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang, ImageFormatEnum format);
 
-				std::unique_ptr<std::string> ProcessThroughOcr(MemoryFileBuffer* imgData) override;
+				std::unique_ptr<std::vector<std::string>> ProcessThroughOcr(MemoryFileBuffer* imgData) override;
 
 				void InitEngine() override;
 

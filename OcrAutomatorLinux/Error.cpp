@@ -61,6 +61,7 @@ void formatter(logging::record_view const& rec, logging::formatting_ostream& str
 	strm << rec[expr::smessage];
 }
 
+#define LOG_FOLDER "/tmp/TesseractAutomator/log"
 void Log::InitLogger()
 {
 	logging::add_common_attributes();
@@ -70,7 +71,14 @@ void Log::InitLogger()
 		keywords::time_based_rotation = sinks::file::rotation_at_time_interval(boost::posix_time::hours(1))
 		);
 	backend->auto_flush(true);
-	
+	backend->set_file_collector
+	(
+		sinks::file::make_collector
+		(
+			keywords::target = LOG_FOLDER
+		)
+	);
+	backend->scan_for_files();
 	//boost::shared_ptr< sinks::syslog_backend > backend = boost::make_shared< sinks::syslog_backend >();Tes
 
 	typedef sinks::synchronous_sink< sinks::text_file_backend > sink_t;

@@ -55,6 +55,9 @@
     <Filter Include="Source Files\Ocr\A2IA">
       <UniqueIdentifier>{caa83644-3a88-4451-a68a-679b8c2b277c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Managed">
+      <UniqueIdentifier>{e29f76c3-a095-4664-a4a4-ccf42be49139}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Display.cpp">
@@ -78,6 +81,12 @@
     <ClCompile Include="FactorySelector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="RTTR_Win.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="OcrAutomatorMaster.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Display.h">
@@ -94,6 +103,9 @@
     </ClInclude>
     <ClInclude Include="A2IAFactory.h">
       <Filter>Header Files\Ocr\A2IA</Filter>
+    </ClInclude>
+    <ClInclude Include="OcrAutomatorMaster.h">
+      <Filter>Header Files\Base</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

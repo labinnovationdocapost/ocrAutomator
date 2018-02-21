@@ -5,6 +5,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include "Error.h"
 #include "StringMemoryFileBuffer.h"
+#include <boost/date_time.hpp>
 
 NetworkClient::NetworkClient(int port, std::string ip) :
 	mSynchroWaiting(0),
@@ -337,7 +338,10 @@ void NetworkClient::SendSynchro(int thread, int threadId, int req, std::vector<S
 		f->set_uuid(boost::uuids::to_string(file->uuid));
 		//f->set_allocated_result(file->result.get());
 		//f->release_result();
-		f->set_result(*file->result);
+		for(auto& result : *file->result)
+		{
+			f->add_result(result);
+		}
 		f->set_start(boost::posix_time::to_time_t(file->start));
 		f->set_end(boost::posix_time::to_time_t(file->end));
 		f->set_ellapsed(file->ellapsed.ticks());

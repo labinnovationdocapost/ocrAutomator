@@ -25,6 +25,8 @@ private:
 	std::mutex mThreadMutex;
 	std::mutex mLoopMutex;
 
+	HANDLE mNewScreenBuffer;
+
 	Docapost::IA::Tesseract::MasterProcessingWorker& mTesseractRunner;
 
 	boost::posix_time::ptime mTimeEnd;

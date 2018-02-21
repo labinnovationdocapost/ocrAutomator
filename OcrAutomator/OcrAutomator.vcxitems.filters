@@ -183,6 +183,12 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)BaseOcrWithLoader.h">
       <Filter>Header Files\Ocr</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)RTTR.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Export.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Broadcast.pb.cc">
@@ -265,6 +271,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)BaseOcrWithLoader.cpp">
       <Filter>Source Files\Ocr</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)RTTR.cpp">
+      <Filter>Source Files\Base</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

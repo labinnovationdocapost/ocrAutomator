@@ -8,5 +8,5 @@ message Result {
 	required int64 Start = 3;
 	required int64 End = 4;
 	required int64 Ellapsed = 5;
-	required string Result = 6;
+	repeated string Result = 6;
 }

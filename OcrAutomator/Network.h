@@ -39,7 +39,7 @@ private:
 	boost::uuids::basic_random_generator<boost::mt19937> mGen = boost::uuids::basic_random_generator<boost::mt19937>();
 
 public:
-	boost::signals2::signal<void(NetworkSession*, int, int, std::vector < std::tuple < boost::uuids::uuid , int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string >> &) > onSlaveSynchro;
+	boost::signals2::signal<void(NetworkSession*, int, int, std::vector < std::tuple < boost::uuids::uuid , int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::vector<std::string>* >> &) > onSlaveSynchro;
 	boost::signals2::signal<void(NetworkSession*, int, std::string)> onSlaveConnect;
 	boost::signals2::signal<void(NetworkSession*, boost::unordered_map<boost::uuids::uuid, bool>&)> onSlaveDisconnect;
 

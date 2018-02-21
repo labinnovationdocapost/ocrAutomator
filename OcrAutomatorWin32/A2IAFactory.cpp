@@ -3,6 +3,8 @@
 
 Docapost::IA::Tesseract::A2IAFactory::A2IAFactory()
 {
+	mExtension = { ".txt", ".json" };
+
 	if (A2iARC_Identify("INSERT PASSWORD HERE") != A2iARC_Ok)
 	{
 		std::cout << "A2iARC_Identify: " << A2iARC_GetLastError() << "\n";

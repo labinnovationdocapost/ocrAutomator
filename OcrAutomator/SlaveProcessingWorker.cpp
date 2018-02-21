@@ -176,7 +176,7 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::ThreadLoop(int id)
 			file->start = boost::posix_time::microsec_clock::local_time();
 
 			file->result = ocr->ProcessThroughOcr(file->buffer);
-			if (!file->result)
+			if (file->result->size() == 0)
 			{
 				std::cerr << "Get Tesseract Error" << std::endl;
 

@@ -32,7 +32,7 @@ namespace Docapost {
 				* \return Return nullptr if the processing il delegate to an asynchrone task, else return the file content
 				*/
 				MemoryFileBuffer* LoadFile(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile) override;
-				virtual std::unique_ptr<std::string> ProcessThroughOcr(MemoryFileBuffer* imgData) = 0;
+				virtual std::unique_ptr<std::vector<std::string>> ProcessThroughOcr(MemoryFileBuffer* imgData) = 0;
 				virtual void InitEngine() = 0;
 			};
 		}

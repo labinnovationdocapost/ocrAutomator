@@ -12,7 +12,18 @@
 #include <boost/algorithm/string.hpp>
 #include "MuPDF.h"
 #include "ExivMemoryFileBuffer.h"
+#include <zlib.h>
 
+#if defined(MSDOS) || defined(OS2) || defined(WIN32) || defined(__CYGWIN__)
+#  include <fcntl.h>
+#  include <io.h>
+#  define SET_BINARY_MODE(file) setmode(fileno(file), O_BINARY)
+#else
+#  define SET_BINARY_MODE(file)
+#endif
+
+const std::vector<char*> Docapost::IA::Tesseract::MasterProcessingWorker::EXIF_FIELD = { (char*)"Exif.Image.DNGPrivateData", (char*)"Exif.Image.CFAPlaneColor", (char*)"Exif.Image.Copyright" };
+const char* EXTENSION_EXTRA = ".extra";
 
 Docapost::IA::Tesseract::MasterProcessingWorker::MasterProcessingWorker(OcrFactory& ocr, Docapost::IA::Tesseract::OutputFlags types, int port) :
 	BaseProcessingWorker(ocr),
@@ -78,14 +89,14 @@ const char* kPathSeparator =
 "/";
 #endif
 
-fs::path Docapost::IA::Tesseract::MasterProcessingWorker::ConstructNewTextFilePath(fs::path path) const
+fs::path Docapost::IA::Tesseract::MasterProcessingWorker::ConstructNewTextFilePath(fs::path path, std::string ext = ".txt") const
 {
 	fs::path new_path;
 
 	auto it = mOutputs.find(OutputFlags::Text);
 	if (it == mOutputs.end() || it->second == mInput)
 	{
-		new_path = fs::change_extension(path, ".txt");
+		new_path = fs::change_extension(path, ext);
 	}
 	else
 	{
@@ -93,9 +104,9 @@ fs::path Docapost::IA::Tesseract::MasterProcessingWorker::ConstructNewTextFilePa
 
 		new_path = fs::absolute(relative_path, it->second);
 		if (mOutputTypes & OutputFlags::Flattern)
-			new_path = new_path.parent_path() / boost::replace_all_copy(fs::change_extension(relative_path, ".txt").string(), kPathSeparator, mSeparator);
+			new_path = new_path.parent_path() / boost::replace_all_copy(fs::change_extension(relative_path, ext).string(), kPathSeparator, mSeparator);
 		else
-			new_path = new_path.parent_path() / fs::change_extension(new_path.filename(), ".txt");
+			new_path = new_path.parent_path() / fs::change_extension(new_path.filename(), ext);
 
 	}
 	return new_path;
@@ -131,7 +142,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::MergeResult(MasterFileStat
 				auto item = (*file->siblings)[i];
 				if (item != nullptr)
 				{
-					stream << *(item->result) << std::endl;
+					stream << *(item->result->begin()) << std::endl;
 				}
 				else
 				{
@@ -346,7 +357,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::AddFolder(fs::path folder,
 		CatchAllErrorSignals();
 		if (mFiles.size() > 0)
 			return;
-		
+
 		mInput = folder;
 		_AddFolder(folder, resume);
 		mIsEnd = true;
@@ -372,33 +383,104 @@ std::thread* Docapost::IA::Tesseract::MasterProcessingWorker::Run(int nbThread)
 	}
 	return nullptr;
 }
-
-void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileStatus* file, std::string& outText)
+std::string Docapost::IA::Tesseract::MasterProcessingWorker::Compress(std::string& str,
+	int compressionlevel = Z_BEST_COMPRESSION)
 {
+	z_stream zs;                        // z_stream is zlib's control structure
+	memset(&zs, 0, sizeof(zs));
+
+	if (deflateInit(&zs, compressionlevel) != Z_OK)
+		throw(std::runtime_error("deflateInit failed while compressing."));
+
+	zs.next_in = (Bytef*)str.data();
+	zs.avail_in = str.size();           // set the z_stream's input
+
+	int ret;
+	char outbuffer[32768];
+	std::string outstring;
+
+	// retrieve the compressed bytes blockwise
+	do {
+		zs.next_out = reinterpret_cast<Bytef*>(outbuffer);
+		zs.avail_out = sizeof(outbuffer);
+
+		ret = deflate(&zs, Z_FINISH);
+
+		if (outstring.size() < zs.total_out) {
+			// append the block to the output string
+			outstring.append(outbuffer,
+				zs.total_out - outstring.size());
+		}
+	} while (ret == Z_OK);
+
+	deflateEnd(&zs);
+
+	if (ret != Z_STREAM_END) {          // an error occurred that was not EOF
+		std::ostringstream oss;
+		oss << "Exception during zlib compression: (" << ret << ") " << zs.msg;
+		throw(std::runtime_error(oss.str()));
+	}
+
+	return outstring;
+}
+
+void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileStatus* file)
+{
+	if (file->result->size() == 0)
+		return;
+
 	fs::path new_path;
 	if (mOutputTypes & OutputFlags::Text)
 	{
-		new_path = ConstructNewTextFilePath(file->new_name);
+		auto ext = mOcrFactory.GetTextExtension();
 
-		fs::create_directories(new_path.parent_path());
+		for (int i = 0; i < file->result->size(); i++)
+		{
+			new_path = ConstructNewTextFilePath(file->new_name, ext[i]);
 
-		std::ofstream output;
-		output.open(new_path.string(), std::ofstream::trunc | std::ofstream::out);
-		output << outText;
-		output.close();
+			fs::create_directories(new_path.parent_path());
 
-		file->output.push_back(new_path.string());
-		file->relative_output.push_back(fs::relative(new_path, mOutputs[OutputFlags::Text]).string());
+			std::ofstream output;
+			output.open(new_path.string(), std::ofstream::trunc | std::ofstream::out);
+			output << (*file->result)[i];
+			output.close();
+
+			if (i == 0)
+			{
+				file->output.push_back(new_path.string());
+				file->relative_output.push_back(fs::relative(new_path, mOutputs[OutputFlags::Text]).string());
+			}
+		}
 	}
 
 	if (mOutputTypes & OutputFlags::Exif)
 	{
-
 		Exiv2::ExifData exifData;
-		auto v = Exiv2::Value::create(Exiv2::asciiString);
-		v->read(outText);
-		Exiv2::ExifKey key("Exif.Image.ImageDescription");
-		exifData.add(key, v.get());
+		for (int i = 0; i < file->result->size(); i++)
+		{
+			if (i == 0)
+			{
+				auto v = std::make_unique<Exiv2::AsciiValue>();
+				if (v->read((*file->result)[i]))
+				{
+					BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "cannot read " << file->name;
+				}
+
+				Exiv2::ExifKey key("Exif.Image.ImageDescription");
+				exifData.add(key, v.get());
+			}
+
+			auto data = Compress((*file->result)[i]);
+			auto v = std::make_unique<Exiv2::DataValue>((unsigned char*)data.data(), data.size());
+
+			//auto str = (*file->result)[i].substr(0, 57830);
+			/*if(v->read(str))
+			{
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "cannot read " << file->name;
+			}*/
+			Exiv2::ExifKey key(EXIF_FIELD[i]);
+			exifData.add(key, v.get());
+		}
 		exifData["Exif.Image.ImageID"] = fs::relative(file->name, mInput).string();
 		exifData["Exif.Image.ProcessingSoftware"] = mSoftName;
 
@@ -504,21 +586,31 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 					continue;
 				}
 			}
-			catch(std::runtime_error& e)
+			catch (std::runtime_error& e)
 			{
 				AddFileBack(file);
 				continue;
 			}
 			onStartProcessFile(file);
 
-			file->result = ocr->ProcessThroughOcr(file->buffer);
-			if (!file->result)
+			try
 			{
+				file->result = ocr->ProcessThroughOcr(file->buffer);
+				if (file->result->size() == 0)
+				{
+					AddFileBack(file);
+					continue;
+				}
+			}
+			catch (std::runtime_error& error)
+			{
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Error: " << error.what();
+				onFileCanceled(file);
 				AddFileBack(file);
 				continue;
 			}
 
-			CreateOutput(file, *file->result);
+			CreateOutput(file);
 
 			MergeResult(file);
 
@@ -625,7 +717,7 @@ Docapost::IA::Tesseract::MasterProcessingWorker::~MasterProcessingWorker()
 	const auto ths = mThreads;
 	for (auto th : ths)
 	{
-		if(th.second->joinable())
+		if (th.second->joinable())
 			th.second->join();
 
 		delete th.second;

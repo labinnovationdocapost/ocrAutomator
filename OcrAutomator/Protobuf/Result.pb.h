@@ -133,17 +133,21 @@ class Result : public ::google::protobuf::Message {
   inline ::google::protobuf::int64 ellapsed() const;
   inline void set_ellapsed(::google::protobuf::int64 value);
 
-  // required string Result = 6;
-  inline bool has_result() const;
+  // repeated string Result = 6;
+  inline int result_size() const;
   inline void clear_result();
   static const int kResultFieldNumber = 6;
-  inline const ::std::string& result() const;
-  inline void set_result(const ::std::string& value);
-  inline void set_result(const char* value);
-  inline void set_result(const char* value, size_t size);
-  inline ::std::string* mutable_result();
-  inline ::std::string* release_result();
-  inline void set_allocated_result(::std::string* result);
+  inline const ::std::string& result(int index) const;
+  inline ::std::string* mutable_result(int index);
+  inline void set_result(int index, const ::std::string& value);
+  inline void set_result(int index, const char* value);
+  inline void set_result(int index, const char* value, size_t size);
+  inline ::std::string* add_result();
+  inline void add_result(const ::std::string& value);
+  inline void add_result(const char* value);
+  inline void add_result(const char* value, size_t size);
+  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& result() const;
+  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_result();
 
   // @@protoc_insertion_point(class_scope:Docapost.IA.Tesseract.Proto.Result)
  private:
@@ -157,8 +161,6 @@ class Result : public ::google::protobuf::Message {
   inline void clear_has_end();
   inline void set_has_ellapsed();
   inline void clear_has_ellapsed();
-  inline void set_has_result();
-  inline void clear_has_result();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -168,7 +170,7 @@ class Result : public ::google::protobuf::Message {
   ::google::protobuf::int64 start_;
   ::google::protobuf::int64 end_;
   ::google::protobuf::int64 ellapsed_;
-  ::std::string* result_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> result_;
   ::google::protobuf::int32 threadid_;
   friend void  protobuf_AddDesc_Result_2eproto();
   friend void protobuf_AssignDesc_Result_2eproto();
@@ -356,80 +358,58 @@ inline void Result::set_ellapsed(::google::protobuf::int64 value) {
   // @@protoc_insertion_point(field_set:Docapost.IA.Tesseract.Proto.Result.Ellapsed)
 }
 
-// required string Result = 6;
-inline bool Result::has_result() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
-}
-inline void Result::set_has_result() {
-  _has_bits_[0] |= 0x00000020u;
-}
-inline void Result::clear_has_result() {
-  _has_bits_[0] &= ~0x00000020u;
+// repeated string Result = 6;
+inline int Result::result_size() const {
+  return result_.size();
 }
 inline void Result::clear_result() {
-  if (result_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    result_->clear();
-  }
-  clear_has_result();
+  result_.Clear();
 }
-inline const ::std::string& Result::result() const {
+inline const ::std::string& Result::result(int index) const {
   // @@protoc_insertion_point(field_get:Docapost.IA.Tesseract.Proto.Result.Result)
-  return *result_;
+  return result_.Get(index);
 }
-inline void Result::set_result(const ::std::string& value) {
-  set_has_result();
-  if (result_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    result_ = new ::std::string;
-  }
-  result_->assign(value);
+inline ::std::string* Result::mutable_result(int index) {
+  // @@protoc_insertion_point(field_mutable:Docapost.IA.Tesseract.Proto.Result.Result)
+  return result_.Mutable(index);
+}
+inline void Result::set_result(int index, const ::std::string& value) {
   // @@protoc_insertion_point(field_set:Docapost.IA.Tesseract.Proto.Result.Result)
+  result_.Mutable(index)->assign(value);
 }
-inline void Result::set_result(const char* value) {
-  set_has_result();
-  if (result_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    result_ = new ::std::string;
-  }
-  result_->assign(value);
+inline void Result::set_result(int index, const char* value) {
+  result_.Mutable(index)->assign(value);
   // @@protoc_insertion_point(field_set_char:Docapost.IA.Tesseract.Proto.Result.Result)
 }
-inline void Result::set_result(const char* value, size_t size) {
-  set_has_result();
-  if (result_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    result_ = new ::std::string;
-  }
-  result_->assign(reinterpret_cast<const char*>(value), size);
+inline void Result::set_result(int index, const char* value, size_t size) {
+  result_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
   // @@protoc_insertion_point(field_set_pointer:Docapost.IA.Tesseract.Proto.Result.Result)
 }
-inline ::std::string* Result::mutable_result() {
-  set_has_result();
-  if (result_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    result_ = new ::std::string;
-  }
-  // @@protoc_insertion_point(field_mutable:Docapost.IA.Tesseract.Proto.Result.Result)
+inline ::std::string* Result::add_result() {
+  return result_.Add();
+}
+inline void Result::add_result(const ::std::string& value) {
+  result_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:Docapost.IA.Tesseract.Proto.Result.Result)
+}
+inline void Result::add_result(const char* value) {
+  result_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:Docapost.IA.Tesseract.Proto.Result.Result)
+}
+inline void Result::add_result(const char* value, size_t size) {
+  result_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:Docapost.IA.Tesseract.Proto.Result.Result)
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+Result::result() const {
+  // @@protoc_insertion_point(field_list:Docapost.IA.Tesseract.Proto.Result.Result)
   return result_;
 }
-inline ::std::string* Result::release_result() {
-  clear_has_result();
-  if (result_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    return NULL;
-  } else {
-    ::std::string* temp = result_;
-    result_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-    return temp;
-  }
-}
-inline void Result::set_allocated_result(::std::string* result) {
-  if (result_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete result_;
-  }
-  if (result) {
-    set_has_result();
-    result_ = result;
-  } else {
-    clear_has_result();
-    result_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  }
-  // @@protoc_insertion_point(field_set_allocated:Docapost.IA.Tesseract.Proto.Result.Result)
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+Result::mutable_result() {
+  // @@protoc_insertion_point(field_mutable_list:Docapost.IA.Tesseract.Proto.Result.Result)
+  return &result_;
 }
 
 

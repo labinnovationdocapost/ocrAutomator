@@ -1,10 +1,8 @@
 #pragma once
-#include <string>
-#include <mutex>
 #include <boost/lexical_cast.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <boost/date_time.hpp>
 #include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
 #include "MemoryFileBuffer.h"
 
 
@@ -21,7 +19,7 @@ struct BaseFileStatus
 	/**
 	* \brief Contain the result as text. Should be a pointer to be deletable after use
 	*/
-	std::unique_ptr<std::string> result;
+	std::unique_ptr<std::vector<std::string>> result;
 
 	BaseFileStatus() : thread(0) {}
 	explicit BaseFileStatus(std::string uuid) : thread(0) { this->uuid = boost::lexical_cast<boost::uuids::uuid>(uuid); }

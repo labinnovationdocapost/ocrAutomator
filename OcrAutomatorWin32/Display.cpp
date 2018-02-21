@@ -18,7 +18,8 @@ void Display::Init(bool create)
 		CloseHandle(mConsoleHandler);
 	}
 	mConsoleHandler = GetStdHandle(STD_OUTPUT_HANDLE);
-	SetConsoleActiveScreenBuffer(mConsoleHandler);
+	Clear();
+	//auto Status = SetConsoleActiveScreenBuffer(mConsoleHandler);
 }
 
 void Display::OnEnd()

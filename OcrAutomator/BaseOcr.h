@@ -1,15 +1,11 @@
 #pragma once
 
-#include <string>
 #include "ImageFormatEnum.h"
 
-using std::string;
-#include <tesseract/baseapi.h>
-
-#include <iostream>
-#include <boost/format.hpp>
 #include "BaseFileStatus.h"
 #include "MasterFileStatus.h"
+#include <rttr/type>
+
 
 namespace Docapost {
 	namespace IA {
@@ -28,17 +24,22 @@ namespace Docapost {
 				}
 
 				virtual MemoryFileBuffer* LoadFile(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile) = 0;
-				virtual std::unique_ptr<std::string> ProcessThroughOcr(MemoryFileBuffer* imgData) = 0;
+				virtual std::unique_ptr<std::vector<std::string>> ProcessThroughOcr(MemoryFileBuffer* imgData) = 0;
 				virtual void InitEngine() = 0;
 			};
 			class OcrFactory
 			{
 			protected:
 				ImageFormatEnum mImageFormat = ImageFormatEnum::JPG;
+				std::vector<std::string> mExtension = { ".txt" };
 			public:
 
 				virtual ~OcrFactory() = default;
 				virtual BaseOcr* CreateNew() = 0;
+				virtual std::vector<std::string>& GetTextExtension()
+				{
+					return mExtension;
+				}
 
 				ImageFormatEnum ImageFormat() const { return mImageFormat; }
 				void ImageFormat(const ImageFormatEnum image_format) { mImageFormat = image_format; }
@@ -49,6 +50,7 @@ namespace Docapost {
 					if (mImageFormat == ImageFormatEnum::PNG) return ".png";
 					return "";
 				}
+				RTTR_ENABLE();
 			};
 
 		}

@@ -1,5 +1,6 @@
 #pragma once
 #include "BaseFileStatus.h"
+#include <mutex>
 
 struct MasterFileStatus : BaseFileStatus
 {

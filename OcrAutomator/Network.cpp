@@ -54,7 +54,7 @@ void Network::InitComm()
 				this->onSlaveConnect(ns, thread, hostname);
 			});
 
-			obj->onSlaveSynchro.connect([this](NetworkSession* ns, int thread, int required, std::vector<std::tuple<boost::uuids::uuid, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>& results)
+			obj->onSlaveSynchro.connect([this](NetworkSession* ns, int thread, int required, std::vector<std::tuple<boost::uuids::uuid, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::vector<std::string>*>>& results)
 			{
 				this->onSlaveSynchro(ns, thread, required, results);
 			});

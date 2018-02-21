@@ -9,7 +9,7 @@
 
 #include "MuPDF.h"
 #include "Error.h"
-#include "ArrayMemoryFileBuffer.h"
+#include <boost/format.hpp>
 
 
 Docapost::IA::Tesseract::Tesseract::Tesseract(tesseract::PageSegMode psm, tesseract::OcrEngineMode oem, std::string lang, ImageFormatEnum format) : BaseOcrWithLoader(format), mPsm(psm), mOem(oem), mLang(lang), mTessBaseAPI(tesseract::TessBaseAPI())
@@ -22,22 +22,24 @@ Docapost::IA::Tesseract::Tesseract::Tesseract(tesseract::PageSegMode psm, tesser
 }
 
 
-std::unique_ptr<std::string> Docapost::IA::Tesseract::Tesseract::ProcessThroughOcr(Docapost::IA::Tesseract::MemoryFileBuffer* imgData) {
+std::unique_ptr<std::vector<std::string>> Docapost::IA::Tesseract::Tesseract::ProcessThroughOcr(Docapost::IA::Tesseract::MemoryFileBuffer* imgData) {
 	Pix *image = pixReadMem(imgData->data(), imgData->len());
 	if (image == nullptr)
 	{
-		return nullptr;
+		throw std::runtime_error("ProcessThroughOcr: Cannot open image");
 	}
 
 	mTessBaseAPI.SetImage(image);
 	auto outtext = mTessBaseAPI.GetUTF8Text();
 
-	auto text = std::unique_ptr<std::string>{ new string(outtext) };
+	//auto text = std::unique_ptr<std::string>{ new string(outtext) };
 
 	pixDestroy(&image);
 	delete[] outtext;
 
-	return text;
+	std::vector<std::string>* vector = new std::vector<std::string>();
+	vector->push_back(string(outtext));
+	return std::unique_ptr<std::vector<std::string>>(vector);
 }
 
 void Docapost::IA::Tesseract::Tesseract::InitEngine()

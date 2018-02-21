@@ -1,4 +1,5 @@
 #pragma once
+#include <rttr/registration>
 
 namespace Docapost {
 	namespace IA {

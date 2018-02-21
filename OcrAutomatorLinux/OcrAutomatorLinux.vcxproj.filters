@@ -36,6 +36,7 @@
     <ClCompile Include="Error.cpp">
       <Filter>Source Files\Base</Filter>
     </ClCompile>
+    <ClCompile Include="FactorySelector.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Display.h">
