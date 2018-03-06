@@ -55,6 +55,9 @@
     <Filter Include="Source Files\Buffer">
       <UniqueIdentifier>{7a6105de-8fa4-4ee0-a1c5-8cdf63eb6cc5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Ocr\NoOcr">
+      <UniqueIdentifier>{76df56e8-d073-4078-a0be-35f27e4d866e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)BaseFileStatus.h">
@@ -188,6 +191,12 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Export.h">
       <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)NoOcr.h">
+      <Filter>Header Files\Ocr\NoOcr</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)NoOcrFactory.h">
+      <Filter>Header Files\Ocr\NoOcr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

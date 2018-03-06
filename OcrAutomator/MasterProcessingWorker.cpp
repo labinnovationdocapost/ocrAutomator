@@ -604,7 +604,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 			}
 			catch (std::runtime_error& error)
 			{
-				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Error: " << error.what();
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Error: " << file->name << "\n" << error.what();
 				onFileCanceled(file);
 				AddFileBack(file);
 				continue;

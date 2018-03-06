@@ -37,6 +37,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Network.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)NetworkClient.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)NetworkSession.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)NoOcr.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)NoOcrFactory.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)OutputFlags.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Broadcast.pb.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Declare.pb.h" />
