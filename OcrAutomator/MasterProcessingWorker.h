@@ -77,6 +77,16 @@ namespace Docapost {
 				 * \return le chemin d'origine décrivant le pdf + numéro de page
 				 */
 				string CreatePdfOutputPath(fs::path path, int i);
+				void InitPdfMasterFileStatus(MasterFileStatus* file, std::mutex* mutex_siblings, std::vector<MasterFileStatus*>* siblings, int i);
+
+				/**
+				 * \brief Ajout un document PDF au pipeline
+				 * \param resume Faut il écraser les fichiers déja présent (false) ou ignorer le travail si il existe déja (true)
+				 * \param nbPages Nombre de page du PDF
+				 * \param path 
+				 */
+				int AddPdfFile(bool resume, fs::path path);
+				void AddImageFile(bool resume, fs::path path);
 				/**
 				 * \brief Créer le chemin de sortie (texte) pour le fichier spécifié
 				 * \param path Chemin vers le fichier original
@@ -125,10 +135,14 @@ namespace Docapost {
 				std::thread* Run(int nbThread) override;
 				void SetOutput(boost::unordered_map<OutputFlags, fs::path> folders);
 
+				int AddPdfFile(std::string id, char* pdf, int len);
+				void AddImageFile(std::string id, char* image, int len);
+
 				std::set<std::string> extensions = { ".tif", ".tiff", ".png", ".jpg", ".jpeg", ".pdf" };
 
 				boost::signals2::signal<void(MasterFileStatus*)> onFileCanceled;
 				boost::signals2::signal<void(MasterFileStatus*)> onStartProcessFile;
+				boost::signals2::signal<void(MasterFileStatus*)> onEndProcessFile;
 				boost::signals2::signal<void()> onProcessEnd;
 
 				bool NetworkEnable() const { return mNetwork != nullptr/* && mNetworkThread != nullptr*/; }

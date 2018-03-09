@@ -1,9 +1,21 @@
+
 #include "MuPDF.h"
 #include <boost/thread.hpp>
 #include "Error.h"
+#include "MasterMemoryFileStatus.h"
+#include "MasterLocalFileStatus.h"
+
+extern "C"
+{
 #include <mupdf/fitz.h>
+}
 #include "ArrayMemoryFileBuffer.h"
 #include "JpegTurboMemoryFileBuffer.h"
+
+// Dans le as d'une DLL fz_identity n'est pas connue, sous linux le logiciel est compiler avec des libs statics
+#ifdef _WIN32
+const fz_matrix fz_identity = { 1, 0, 0, 1, 0, 0 };
+#endif
 
 std::mutex Docapost::IA::MuPDF::MuPDF::mStaticContextMutex;
 
@@ -17,7 +29,7 @@ Docapost::IA::MuPDF::MuPDF::MuPDF()
 
 	initLocks();
 	mContext = fz_new_context(NULL, &mDrawLocks, FZ_STORE_UNLIMITED);
-	
+
 	if (!mContext)
 	{
 		throw std::runtime_error("cannot create mupdf context");
@@ -67,17 +79,22 @@ int Docapost::IA::MuPDF::MuPDF::GetNbPage(std::string path)
 	return pageCount;
 }
 
-void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::Tesseract::ImageFormatEnum format, ImageQuality quality)
+int Docapost::IA::MuPDF::MuPDF::GetNbPage(char* pdf, int len)
 {
-	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Begin extract PDF file";
 	//std::lock_guard<std::mutex> lock(mContextMutex);
+	fz_stream *stream = nullptr;
 	fz_document *doc = nullptr;
 	/* Open the document. */
 	fz_try(mContext)
-		doc = fz_open_document(mContext, file->name.c_str());
+	{
+		stream = fz_open_memory(mContext, (unsigned char*)pdf, len);
+		doc = fz_open_document_with_stream(mContext, ".pdf", stream);
+	}
 	fz_catch(mContext)
 	{
 		auto msg = fz_caught_message(mContext);
+		if (stream != nullptr)
+			fz_drop_stream(mContext, stream);
 		fz_drop_context(mContext);
 		throw std::runtime_error(std::string("cannot open document: ") + msg);
 	}
@@ -90,6 +107,52 @@ void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::T
 	{
 		auto msg = fz_caught_message(mContext);
 		fz_drop_document(mContext, doc);
+		fz_drop_stream(mContext, stream);
+		throw std::runtime_error(std::string("cannot count number of pages: ") + msg);
+	}
+	fz_drop_document(mContext, doc);
+	fz_drop_stream(mContext, stream);
+	return pageCount;
+}
+
+void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::Tesseract::ImageFormatEnum format, ImageQuality quality)
+{
+	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Begin extract PDF file";
+	//std::lock_guard<std::mutex> lock(mContextMutex);
+	fz_stream * stream = nullptr;
+	fz_document *doc = nullptr;
+	/* Open the document. */
+	fz_try(mContext)
+	{
+		if (MasterLocalFileStatus* _file = dynamic_cast<MasterLocalFileStatus*>(file))
+		{
+			doc = fz_open_document(mContext, _file->name.c_str());
+		}
+		if (MasterMemoryFileStatus* _file = dynamic_cast<MasterMemoryFileStatus*>(file))
+		{
+			stream = fz_open_memory(mContext, (unsigned char*)_file->OriginalFile(), _file->Length());
+			doc = fz_open_document_with_stream(mContext, ".pdf", stream);
+		}
+	}
+	fz_catch(mContext)
+	{
+		auto msg = fz_caught_message(mContext);
+		if (stream != nullptr)
+			fz_drop_stream(mContext,stream);
+		fz_drop_context(mContext);
+		throw std::runtime_error(std::string("cannot open document: ") + msg);
+	}
+
+	int pageCount = 0;
+	/* Count the number of pages. */
+	fz_try(mContext)
+		pageCount = fz_count_pages(mContext, doc);
+	fz_catch(mContext)
+	{
+		auto msg = fz_caught_message(mContext);
+		fz_drop_document(mContext, doc);
+		if (stream != nullptr)
+			fz_drop_stream(mContext, stream);
 		fz_drop_context(mContext);
 		throw std::runtime_error(std::string("cannot count number of pages: ") + msg);
 	}
@@ -144,8 +207,11 @@ void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::T
 		fz_catch(mContext)
 		{
 			auto msg = fz_caught_message(mContext);
+			fz_drop_document(mContext, doc);
+			if (stream != nullptr)
+				fz_drop_stream(mContext, stream);
 			fz_drop_context(mContext);
-			throw std::runtime_error(std::string("cannot count number of pages: ") + msg);
+			throw std::runtime_error(std::string("cannot create device: ") + msg);
 		}
 
 		//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destruct page";
@@ -153,7 +219,7 @@ void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::T
 
 		fz_pixmap *pix = nullptr;
 		fz_try(mContext)
-		{ 
+		{
 			//std::lock_guard<std::mutex> staticlock(mStaticContextMutex);
 			//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "create pixmap";
 			pix = fz_new_pixmap_with_bbox(mContext, fz_device_rgb(mContext), &irect, 0, 0);
@@ -162,6 +228,9 @@ void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::T
 		fz_catch(mContext)
 		{
 			auto msg = fz_caught_message(mContext);
+			fz_drop_document(mContext, doc);
+			if (stream != nullptr)
+				fz_drop_stream(mContext, stream);
 			fz_drop_context(mContext);
 			throw std::runtime_error(std::string("Cannot allocate: ") + msg);
 		}
@@ -181,6 +250,8 @@ void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::T
 
 	}
 	fz_drop_document(mContext, doc);
+	if (stream != nullptr)
+		fz_drop_stream(mContext, stream);
 	//lock.~lock_guard();
 	//worker_threads.join_all();
 
@@ -255,20 +326,20 @@ void Docapost::IA::MuPDF::MuPDF::Worker(WorkerParam wp, MasterFileStatus* file)
 
 	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "writing to jpeg";
 
-	 if(wp.format == Docapost::IA::Tesseract::ImageFormatEnum::JPG)
-	 {
-		 file->buffer = WriteToJPEG(wp, wp.quality.jpegQuality);
-	 }
-	 else if (wp.format == Docapost::IA::Tesseract::ImageFormatEnum::PNG)
-	 {
-		 auto buffer = fz_new_buffer_from_pixmap_as_png(local_ctx, wp.pixmap, fz_default_color_params(local_ctx));
-		 file->buffer = new Tesseract::FzBufferMemoryFileBuffer(local_ctx, buffer);
-	 }
-	 else
-	 {
-		 BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Cannot convert to specified format, rollback to jpg";
-		 file->buffer = WriteToJPEG(wp, wp.quality.jpegQuality);
-	 }
+	if (wp.format == Docapost::IA::Tesseract::ImageFormatEnum::JPG)
+	{
+		file->buffer = WriteToJPEG(wp, wp.quality.jpegQuality);
+	}
+	else if (wp.format == Docapost::IA::Tesseract::ImageFormatEnum::PNG)
+	{
+		auto buffer = fz_new_buffer_from_pixmap_as_png(local_ctx, wp.pixmap, fz_default_color_params(local_ctx));
+		file->buffer = new Tesseract::FzBufferMemoryFileBuffer(local_ctx, buffer);
+	}
+	else
+	{
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Cannot convert to specified format, rollback to jpg";
+		file->buffer = WriteToJPEG(wp, wp.quality.jpegQuality);
+	}
 
 	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "clean";
 

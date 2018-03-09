@@ -13,6 +13,8 @@
 #include "MuPDF.h"
 #include "ExivMemoryFileBuffer.h"
 #include <zlib.h>
+#include "MasterLocalFileStatus.h"
+#include "MasterMemoryFileStatus.h"
 
 #if defined(MSDOS) || defined(OS2) || defined(WIN32) || defined(__CYGWIN__)
 #  include <fcntl.h>
@@ -112,8 +114,12 @@ fs::path Docapost::IA::Tesseract::MasterProcessingWorker::ConstructNewTextFilePa
 	return new_path;
 }
 
-void Docapost::IA::Tesseract::MasterProcessingWorker::MergeResult(MasterFileStatus* file)
+void Docapost::IA::Tesseract::MasterProcessingWorker::MergeResult(MasterFileStatus* mfile)
 {
+	MasterLocalFileStatus* file = dynamic_cast<MasterLocalFileStatus*>(mfile);
+	if (file == nullptr)
+		return;
+
 	if (file->filePosition >= 0)
 	{
 		std::lock_guard<std::mutex>(*file->mutex_siblings);
@@ -228,6 +234,124 @@ string Docapost::IA::Tesseract::MasterProcessingWorker::CreatePdfOutputPath(fs::
 	return (boost::format("%s/%s-%d%d") % path.parent_path().string() % fs::change_extension(path.filename(), "").string() % i % mOcrFactory.GetExtension()).str();
 }
 
+void Docapost::IA::Tesseract::MasterProcessingWorker::InitPdfMasterFileStatus(MasterFileStatus* file, std::mutex* mutex_siblings, std::vector<MasterFileStatus*>* siblings, int i)
+{
+	mTotal++;
+	file->filePosition = i;
+	(*siblings)[i] = file;
+	file->siblings = siblings;
+	file->mutex_siblings = mutex_siblings;
+}
+
+int Docapost::IA::Tesseract::MasterProcessingWorker::AddPdfFile(bool resume, fs::path path)
+{
+	MuPDF::MuPDF pdf;
+	auto nbPages = pdf.GetNbPage(path.string());
+
+	std::mutex* mutex_siblings = new std::mutex();
+
+	std::vector<MasterFileStatus*>* siblings = new std::vector<MasterFileStatus*>(nbPages);
+
+
+	bool added = false;
+	for (int i = 0; i < nbPages; i++)
+	{
+		bool toProcess = true;
+		std::string output_file = CreatePdfOutputPath(path, i);
+
+		if (resume)
+		{
+			toProcess = false;
+			if (mOutputTypes & OutputFlags::Text)
+			{
+				toProcess = toProcess || !FileExist(output_file);
+			}
+
+			if (mOutputTypes & OutputFlags::Exif)
+			{
+				toProcess = toProcess || !ExifExist(output_file);
+			}
+
+			if (!toProcess)
+			{
+				mSkip++;
+			}
+		}
+
+		if (toProcess)
+		{
+			MasterFileStatus* file = new MasterLocalFileStatus(path.string(), fs::relative(path, mInput).string(), output_file);
+			InitPdfMasterFileStatus(file, mutex_siblings, siblings, i);
+			if (added == false)
+			{
+				added = true;
+				AddFileBack(file);
+			}
+		}
+	}
+	if (added == false)
+	{
+		delete mutex_siblings;
+		delete siblings;
+	}
+	return nbPages;
+}
+
+int Docapost::IA::Tesseract::MasterProcessingWorker::AddPdfFile(std::string id, char* pdf, int len)
+{
+	MuPDF::MuPDF mupdf;
+	auto nbPages = mupdf.GetNbPage(pdf, len);
+
+	std::mutex* mutex_siblings = new std::mutex();
+	std::vector<MasterFileStatus*>* siblings = new std::vector<MasterFileStatus*>(nbPages);
+	bool added = false;
+	for (int i = 0; i < nbPages; i++)
+	{
+		MasterFileStatus* file = new MasterMemoryFileStatus(id, pdf, len);
+		InitPdfMasterFileStatus(file, mutex_siblings, siblings, i);
+		if (added == false)
+		{
+			added = true;
+			AddFileBack(file);
+		}
+	}
+	return nbPages;
+}
+
+void Docapost::IA::Tesseract::MasterProcessingWorker::AddImageFile(bool resume, fs::path path)
+{
+	bool toProcess = true;
+	if (resume)
+	{
+		toProcess = false;
+		if (mOutputTypes & OutputFlags::Text)
+		{
+			toProcess = toProcess || !FileExist(path);
+		}
+
+		if (mOutputTypes & OutputFlags::Exif)
+		{
+			toProcess = toProcess || !ExifExist(path);
+		}
+
+		if (!toProcess)
+		{
+			mSkip++;
+		}
+	}
+	if (toProcess)
+	{
+		mTotal++;
+		AddFileBack(new MasterLocalFileStatus(path.string(), fs::relative(path, mInput).string()));
+	}
+}
+
+void Docapost::IA::Tesseract::MasterProcessingWorker::AddImageFile(std::string id, char* image, int len)
+{
+	mTotal++;
+	AddFileBack(new MasterMemoryFileStatus(id, image, len));
+}
+
 void Docapost::IA::Tesseract::MasterProcessingWorker::_AddFolder(fs::path folder, bool resume)
 {
 	if (!fs::is_directory(folder) || mIsTerminated)
@@ -254,65 +378,15 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::_AddFolder(fs::path folder
 		}
 		if (ext == ".pdf")
 		{
-			std::vector<MasterFileStatus*>* siblings = nullptr;
-			std::mutex* mutex_siblings = new std::mutex();
 			try
 			{
-				MuPDF::MuPDF pdf;
-				auto nbPages = pdf.GetNbPage(path.string());
 
 				/*PoDoFo::PdfMemDocument document;
 				document.Load(path.string().c_str());
 				//PoDoFo::PdfStreamedDocument document(path.string().c_str());
 				auto nbPages = document.GetPageCount();*/
 
-				siblings = new std::vector<MasterFileStatus*>(nbPages);
-
-				bool added = false;
-				for (int i = 0; i < nbPages; i++)
-				{
-					auto output_file = CreatePdfOutputPath(path, i);
-
-					bool toProcess = true;
-					if (resume)
-					{
-						toProcess = false;
-						if (mOutputTypes & OutputFlags::Text)
-						{
-							toProcess = toProcess || !FileExist(output_file);
-						}
-
-						if (mOutputTypes & OutputFlags::Exif)
-						{
-							toProcess = toProcess || !ExifExist(output_file);
-						}
-
-						if (!toProcess)
-						{
-							mSkip++;
-						}
-					}
-
-					if (toProcess)
-					{
-						mTotal++;
-						auto file = new MasterFileStatus(path.string(), fs::relative(path, mInput).string(), output_file);
-						file->filePosition = i;
-						(*siblings)[i] = file;
-						file->siblings = siblings;
-						file->mutex_siblings = mutex_siblings;
-						if (added == false)
-						{
-							added = true;
-							AddFileBack(file);
-						}
-					}
-				}
-				if (added == false)
-				{
-					delete mutex_siblings;
-					delete siblings;
-				}
+				AddPdfFile(resume, path);
 			}
 			catch (...)
 			{
@@ -323,30 +397,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::_AddFolder(fs::path folder
 		}
 		else
 		{
-			bool toProcess = true;
-			if (resume)
-			{
-				toProcess = false;
-				if (mOutputTypes & OutputFlags::Text)
-				{
-					toProcess = toProcess || !FileExist(path);
-				}
-
-				if (mOutputTypes & OutputFlags::Exif)
-				{
-					toProcess = toProcess || !ExifExist(path);
-				}
-
-				if (!toProcess)
-				{
-					mSkip++;
-				}
-			}
-			if (toProcess)
-			{
-				mTotal++;
-				AddFileBack(new MasterFileStatus(path.string(), fs::relative(path, mInput).string()));
-			}
+			AddImageFile(resume, path);
 		}
 	}
 }
@@ -424,76 +475,98 @@ std::string Docapost::IA::Tesseract::MasterProcessingWorker::Compress(std::strin
 	return outstring;
 }
 
-void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileStatus* file)
+void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileStatus* _file)
 {
-	if (file->result->size() == 0)
+	if (_file == nullptr)
 		return;
 
-	fs::path new_path;
-	if (mOutputTypes & OutputFlags::Text)
+	if (_file->result->size() == 0)
+		return;
+
+	if (mOutputTypes & OutputFlags::Text && std::find(_file->capability.begin(), _file->capability.end(), OutputFlags::Text) != _file->capability.end())
 	{
-		auto ext = mOcrFactory.GetTextExtension();
-
-		for (int i = 0; i < file->result->size(); i++)
+		// We write the file if we are in file configuration, else the result is already in memory
+		if (MasterLocalFileStatus* file = dynamic_cast<MasterLocalFileStatus*>(_file))
 		{
-			new_path = ConstructNewTextFilePath(file->new_name, ext[i]);
+			auto ext = mOcrFactory.GetTextExtension();
 
-			fs::create_directories(new_path.parent_path());
-
-			std::ofstream output;
-			output.open(new_path.string(), std::ofstream::trunc | std::ofstream::out);
-			output << (*file->result)[i];
-			output.close();
-
-			if (i == 0)
+			for (int i = 0; i < file->result->size(); i++)
 			{
-				file->output.push_back(new_path.string());
-				file->relative_output.push_back(fs::relative(new_path, mOutputs[OutputFlags::Text]).string());
+				fs::path new_path = ConstructNewTextFilePath(file->new_name, ext[i]);
+
+				fs::create_directories(new_path.parent_path());
+
+				std::ofstream output;
+				output.open(new_path.string(), std::ofstream::trunc | std::ofstream::out);
+				output << (*file->result)[i];
+				output.close();
+
+				if (i == 0)
+				{
+					file->output.push_back(new_path.string());
+					file->relative_output.push_back(fs::relative(new_path, mOutputs[OutputFlags::Text]).string());
+				}
 			}
 		}
 	}
 
-	if (mOutputTypes & OutputFlags::Exif)
+	if (mOutputTypes & OutputFlags::MemoryImage || mOutputTypes & OutputFlags::Exif)
 	{
 		Exiv2::ExifData exifData;
-		for (int i = 0; i < file->result->size(); i++)
+		for (int i = 0; i < _file->result->size(); i++)
 		{
 			if (i == 0)
 			{
 				auto v = std::make_unique<Exiv2::AsciiValue>();
-				if (v->read((*file->result)[i]))
+				if (v->read((*_file->result)[i]))
 				{
-					BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "cannot read " << file->name;
+					if (MasterLocalFileStatus* file = dynamic_cast<MasterLocalFileStatus*>(_file))
+					{
+						BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "cannot read " << file->name;
+					}
+					else
+					{
+						BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "cannot read memory file";
+					}
 				}
 
 				Exiv2::ExifKey key("Exif.Image.ImageDescription");
 				exifData.add(key, v.get());
 			}
 
-			auto data = Compress((*file->result)[i]);
+			auto data = Compress((*_file->result)[i]);
 			auto v = std::make_unique<Exiv2::DataValue>((unsigned char*)data.data(), data.size());
 
 			//auto str = (*file->result)[i].substr(0, 57830);
 			/*if(v->read(str))
 			{
-				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "cannot read " << file->name;
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "cannot read " << file->name;
 			}*/
 			Exiv2::ExifKey key(EXIF_FIELD[i]);
 			exifData.add(key, v.get());
 		}
-		exifData["Exif.Image.ImageID"] = fs::relative(file->name, mInput).string();
+		if (MasterLocalFileStatus* file = dynamic_cast<MasterLocalFileStatus*>(_file))
+		{
+			exifData["Exif.Image.ImageID"] = fs::relative(file->name, mInput).string();
+		}
 		exifData["Exif.Image.ProcessingSoftware"] = mSoftName;
 
-		auto o_image = Exiv2::ImageFactory::open(file->buffer->data(), file->buffer->len());
+		auto o_image = Exiv2::ImageFactory::open(_file->buffer->data(), _file->buffer->len());
 		o_image->setExifData(exifData);
 		o_image->writeMetadata();
 		auto buffersize = o_image->io().size();
 		o_image->io().seek(0, Exiv2::BasicIo::beg);
 		auto exif_data = o_image->io().read(buffersize);
 
-		if (!(mOutputTypes & OutputFlags::MemoryImage))
+		delete _file->buffer;
+		_file->buffer = new ExivMemoryFileBuffer(exif_data);
+	}
+
+	if (mOutputTypes & OutputFlags::Exif && std::find(_file->capability.begin(), _file->capability.end(), OutputFlags::Exif) != _file->capability.end())
+	{
+		if (MasterLocalFileStatus* file = dynamic_cast<MasterLocalFileStatus*>(_file))
 		{
-			new_path = ConstructNewExifFilePath(file->new_name);
+			fs::path new_path = ConstructNewExifFilePath(file->new_name);
 			auto it = mOutputs.find(OutputFlags::Exif);
 			if (it != mOutputs.end() && it->second != mInput)
 			{
@@ -504,15 +577,10 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 				}
 			}
 			std::ofstream stream(new_path.string(), std::ios_base::out | std::ios_base::binary);
-			stream.write((char*)exif_data.pData_, buffersize);
+			stream.write((char*)file->buffer->data(), file->buffer->len());
 
 			file->output.push_back(new_path.string());
 			file->relative_output.push_back(fs::relative(new_path, mOutputs[OutputFlags::Exif]).string());
-		}
-		else
-		{
-			delete file->buffer;
-			file->buffer = new ExivMemoryFileBuffer(exif_data);
 		}
 	}
 }
@@ -604,7 +672,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 			}
 			catch (std::runtime_error& error)
 			{
-				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Error: " << file->name << "\n" << error.what();
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Error: " << error.what();
 				onFileCanceled(file);
 				AddFileBack(file);
 				continue;
@@ -622,6 +690,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 			file->ellapsed = file->end - file->start;
 			file->isEnd = true;
 
+			onEndProcessFile(file);
 
 			boost::lock_guard<std::mutex> lock(mThreadMutex);
 			if (mNbThreadToStop > 0)

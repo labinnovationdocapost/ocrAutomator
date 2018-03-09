@@ -1,6 +1,7 @@
 #include "Display.h"
 #include "TesseractFactory.h"
 #include <math.h>
+#include "MasterLocalFileStatus.h"
 
 #define COLOR_GREY 8
 
@@ -154,11 +155,25 @@ void Display::DrawBody(const std::unordered_set<MasterFileStatus*> files, FileSu
 			std::stringstream cstring;
 			cstring << "" << (*j)->ellapsed;
 			//wprintw(win, "%-15s %-6d %s -> %s\n", cstring.str().c_str(), files[j]->thread, files[j]->relative_name.c_str(), boost::algorithm::join(files[j]->relative_output, " | ").c_str());
-			wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", cstring.str().c_str(), (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, (*j)->relative_name.c_str());
+			if (MasterLocalFileStatus* _file = dynamic_cast<MasterLocalFileStatus*>(*j))
+			{
+				wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", cstring.str().c_str(), (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, _file->relative_name.c_str());
+			}
+			else
+			{
+				wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", cstring.str().c_str(), (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, _file->name.c_str());
+			}
 		}
 		else
 		{
-			wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", "", (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, (*j)->relative_name.c_str());
+			if (MasterLocalFileStatus* _file = dynamic_cast<MasterLocalFileStatus*>(*j))
+			{
+				wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", "", (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, _file->relative_name.c_str());
+			}
+			else
+			{
+				wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", "", (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, (*j)->name.c_str());
+			}
 		}
 
 	}

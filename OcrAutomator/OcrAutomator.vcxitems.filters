@@ -198,6 +198,15 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)NoOcrFactory.h">
       <Filter>Header Files\Ocr\NoOcr</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)MasterLocalFileStatus.h">
+      <Filter>Header Files\Master</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)MasterMemoryFileStatus.h">
+      <Filter>Header Files\Master</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)OcrAutomatorMaster.h">
+      <Filter>Header Files\Master</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Broadcast.pb.cc">
@@ -283,6 +292,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)RTTR.cpp">
       <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)OcrAutomatorMaster.cpp">
+      <Filter>Source Files\Master</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

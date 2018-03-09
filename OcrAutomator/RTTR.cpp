@@ -1,4 +1,6 @@
 #include "RTTR.h"
+#include <rttr/policy.h>
+#include "NoOcrFactory.h"
 
 RTTR_REGISTRATION
 {
@@ -6,11 +8,16 @@ RTTR_REGISTRATION
 
 	registration::class_<Docapost::IA::Tesseract::OcrFactory>("OcrFactory")(metadata(Metadata_Type::OCR, false));
 
+	auto ptr = policy::ctor::as_raw_ptr;
 	registration::class_<Docapost::IA::Tesseract::TesseractFactory>("Tesseract")(metadata(Metadata_Type::OCR, true))
-	.constructor<>()(policy::ctor::as_raw_ptr)
-	.property("PSM", select_overload<tesseract::PageSegMode(void) const>(&Docapost::IA::Tesseract::TesseractFactory::Psm), select_overload<void(tesseract::PageSegMode)>(&Docapost::IA::Tesseract::TesseractFactory::Psm))
-	.property("OEM", select_overload<tesseract::OcrEngineMode(void) const>(&Docapost::IA::Tesseract::TesseractFactory::Oem), select_overload<void(tesseract::OcrEngineMode)>(&Docapost::IA::Tesseract::TesseractFactory::Oem))
-	.property("OEM", select_overload<std::string(void) const>(&Docapost::IA::Tesseract::TesseractFactory::Lang), select_overload<void(std::string)>(&Docapost::IA::Tesseract::TesseractFactory::Lang));
+		.constructor<>()(ptr)
+		.property("PSM", select_overload<tesseract::PageSegMode(void) const>(&Docapost::IA::Tesseract::TesseractFactory::Psm), select_overload<void(tesseract::PageSegMode)>(&Docapost::IA::Tesseract::TesseractFactory::Psm))
+		.property("OEM", select_overload<tesseract::OcrEngineMode(void) const>(&Docapost::IA::Tesseract::TesseractFactory::Oem), select_overload<void(tesseract::OcrEngineMode)>(&Docapost::IA::Tesseract::TesseractFactory::Oem))
+		.property("Lang", select_overload<std::string(void) const>(&Docapost::IA::Tesseract::TesseractFactory::Lang), select_overload<void(std::string)>(&Docapost::IA::Tesseract::TesseractFactory::Lang));
+
+	registration::class_<Docapost::IA::Tesseract::NoOcrFactory>("NoOcr")(metadata(Metadata_Type::OCR, true))
+		.constructor<>()(ptr)
+		.property("Num", select_overload<int(void) const>(&Docapost::IA::Tesseract::NoOcrFactory::Num), select_overload<void(int)>(&Docapost::IA::Tesseract::NoOcrFactory::Num));
 
 	registration::enumeration<Docapost::IA::Tesseract::OutputFlags>("OutputFlags")
 	(

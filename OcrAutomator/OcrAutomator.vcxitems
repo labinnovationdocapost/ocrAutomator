@@ -31,6 +31,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)JpegTurboMemoryFileBuffer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Main.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MasterFileStatus.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)MasterLocalFileStatus.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)MasterMemoryFileStatus.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MasterProcessingWorker.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MemoryFileBuffer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MuPDF.h" />
@@ -39,6 +41,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)NetworkSession.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)NoOcr.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)NoOcrFactory.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)OcrAutomatorMaster.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)OutputFlags.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Broadcast.pb.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Declare.pb.h" />
@@ -76,6 +79,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Network.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)NetworkClient.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)NetworkSession.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)OcrAutomatorMaster.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Broadcast.pb.cc" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Declare.pb.cc" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\File.pb.cc" />

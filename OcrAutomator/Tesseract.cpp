@@ -34,11 +34,13 @@ std::unique_ptr<std::vector<std::string>> Docapost::IA::Tesseract::Tesseract::Pr
 
 	//auto text = std::unique_ptr<std::string>{ new string(outtext) };
 
-	pixDestroy(&image);
-	delete[] outtext;
 
 	std::vector<std::string>* vector = new std::vector<std::string>();
 	vector->push_back(string(outtext));
+
+	pixDestroy(&image);
+	delete[] outtext;
+
 	return std::unique_ptr<std::vector<std::string>>(vector);
 }
 

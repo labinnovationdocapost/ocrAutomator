@@ -1,25 +1,25 @@
 #pragma once
 #include "BaseFileStatus.h"
 #include <mutex>
+#include "OutputFlags.h"
 
 struct MasterFileStatus : BaseFileStatus
 {
-	std::string relative_name;
+protected:
+	MasterFileStatus(std::vector<Docapost::IA::Tesseract::OutputFlags> cap, std::string name):BaseFileStatus(), capability(cap), name(name)
+	{
+		
+	};
+public:
 	std::string name;
-	std::string new_name;
-	std::vector<std::string> output;
-	std::vector<std::string> relative_output;
 	std::string hostname = "";
 	int filePosition = -1;
 	std::vector<MasterFileStatus*>* siblings;
 	std::mutex* mutex_siblings;
 	bool isCompleted = false;
 
+	const std::vector<Docapost::IA::Tesseract::OutputFlags> capability;
+
+	virtual ~MasterFileStatus() { }
 	//(new_path.parent_path() / fs::change_extension(new_path.filename(), "")).string() + std::to_string(file->filePosition) + new_path.extension()
-	MasterFileStatus(std::string name, std::string relative) : BaseFileStatus(), relative_name(relative), name(name), new_name(name)
-	{
-	}
-	MasterFileStatus(std::string name, std::string relative, std::string new_name) : BaseFileStatus(), relative_name(relative), name(name), new_name(new_name)
-	{
-	}
 };

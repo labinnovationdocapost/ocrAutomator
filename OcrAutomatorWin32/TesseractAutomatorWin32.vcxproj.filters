@@ -84,9 +84,6 @@
     <ClCompile Include="RTTR_Win.cpp">
       <Filter>Source Files\Base</Filter>
     </ClCompile>
-    <ClCompile Include="OcrAutomatorMaster.cpp">
-      <Filter>Source Files\Base</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Display.h">
@@ -104,11 +101,5 @@
     <ClInclude Include="A2IAFactory.h">
       <Filter>Header Files\Ocr\A2IA</Filter>
     </ClInclude>
-    <ClInclude Include="OcrAutomatorMaster.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
 </Project>

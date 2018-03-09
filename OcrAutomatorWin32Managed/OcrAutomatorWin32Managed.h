@@ -5,6 +5,7 @@
 
 using namespace System;
 using namespace System::Collections::Generic;
+using namespace System::Threading;
 
 public ref struct OcrType
 {
@@ -47,21 +48,30 @@ public:
 		}
 	}
 };
+delegate void FileRecievedHandle(OcrResult* str);
 
+class OcrAutomatorPDF
+{
+public:
+	static int nbpage;
+	static std::string name;
+	static std::vector<OcrResult*> results;
+};
 namespace Docapost {
 	namespace OCR {
 		public ref class OcrAutomatorModel
 		{
 			OcrAutomatorMaster* mOcr;
-
-
 		public :
+			static std::unordered_map<std::string,OcrAutomatorPDF*>* pdf = new std::unordered_map<std::string,OcrAutomatorPDF*>();
+			static AutoResetEvent^ event = gcnew AutoResetEvent(false);
+
 			OcrAutomatorModel();
 			~OcrAutomatorModel();
-
 			void RunOcr();
 			List<OcrType^>^ GetConfiguration();
 
 		};
+
 	}
 }

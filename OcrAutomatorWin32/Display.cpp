@@ -1,6 +1,7 @@
 #include "Display.h"
 #include "TesseractFactory.h"
 #include <math.h>
+#include "MasterLocalFileStatus.h"
 
 #define COLOR_GREY 8
 
@@ -80,28 +81,29 @@ void Display::Clear() {
 void Display::DrawBody(const std::unordered_set<MasterFileStatus*> files, FileSum& s)
 {
 	int i = 0;
-	for (auto j = files.cbegin(); j != files.cend(); ++j)
+	for (auto pfile = files.cbegin(); pfile != files.cend(); ++pfile)
 	{
-		if (*j == nullptr)
+		if (*pfile == nullptr)
 			break;
 
-		if ((*j)->isEnd)
+		auto plfile = dynamic_cast<MasterLocalFileStatus*>(*pfile);
+		if ((*pfile)->isEnd)
 		{
-			if ((boost::posix_time::microsec_clock::local_time() - (*j)->end).total_seconds() > 5)
+			if ((boost::posix_time::microsec_clock::local_time() - (*pfile)->end).total_seconds() > 5)
 			{
 				boost::lock_guard<std::mutex> lock(mThreadMutex);
-				mFiles.erase(*j);
-				mFilesCompleted.push_back(*j);
+				mFiles.erase(*pfile);
+				mFilesCompleted.push_back(*pfile);
 				continue;
 			}
 
 			std::stringstream cstring;
-			cstring << "" << (*j)->ellapsed;
+			cstring << "" << (*pfile)->ellapsed;
 			//wprintw(win, "%-15s %-6d %s -> %s\n", cstring.str().c_str(), files[j]->thread, files[j]->relative_name.c_str(), boost::algorithm::join(files[j]->relative_output, " | ").c_str());
 			//wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", cstring.str().c_str(), (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, (*j)->relative_name.c_str());
 
 			char text[1024];
-			sprintf(text, "%-15s %-6d %-15s %2d %s", cstring.str().c_str(), (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, (*j)->relative_name.c_str());
+			sprintf(text, "%-15s %-6d %-15s %2d %s", cstring.str().c_str(), (*pfile)->thread, (*pfile)->hostname.c_str(), (*pfile)->filePosition, plfile->relative_name.c_str());
 			DWORD dwBytesWritten = 0;
 			WriteConsoleOutputCharacter(mConsoleHandler, text, strlen(text), { 0, (SHORT)i++ }, &dwBytesWritten);
 		}
@@ -109,7 +111,7 @@ void Display::DrawBody(const std::unordered_set<MasterFileStatus*> files, FileSu
 		{
 			//wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", "", (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, (*j)->relative_name.c_str());
 			char text[1024];
-			sprintf(text, "%-15s %-6d %-15s %2d %s", "", (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, (*j)->relative_name.c_str());
+			sprintf(text, "%-15s %-6d %-15s %2d %s", "", (*pfile)->thread, (*pfile)->hostname.c_str(), (*pfile)->filePosition, plfile->relative_name.c_str());
 			DWORD dwBytesWritten = 0;
 			WriteConsoleOutputCharacter(mConsoleHandler, text, strlen(text), { 0, (SHORT)i++ }, &dwBytesWritten);
 		}
