@@ -43,11 +43,10 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
 - Telecharger les trois librairies suivantes : 
   - leptonica (https://github.com/DanBloomberg/leptonica)
   - tesseract4 LTSM (https://github.com/tesseract-ocr/tesseract)
-  - jpegturbo (https://github.com/libjpeg-turbo/libjpeg-turbo)
 - Instaler les outils nécéssaire et ajouter les a votre PATH
   - cmake (https://cmake.org/)
-  - NASM (http://www.nasm.us/)
   - CPPAN (https://cppan.org/client/)
+  - VCPKG
   - Visual studio 2017
 - Leptonica:
   - Suivez la procédure de génération du projet
@@ -86,14 +85,6 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
   - installer le (INSTALL), un dossier ```c:\programmes\tesseract``` doit être créer
   - Créer un dossier ```c:\programmes\tesseract\tessdata```
   - Télécharger dans ce dossier vos packs de langues (https://github.com/tesseract-ocr/tesseract/wiki/Data-Files)
-- JpegTurbo
-    - Lancer **cmake**
-      - Entrer le chemin vers le code source de jpegturbo et le chemin de sortie de la génération 
-      - Bouton ```Configure```
-      - Modifier la propriété **CMAKE_INSTALL_PREFIX** pour qu'elle soit ```C:\Program Files\libjpeg-turbo64```
-      - Bouton ```Generate```
-  - compiler en 64bits (ALL_BUILD)
-  - installer le (INSTALL), un dossier ```C:\Program Files\libjpeg-turbo64``` doit être créer
 
 ## Utilisation
 ```Usage:
