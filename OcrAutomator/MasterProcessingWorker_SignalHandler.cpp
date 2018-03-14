@@ -15,7 +15,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveConnectHandler(Netw
 	ns->SendStatus(this->mDone, this->mSkip, this->mTotal, tf.Psm(), tf.Oem(), tf.Lang());
 }
 
-void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(NetworkSession* ns, int thread, int required, std::vector<std::tuple<boost::uuids::uuid, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>>& results)
+void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(NetworkSession* ns, int thread, int required, std::vector<std::tuple<boost::uuids::uuid, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::vector<std::string>*>>& results)
 {
 	CatchAllErrorSignals();
 	// On garde une référence sur l'objet pou qu'il ne soit supprimer que quand plus personne ne l'utilise
@@ -40,15 +40,15 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 
 			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << ns->Hostname() << "Getting back " << file->name << "[" << file->filePosition << "]" << "\n";
 
-			auto str = new std::string();
-			std::tie(uuid, file->thread, file->start, file->end, file->ellapsed, *str) = res;
+			std::vector<std::string>* vector = nullptr;
+			std::tie(uuid, file->thread, file->start, file->end, file->ellapsed, vector) = res;
 			file->isEnd = true;
 			file->hostname = ns->Hostname();
 
-			file->result = std::unique_ptr<std::string>(str);
+			file->result = std::unique_ptr<std::vector<std::string>>(vector);
 
 			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << ns->Hostname() << "Writing Output " << file->name << "[" << file->filePosition << "]" << "\n";
-			CreateOutput(file, *file->result);
+			CreateOutput(file);
 			MergeResult(file);
 			mDone++;
 

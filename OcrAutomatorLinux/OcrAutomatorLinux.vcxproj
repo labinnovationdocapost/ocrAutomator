@@ -30,6 +30,7 @@
     <ClCompile Include="Display.cpp" />
     <ClCompile Include="DisplayManager.cpp" />
     <ClCompile Include="Error.cpp" />
+    <ClCompile Include="FactorySelector.cpp" />
     <ClCompile Include="SlaveDisplay.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -75,7 +76,7 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>..\Includes\Linux;..\Includes\Exiv2;..\Includes\MuPDF;$(IncludePath)</IncludePath>
+    <IncludePath>..\Includes\Linux;..\Includes\Exiv2;..\Includes\RTTR;..\Includes\MuPDF;$(IncludePath)</IncludePath>
     <TargetExt />
     <TargetName>TesseractAutomator</TargetName>
   </PropertyGroup>
@@ -89,11 +90,11 @@
       <AdditionalIncludeDirectories>/boost_1_65_1/;/usr/include/ImageMagick-6;/usr/include/x86_64-linux-gnu/ImageMagick-6;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Verbose>false</Verbose>
       <PreprocessorDefinitions>DISPLAY;MAGICKCORE_HDRI_ENABLE=0;MAGICKCORE_QUANTUM_DEPTH=16</PreprocessorDefinitions>
-      <CppLanguageStandard>c++11</CppLanguageStandard>
+      <CppLanguageStandard>c++1y</CppLanguageStandard>
       <CppAdditionalWarning>switch;no-deprecated-declarations;empty-body;return-type;parentheses;no-format;uninitialized;unreachable-code;unused-function;unused-value;unused-variable</CppAdditionalWarning>
     </ClCompile>
     <Link>
-      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;mupdf;mupdfthird;ncurses;exiv2;protobuf-lite;protobuf;z;fontconfig;freetype;dl;boost_thread;boost_log;boost_log_setup;jpeg;turbojpeg;Magick++-6.Q16;MagickCore-6.Q16</LibraryDependencies>
+      <LibraryDependencies>tesseract;lept;boost_program_options;pthread;boost_filesystem;boost_system;mupdf;mupdfthird;ncurses;exiv2;protobuf-lite;protobuf;z;fontconfig;freetype;dl;boost_thread;boost_log;boost_log_setup;jpeg;turbojpeg;rttr_core;archive</LibraryDependencies>
       <AdditionalLibraryDirectories>/boost_1_65_1/stage/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SharedLibrarySearchPath>%(SharedLibrarySearchPath)</SharedLibrarySearchPath>
       <VerboseOutput>false</VerboseOutput>

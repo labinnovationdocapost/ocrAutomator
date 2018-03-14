@@ -40,7 +40,7 @@ BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", boost::log::trivial::severity_
 BOOST_LOG_ATTRIBUTE_KEYWORD(tag_attr, "Tag", std::string)
 BOOST_LOG_ATTRIBUTE_KEYWORD(timestamp, "Timestamp",
 	boost::posix_time::ptime)
-boost::log::sources::severity_logger<boost::log::trivial::severity_level> Log::CommonLogger;
+	boost::log::sources::severity_logger<boost::log::trivial::severity_level> Log::CommonLogger;
 
 void formatter(logging::record_view const& rec, logging::formatting_ostream& strm)
 {
@@ -60,16 +60,29 @@ void formatter(logging::record_view const& rec, logging::formatting_ostream& str
 	strm << rec[expr::smessage];
 }
 
+#ifdef WIN32
+#define LOG_FOLDER "log"
+#else
+#define LOG_FOLDER "/tmp/TesseractAutomator/log"
+#endif
+
 void Log::InitLogger()
 {
 	logging::add_common_attributes();
 	boost::shared_ptr< sinks::text_file_backend > backend = boost::make_shared< sinks::text_file_backend >(
 		keywords::file_name = "TesseractAutomator_Log_%5N.log",
 		keywords::rotation_size = 5 * 1024 * 1024,
-		keywords::time_based_rotation = sinks::file::rotation_at_time_interval(boost::posix_time::hours(1))
+		keywords::time_based_rotation = sinks::file::rotation_at_time_interval(boost::posix_time::seconds(1))
 		);
 	backend->auto_flush(true);
-	
+	backend->set_file_collector
+	(
+		sinks::file::make_collector
+		(
+			keywords::target = LOG_FOLDER
+		)
+	);
+	backend->scan_for_files();
 	//boost::shared_ptr< sinks::syslog_backend > backend = boost::make_shared< sinks::syslog_backend >();Tes
 
 	typedef sinks::synchronous_sink< sinks::text_file_backend > sink_t;

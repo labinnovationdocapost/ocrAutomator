@@ -4,21 +4,28 @@
 #include <vector>
 #include "MasterFileStatus.h"
 #include "FileSum.h"
+#include <unordered_set>
 struct FileSum;
 using std::string;
 #include "MasterProcessingWorker.h"
+#include <Windows.h>
 
 class Display
 {
 private:
 	int mScreenHeight, mScreenWidth;
-	std::list<MasterFileStatus*> mFiles{};
-	std::list<MasterFileStatus*> mFilesCompleted{};
+	std::unordered_set<MasterFileStatus*> mFiles;
+	std::list<MasterFileStatus*> mFilesCompleted;
+
+	HANDLE mConsoleHandler;
 
 	int mCurrentView = 0;
 	int mTotalView = 2;
 
 	std::mutex mThreadMutex;
+	std::mutex mLoopMutex;
+
+	HANDLE mNewScreenBuffer;
 
 	Docapost::IA::Tesseract::MasterProcessingWorker& mTesseractRunner;
 
@@ -33,14 +40,15 @@ private:
 	int GetAverageSize() const;
 	void Init(bool create = true);
 	void OnEnd();
+	void Clear();
 public:
 	explicit Display(Docapost::IA::Tesseract::MasterProcessingWorker &tessR);
 	~Display();
 
 	void DrawHeader() const;
-	void DrawBody(const std::list<MasterFileStatus*> files, FileSum& s) const;
-	void DrawBodyNetwork(const std::list<MasterFileStatus*> files, FileSum& s) const;
-	void DrawFooter(const std::list<MasterFileStatus*> cfiles, FileSum s) const;
+	void DrawBody(const std::unordered_set<MasterFileStatus*> files, FileSum& s);
+	void DrawBodyNetwork(const std::unordered_set<MasterFileStatus*> files, FileSum& s);
+	void DrawFooter(const std::unordered_set<MasterFileStatus*> files, FileSum s);
 	void DrawCommand() const;
 	void Draw();
 

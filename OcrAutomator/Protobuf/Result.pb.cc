@@ -89,7 +89,7 @@ void protobuf_AddDesc_Result_2eproto() {
     "\n\014Result.proto\022\033Docapost.IA.Tesseract.Pr"
     "oto\"f\n\006Result\022\014\n\004uuid\030\001 \002(\t\022\020\n\010threadId\030"
     "\002 \002(\005\022\r\n\005Start\030\003 \002(\003\022\013\n\003End\030\004 \002(\003\022\020\n\010Ell"
-    "apsed\030\005 \002(\003\022\016\n\006Result\030\006 \002(\t", 147);
+    "apsed\030\005 \002(\003\022\016\n\006Result\030\006 \003(\t", 147);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "Result.proto", &protobuf_RegisterTypes);
   Result::default_instance_ = new Result();
@@ -139,7 +139,6 @@ void Result::SharedCtor() {
   start_ = GOOGLE_LONGLONG(0);
   end_ = GOOGLE_LONGLONG(0);
   ellapsed_ = GOOGLE_LONGLONG(0);
-  result_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -151,9 +150,6 @@ Result::~Result() {
 void Result::SharedDtor() {
   if (uuid_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
     delete uuid_;
-  }
-  if (result_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete result_;
   }
   if (this != default_instance_) {
   }
@@ -191,7 +187,7 @@ void Result::Clear() {
     ::memset(&first, 0, n);                                \
   } while (0)
 
-  if (_has_bits_[0 / 32] & 63) {
+  if (_has_bits_[0 / 32] & 31) {
     ZR_(start_, ellapsed_);
     if (has_uuid()) {
       if (uuid_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
@@ -199,16 +195,12 @@ void Result::Clear() {
       }
     }
     threadid_ = 0;
-    if (has_result()) {
-      if (result_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-        result_->clear();
-      }
-    }
   }
 
 #undef OFFSET_OF_FIELD_
 #undef ZR_
 
+  result_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -299,19 +291,21 @@ bool Result::MergePartialFromCodedStream(
         break;
       }
 
-      // required string Result = 6;
+      // repeated string Result = 6;
       case 6: {
         if (tag == 50) {
          parse_Result:
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_result()));
+                input, this->add_result()));
           ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
-            this->result().data(), this->result().length(),
+            this->result(this->result_size() - 1).data(),
+            this->result(this->result_size() - 1).length(),
             ::google::protobuf::internal::WireFormat::PARSE,
             "result");
         } else {
           goto handle_unusual;
         }
+        if (input->ExpectTag(50)) goto parse_Result;
         if (input->ExpectAtEnd()) goto success;
         break;
       }
@@ -371,14 +365,14 @@ void Result::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt64(5, this->ellapsed(), output);
   }
 
-  // required string Result = 6;
-  if (has_result()) {
-    ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
-      this->result().data(), this->result().length(),
-      ::google::protobuf::internal::WireFormat::SERIALIZE,
-      "result");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      6, this->result(), output);
+  // repeated string Result = 6;
+  for (int i = 0; i < this->result_size(); i++) {
+  ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
+    this->result(i).data(), this->result(i).length(),
+    ::google::protobuf::internal::WireFormat::SERIALIZE,
+    "result");
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      6, this->result(i), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -422,15 +416,14 @@ void Result::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(5, this->ellapsed(), target);
   }
 
-  // required string Result = 6;
-  if (has_result()) {
+  // repeated string Result = 6;
+  for (int i = 0; i < this->result_size(); i++) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
-      this->result().data(), this->result().length(),
+      this->result(i).data(), this->result(i).length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE,
       "result");
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        6, this->result(), target);
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteStringToArray(6, this->result(i), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -480,14 +473,14 @@ int Result::ByteSize() const {
           this->ellapsed());
     }
 
-    // required string Result = 6;
-    if (has_result()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::StringSize(
-          this->result());
-    }
-
   }
+  // repeated string Result = 6;
+  total_size += 1 * this->result_size();
+  for (int i = 0; i < this->result_size(); i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->result(i));
+  }
+
   if (!unknown_fields().empty()) {
     total_size +=
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
@@ -513,6 +506,7 @@ void Result::MergeFrom(const ::google::protobuf::Message& from) {
 
 void Result::MergeFrom(const Result& from) {
   GOOGLE_CHECK_NE(&from, this);
+  result_.MergeFrom(from.result_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from.has_uuid()) {
       set_uuid(from.uuid());
@@ -528,9 +522,6 @@ void Result::MergeFrom(const Result& from) {
     }
     if (from.has_ellapsed()) {
       set_ellapsed(from.ellapsed());
-    }
-    if (from.has_result()) {
-      set_result(from.result());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -549,7 +540,7 @@ void Result::CopyFrom(const Result& from) {
 }
 
 bool Result::IsInitialized() const {
-  if ((_has_bits_[0] & 0x0000003f) != 0x0000003f) return false;
+  if ((_has_bits_[0] & 0x0000001f) != 0x0000001f) return false;
 
   return true;
 }
@@ -561,7 +552,7 @@ void Result::Swap(Result* other) {
     std::swap(start_, other->start_);
     std::swap(end_, other->end_);
     std::swap(ellapsed_, other->ellapsed_);
-    std::swap(result_, other->result_);
+    result_.Swap(&other->result_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

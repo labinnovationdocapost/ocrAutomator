@@ -2,7 +2,7 @@
 #include <string>
 #include <memory>
 #include "Tesseract.h"
-
+#include <rttr/registration>
 
 namespace Docapost {
 	namespace IA {
@@ -10,6 +10,7 @@ namespace Docapost {
 			class TesseractFactory : public OcrFactory
 			{
 			private:
+				std::vector<std::string> mExtesnion = {".txt", ".json"};
 				tesseract::PageSegMode mPsm = tesseract::PageSegMode::PSM_AUTO;
 				tesseract::OcrEngineMode mOem = tesseract::OcrEngineMode::OEM_DEFAULT;
 				std::string mLang = "fra";
@@ -25,6 +26,14 @@ namespace Docapost {
 				{
 					return new Tesseract(mPsm, mOem, mLang, mImageFormat);
 				}
+
+				TesseractFactory()
+				{
+					mExtension = { ".txt" };
+				}
+
+
+				RTTR_ENABLE(OcrFactory)
 			};
 		}
 	}

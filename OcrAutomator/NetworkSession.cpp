@@ -47,14 +47,19 @@ void NetworkSession::ReceiveData(int length)
 			}
 			else if(m.has_synchro())
 			{
-				std::vector<std::tuple<boost::uuids::uuid, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::string>> dict;
+				std::vector<std::tuple<boost::uuids::uuid, int, boost::posix_time::ptime, boost::posix_time::ptime, boost::posix_time::time_duration, std::vector<std::string>*>> dict;
 				for(auto& d : m.synchro().data())
 				{
-					if(d.has_result())
+					if(d.result_size())
 					{
 						auto uuid = boost::lexical_cast<boost::uuids::uuid>(d.uuid());
 						mFileSend.erase(uuid);
-						dict.push_back(std::make_tuple(uuid, d.threadid(), boost::posix_time::from_time_t(d.start()), boost::posix_time::from_time_t(d.end()), boost::posix_time::time_duration(0,0,0,d.ellapsed()), d.result()));
+						auto vector = new std::vector<std::string >();
+						for(auto& str : d.result())
+						{
+							vector->push_back(str);
+						}
+						dict.push_back(std::make_tuple(uuid, d.threadid(), boost::posix_time::from_time_t(d.start()), boost::posix_time::from_time_t(d.end()), boost::posix_time::time_duration(0,0,0,d.ellapsed()), vector));
 					}
 				}
 				onSlaveSynchro(this, m.synchro().threadrunning(), m.synchro().nbfilesrequired(), dict);

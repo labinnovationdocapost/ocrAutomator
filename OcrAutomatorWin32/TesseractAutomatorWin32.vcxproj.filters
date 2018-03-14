@@ -49,6 +49,15 @@
     <Filter Include="Source Files\Ocr\Tesseract">
       <UniqueIdentifier>{fa2d0dd5-49cb-4106-891f-1e5a25764469}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Ocr\A2IA">
+      <UniqueIdentifier>{ce4bd634-ab54-4954-b71a-b98abbe7792f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Ocr\A2IA">
+      <UniqueIdentifier>{caa83644-3a88-4451-a68a-679b8c2b277c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Managed">
+      <UniqueIdentifier>{e29f76c3-a095-4664-a4a4-ccf42be49139}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Display.cpp">
@@ -63,6 +72,18 @@
     <ClCompile Include="SlaveDisplay.cpp">
       <Filter>Source Files\Slave</Filter>
     </ClCompile>
+    <ClCompile Include="A2IA.cpp">
+      <Filter>Source Files\Ocr\A2IA</Filter>
+    </ClCompile>
+    <ClCompile Include="A2IAFactory.cpp">
+      <Filter>Source Files\Ocr\A2IA</Filter>
+    </ClCompile>
+    <ClCompile Include="FactorySelector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RTTR_Win.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Display.h">
@@ -74,8 +95,11 @@
     <ClInclude Include="SlaveDisplay.h">
       <Filter>Header Files\Slave</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
+    <ClInclude Include="A2IA.h">
+      <Filter>Header Files\Ocr\A2IA</Filter>
+    </ClInclude>
+    <ClInclude Include="A2IAFactory.h">
+      <Filter>Header Files\Ocr\A2IA</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

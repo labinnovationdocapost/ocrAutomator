@@ -1,8 +1,10 @@
 #include "Main.h"
 #include <boost/algorithm/string/predicate.hpp>
 #include "ExtraOutput.h"
+#include "HttpServer.h"
 
 Docapost::IA::Tesseract::MasterProcessingWorker* workerM;
+
 
 void Master(char** argv, po::variables_map& vm)
 {
@@ -26,7 +28,7 @@ void Master(char** argv, po::variables_map& vm)
 		}
 	}
 
-	if (!vm.count("input"))
+	if (!vm.count("input") && !vm.count("http"))
 	{
 		std::cout << "\nVeuiller indiquer un dossier a traiter\n\n";
 
@@ -36,14 +38,16 @@ void Master(char** argv, po::variables_map& vm)
 		return;
 	}
 
-
-	if (!fs::is_directory(vm["input"].as<std::string>()))
+	if (vm.count("input"))
 	{
-		std::cout << "Le chemin " << vm["input"].as<std::string>() << " n'est pas un dossier valide\n";
-		return;
+		if (!fs::is_directory(vm["input"].as<std::string>()))
+		{
+			std::cout << "Le chemin " << vm["input"].as<std::string>() << " n'est pas un dossier valide\n";
+			return;
+		}
 	}
-	bool resume = false;
 
+	bool resume = false;
 	if (vm.count("continue"))
 	{
 		resume = true;
@@ -86,6 +90,12 @@ void Master(char** argv, po::variables_map& vm)
 	if (vm.count("prefixe"))
 	{
 		types |= Docapost::IA::Tesseract::OutputFlags::Flattern;
+	}
+
+	if (vm.count("http"))
+	{
+		types |= Docapost::IA::Tesseract::OutputFlags::MemoryImage;
+		types |= Docapost::IA::Tesseract::OutputFlags::MemoryText;
 	}
 
 
@@ -133,35 +143,44 @@ void Master(char** argv, po::variables_map& vm)
 		}
 	}
 
-	Docapost::IA::Tesseract::TesseractFactory factory{};
-	factory.Lang(vm["lang"].as<std::string>());
-	factory.Oem(static_cast<tesseract::OcrEngineMode>(vm["oem"].as<int>()));
-	factory.Psm(static_cast<tesseract::PageSegMode>(vm["psm"].as<int>()));
+	std::unique_ptr<Docapost::IA::Tesseract::OcrFactory> factory = std::unique_ptr<Docapost::IA::Tesseract::OcrFactory>(CreateOcrFactory(vm));
 
 	if (vm.count("image"))
 	{
 		if (vm["image"].as<std::string>() == "png")
 		{
-			factory.ImageFormat(Docapost::IA::Tesseract::ImageFormatEnum::PNG);
+			factory->ImageFormat(Docapost::IA::Tesseract::ImageFormatEnum::PNG);
 		}
 		else if (vm["image"].as<std::string>() == "jpg")
 		{
-			factory.ImageFormat(Docapost::IA::Tesseract::ImageFormatEnum::JPG);
+			factory->ImageFormat(Docapost::IA::Tesseract::ImageFormatEnum::JPG);
 		}
 		else
 		{
 			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Option " << vm["image"].as<std::string>() << " unrecognized for field [image], fallback to jpg";
-			factory.ImageFormat(Docapost::IA::Tesseract::ImageFormatEnum::JPG);
+			factory->ImageFormat(Docapost::IA::Tesseract::ImageFormatEnum::JPG);
 		}
 	}
 
-	workerM = new Docapost::IA::Tesseract::MasterProcessingWorker(factory, types, vm["port"].as<int>());
-
+	workerM = new Docapost::IA::Tesseract::MasterProcessingWorker(*factory, types, vm["port"].as<int>());
 	if (vm.count("prefixe"))
 	{
-		workerM->Separator(vm["prefixe"].as<std::string>());
+		auto p = vm["prefixe"].as<std::string>();
+		workerM->Separator(p);
 	}
 
+	try
+	{
+		new HttpServer(*workerM, L"0.0.0.0", 8888);
+	}
+	catch(std::exception& e)
+	{
+		
+	}
+	catch (...)
+	{
+
+	}
 
 #if DISPLAY
 	if (!vm.count("silent"))
@@ -176,7 +195,10 @@ void Master(char** argv, po::variables_map& vm)
 
 	workerM->SetOutput(map);
 
-	workerM->AddFolder(vm["input"].as<std::string>(), resume);
+	if (vm.count("input"))
+	{
+		workerM->AddFolder(vm["input"].as<std::string>(), resume);
+	}
 
 	workerM->Run(nb_process);
 

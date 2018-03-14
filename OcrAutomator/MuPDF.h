@@ -64,6 +64,7 @@ namespace Docapost {
 				~MuPDF();
 
 				int GetNbPage(std::string);
+				int GetNbPage(char* pdf, int len);
 				void Extract(MasterFileStatus*, Tesseract::ImageFormatEnum format, ImageQuality quality = ImageQuality());
 			};
 		}

@@ -6,6 +6,12 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
 ## Build
 ### Linux
 - https://outils.docapost.tech/nexus/#browse/browse/assets:innovation-raw
+- https://outils.docapost.tech/recettenexus/service/rest/repository/browse/innovation-apt/
+  - Ajoutez le repository : ```sudo add-apt-repository https://outils.docapost.tech/recettenexus/repository/innovation-apt/```
+  - Ajoutez les authorisation : ```sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5E0C99EE```
+  - Mettez a jour : ```sudo apt update```
+  - Mettez a jour : ```sudo apt install tesseractautomator```
+  - Verifier l'instalation avec ```TesseractAutomator -v```
 
 ## Installation
 - Suivre le tutoriel suivant : https://blogs.msdn.microsoft.com/vcblog/2016/03/30/visual-c-for-linux-development/
@@ -16,12 +22,18 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
 
 ## Configuration pour compiler un ELF (Linux)
 - Installer le package Tesseract 4.0 LSTM : https://launchpad.net/~alex-p/+archive/ubuntu/tesseract-ocr
-- Installer les package libtesseract-dev, tesseract-ocr-fra, libleptonica-dev, libncurses5-dev, libexiv2-dev, libmagick++-dev et libprotobuf-dev `sudo apt install libtesseract-dev libtesseract-ocr-fra libleptonica-dev libncurses5-dev libexiv2-dev libmagick++-dev libprotobuf-dev`
+- Installer les package libtesseract-dev, tesseract-ocr-fra, libleptonica-dev, libncurses5-dev, libexiv2-dev, libmagick++-dev, libprotobuf-dev et libarchive `sudo apt install libtesseract-dev libtesseract-ocr-fra libleptonica-dev libncurses5-dev libexiv2-dev libmagick++-dev libprotobuf-dev libarchive-dev`
 - Télécharger Boost : `wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.bz2` puis extraire dans `/root/boost_1_65_1` avec `tar --bzip2 -xf /path/to/boost_1_65_1.tar.bz2`.
 - puis suivre la procédure : (http://www.boost.org/doc/libs/1_65_1/more/getting_started/unix-variants.html)
 - Si vous souhaitez utiliser les lib static de Boost, enlever les .so générés précédemments
 - Télécharge Podofo : `wget https://mupdf.com/downloads/mupdf-1.12.0-source.tar.gz -o mupdf-1.12.0-source.tar.gz` puis extraire avec `tar -xf /path/to/mupdf-1.12.0-source.tar.gz`.
 - puis suivre la procédure : (https://mupdf.com/docs/building.html)
+- Télécharge RTTR : `wget http://www.rttr.org/releases/rttr-0.9.5-src.tar.gz -o rttr-0.9.5-src.tar.gz` puis extraire avec `tar -xf /path/to/rttr-0.9.5-src.tar.gz`.
+- puis suivre la procédure : (http://www.rttr.org/doc/master/building_install_page.html)
+- Pour compiler une lib static : ```cmake -DBUILD_STATIC=ON```
+- Copier le contenu du dossier ```install``` dans ```/user/local``` (pincipalement ```lib``` et ```include```)
+- Télécharge Podofo : `wget https://github.com/Tencent/rapidjson/archive/v1.1.0.zip -o rapidjson-1.1.0.tar.gz` puis extraire avec `tar -xf /path/to/rapidjson-1.1.0.tar.gz`.
+- Suivez la procédure : https://github.com/Tencent/rapidjson (```cmake .; make install```)
 
 ## Configuration pour créer un .deb et le deploiyer (Linux)
 - Copier le fichier Env/env-example.config vers Env/env.config et renseiger les informations de connexion
@@ -33,11 +45,10 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
 - Telecharger les trois librairies suivantes : 
   - leptonica (https://github.com/DanBloomberg/leptonica)
   - tesseract4 LTSM (https://github.com/tesseract-ocr/tesseract)
-  - jpegturbo (https://github.com/libjpeg-turbo/libjpeg-turbo)
 - Instaler les outils nécéssaire et ajouter les a votre PATH
   - cmake (https://cmake.org/)
-  - NASM (http://www.nasm.us/)
   - CPPAN (https://cppan.org/client/)
+  - VCPKG
   - Visual studio 2017
 - Leptonica:
   - Suivez la procédure de génération du projet
@@ -66,7 +77,6 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
     - ```Additional Include Directories```
     - Ajouter ```C:\Program Files\leptonica\include```
     - Ajouter ```C:\Program Files\leptonica\include\leptonica```
-    - 
     - ```Configuration properties```
     - ```Linker```
     - ```Input```
@@ -76,14 +86,6 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
   - installer le (INSTALL), un dossier ```c:\programmes\tesseract``` doit être créer
   - Créer un dossier ```c:\programmes\tesseract\tessdata```
   - Télécharger dans ce dossier vos packs de langues (https://github.com/tesseract-ocr/tesseract/wiki/Data-Files)
-- JpegTurbo
-    - Lancer **cmake**
-      - Entrer le chemin vers le code source de jpegturbo et le chemin de sortie de la génération 
-      - Bouton ```Configure```
-      - Modifier la propriété **CMAKE_INSTALL_PREFIX** pour qu'elle soit ```C:\Program Files\libjpeg-turbo64```
-      - Bouton ```Generate```
-  - compiler en 64bits (ALL_BUILD)
-  - installer le (INSTALL), un dossier ```C:\Program Files\libjpeg-turbo64``` doit être créer
 
 ## Utilisation
 ```Usage:
