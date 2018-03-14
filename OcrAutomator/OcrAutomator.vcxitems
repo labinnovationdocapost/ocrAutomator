@@ -14,6 +14,7 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)AutoResetEvent.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)BaseDisplay.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)BaseFileStatus.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)BaseOcr.h" />
@@ -26,6 +27,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)FileSum.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)FzBufferMemoryFileBuffer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)fz_buffer_impl.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)httplib.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ImageFormatEnum.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ArrayMemoryFileBuffer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)JpegTurboMemoryFileBuffer.h" />
@@ -55,6 +57,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf\Synchro_Slave.pb.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Protobuf_all.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)RTTR.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)HttpServer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)SlaveFileStatus.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)SlaveProcessingWorker.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)SlaveState.h" />
@@ -69,6 +72,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)BaseOcrWithLoader.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)ExivMemoryFileBuffer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)FzBufferMemoryFileBuffer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)HttpServer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)JpegTurboMemoryFileBuffer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Main.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Main_Master.cpp" />

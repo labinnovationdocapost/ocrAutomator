@@ -5,8 +5,6 @@
 struct MasterMemoryFileStatus : MasterFileStatus
 {
 private:
-	std::vector<Docapost::IA::Tesseract::OutputFlags> _capability = { Docapost::IA::Tesseract::OutputFlags::MemoryText, Docapost::IA::Tesseract::OutputFlags::MemoryImage };
-
 	char* original_file;
 	int length;
 public:
@@ -20,7 +18,13 @@ public:
 		return length;
 	}
 
-	MasterMemoryFileStatus(std::string id, char* original_file, int len) : MasterFileStatus(_capability,id), original_file(original_file), length(len)
+	MasterMemoryFileStatus(std::string id, char* original_file, int len) : MasterFileStatus({ Docapost::IA::Tesseract::OutputFlags::MemoryText, Docapost::IA::Tesseract::OutputFlags::MemoryImage },id), original_file(original_file), length(len)
 	{
+	}
+
+	~MasterMemoryFileStatus()
+	{
+		if(original_file != nullptr)
+			delete original_file;
 	}
 };

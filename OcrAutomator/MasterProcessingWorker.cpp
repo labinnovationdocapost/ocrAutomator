@@ -297,7 +297,7 @@ int Docapost::IA::Tesseract::MasterProcessingWorker::AddPdfFile(bool resume, fs:
 	return nbPages;
 }
 
-int Docapost::IA::Tesseract::MasterProcessingWorker::AddPdfFile(std::string id, char* pdf, int len)
+int Docapost::IA::Tesseract::MasterProcessingWorker::AddPdfFile(std::string id, char* pdf, int len, std::vector<boost::uuids::uuid>& uids)
 {
 	MuPDF::MuPDF mupdf;
 	auto nbPages = mupdf.GetNbPage(pdf, len);
@@ -308,6 +308,7 @@ int Docapost::IA::Tesseract::MasterProcessingWorker::AddPdfFile(std::string id, 
 	for (int i = 0; i < nbPages; i++)
 	{
 		MasterFileStatus* file = new MasterMemoryFileStatus(id, pdf, len);
+		uids.push_back(file->uid);
 		InitPdfMasterFileStatus(file, mutex_siblings, siblings, i);
 		if (added == false)
 		{
@@ -346,10 +347,12 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::AddImageFile(bool resume, 
 	}
 }
 
-void Docapost::IA::Tesseract::MasterProcessingWorker::AddImageFile(std::string id, char* image, int len)
+void Docapost::IA::Tesseract::MasterProcessingWorker::AddImageFile(std::string id, char* image, int len, boost::uuids::uuid& uuid)
 {
 	mTotal++;
-	AddFileBack(new MasterMemoryFileStatus(id, image, len));
+	MasterMemoryFileStatus* mmfs;
+	AddFileBack(mmfs = new MasterMemoryFileStatus(id, image, len));
+	uuid = mmfs->uid;
 }
 
 void Docapost::IA::Tesseract::MasterProcessingWorker::_AddFolder(fs::path folder, bool resume)

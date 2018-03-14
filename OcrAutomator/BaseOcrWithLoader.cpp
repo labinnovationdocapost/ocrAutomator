@@ -2,6 +2,8 @@
 #include "Error.h"
 #include "MuPDF.h"
 #include "ArrayMemoryFileBuffer.h"
+#include "MasterMemoryFileStatus.h"
+#include "MasterLocalFileStatus.h"
 
 std::mutex Docapost::IA::Tesseract::BaseOcrWithLoader::mCreationThreadMutex{};
 int Docapost::IA::Tesseract::BaseOcrWithLoader::mCurrentPdfCreationThread = 0;
@@ -146,23 +148,31 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::BaseOcrWithL
 	}
 	else
 	{
-		FILE* f = fopen(file->name.c_str(), "r");
-		if (f == nullptr)
+		if (MasterLocalFileStatus* _file = dynamic_cast<MasterLocalFileStatus*>(file))
 		{
-			std::cerr << "Impossible d'ouvrir le fichier " << file->name << std::endl;
-			throw std::runtime_error("Impossible d'ouvrir le fichier " + file->name);
+			FILE* f = fopen(file->name.c_str(), "r");
+			if (f == nullptr)
+			{
+				std::cerr << "Impossible d'ouvrir le fichier " << file->name << std::endl;
+				throw std::runtime_error("Impossible d'ouvrir le fichier " + file->name);
+			}
+
+			// Determine file size
+			fseek(f, 0, SEEK_END);
+			size_t size = ftell(f);
+
+			file->buffer = new ArrayMemoryFileBuffer(size);
+
+			rewind(f);
+			fread(file->buffer->data(), sizeof(unsigned char), size, f);
+			fclose(f);
+
+			return file->buffer;
 		}
-
-		// Determine file size
-		fseek(f, 0, SEEK_END);
-		size_t size = ftell(f);
-
-		file->buffer = new ArrayMemoryFileBuffer(size);
-
-		rewind(f);
-		fread(file->buffer->data(), sizeof(unsigned char), size, f);
-		fclose(f);
-
-		return file->buffer;
+		if (MasterMemoryFileStatus* _file = dynamic_cast<MasterMemoryFileStatus*>(file))
+		{
+			file->buffer = new ArrayMemoryFileBuffer((unsigned char*)_file->OriginalFile(), _file->Length());
+			return file->buffer;
+		}
 	}
 }

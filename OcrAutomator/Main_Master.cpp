@@ -1,6 +1,7 @@
 #include "Main.h"
 #include <boost/algorithm/string/predicate.hpp>
 #include "ExtraOutput.h"
+#include "HttpServer.h"
 
 Docapost::IA::Tesseract::MasterProcessingWorker* workerM;
 
@@ -27,7 +28,7 @@ void Master(char** argv, po::variables_map& vm)
 		}
 	}
 
-	if (!vm.count("input"))
+	if (!vm.count("input") && !vm.count("http"))
 	{
 		std::cout << "\nVeuiller indiquer un dossier a traiter\n\n";
 
@@ -37,14 +38,16 @@ void Master(char** argv, po::variables_map& vm)
 		return;
 	}
 
-
-	if (!fs::is_directory(vm["input"].as<std::string>()))
+	if (vm.count("input"))
 	{
-		std::cout << "Le chemin " << vm["input"].as<std::string>() << " n'est pas un dossier valide\n";
-		return;
+		if (!fs::is_directory(vm["input"].as<std::string>()))
+		{
+			std::cout << "Le chemin " << vm["input"].as<std::string>() << " n'est pas un dossier valide\n";
+			return;
+		}
 	}
-	bool resume = false;
 
+	bool resume = false;
 	if (vm.count("continue"))
 	{
 		resume = true;
@@ -87,6 +90,12 @@ void Master(char** argv, po::variables_map& vm)
 	if (vm.count("prefixe"))
 	{
 		types |= Docapost::IA::Tesseract::OutputFlags::Flattern;
+	}
+
+	if (vm.count("http"))
+	{
+		types |= Docapost::IA::Tesseract::OutputFlags::MemoryImage;
+		types |= Docapost::IA::Tesseract::OutputFlags::MemoryText;
 	}
 
 
@@ -160,6 +169,18 @@ void Master(char** argv, po::variables_map& vm)
 		workerM->Separator(p);
 	}
 
+	try
+	{
+		new HttpServer(*workerM, L"0.0.0.0", 8888);
+	}
+	catch(std::exception& e)
+	{
+		
+	}
+	catch (...)
+	{
+
+	}
 
 #if DISPLAY
 	if (!vm.count("silent"))
@@ -174,7 +195,10 @@ void Master(char** argv, po::variables_map& vm)
 
 	workerM->SetOutput(map);
 
-	workerM->AddFolder(vm["input"].as<std::string>(), resume);
+	if (vm.count("input"))
+	{
+		workerM->AddFolder(vm["input"].as<std::string>(), resume);
+	}
 
 	workerM->Run(nb_process);
 

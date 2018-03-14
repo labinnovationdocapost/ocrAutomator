@@ -103,7 +103,10 @@ void Display::DrawBody(const std::unordered_set<MasterFileStatus*> files, FileSu
 			//wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", cstring.str().c_str(), (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, (*j)->relative_name.c_str());
 
 			char text[1024];
-			sprintf(text, "%-15s %-6d %-15s %2d %s", cstring.str().c_str(), (*pfile)->thread, (*pfile)->hostname.c_str(), (*pfile)->filePosition, plfile->relative_name.c_str());
+			if (plfile != nullptr)
+				sprintf(text, "%-15s %-6d %-15s %2d %s", cstring.str().c_str(), (*pfile)->thread, (*pfile)->hostname.c_str(), (*pfile)->filePosition, plfile->relative_name.c_str());
+			else
+				sprintf(text, "%-15s %-6d %-15s %2d %s", cstring.str().c_str(), (*pfile)->thread, (*pfile)->hostname.c_str(), (*pfile)->filePosition, (*pfile)->name.c_str());
 			DWORD dwBytesWritten = 0;
 			WriteConsoleOutputCharacter(mConsoleHandler, text, strlen(text), { 0, (SHORT)i++ }, &dwBytesWritten);
 		}
@@ -111,7 +114,10 @@ void Display::DrawBody(const std::unordered_set<MasterFileStatus*> files, FileSu
 		{
 			//wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", "", (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, (*j)->relative_name.c_str());
 			char text[1024];
-			sprintf(text, "%-15s %-6d %-15s %2d %s", "", (*pfile)->thread, (*pfile)->hostname.c_str(), (*pfile)->filePosition, plfile->relative_name.c_str());
+			if (plfile != nullptr)
+				sprintf(text, "%-15s %-6d %-15s %2d %s", "", (*pfile)->thread, (*pfile)->hostname.c_str(), (*pfile)->filePosition, plfile->relative_name.c_str());
+			else
+				sprintf(text, "%-15s %-6d %-15s %2d %s", "", (*pfile)->thread, (*pfile)->hostname.c_str(), (*pfile)->filePosition, (*pfile)->name.c_str());
 			DWORD dwBytesWritten = 0;
 			WriteConsoleOutputCharacter(mConsoleHandler, text, strlen(text), { 0, (SHORT)i++ }, &dwBytesWritten);
 		}

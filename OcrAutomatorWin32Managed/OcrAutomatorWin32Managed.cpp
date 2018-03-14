@@ -60,7 +60,8 @@ void main()
 	OcrAutomatorPDF* pdf = new OcrAutomatorPDF();
 
 	pdf->name = "1234";
-	pdf->nbpage += m_ocr->AddPdf(pdf->name, (char*)data.data(), data.length());
+	std::vector<std::string> s_uids;
+	pdf->nbpage += m_ocr->AddPdf(pdf->name, (char*)data.data(), data.length(), s_uids);
 
 	std::cout << "pages: " << pdf->nbpage << "\n";
 	m_ocr->Start(4, FileRecieved);

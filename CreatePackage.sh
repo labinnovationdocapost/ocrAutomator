@@ -16,7 +16,7 @@ Version: $VERSION
 Section: base
 Priority: optional
 Architecture: amd64
-Depends: libtesseract4 (>= 4), libncurses5 (>= 6.0), libexiv2-14 (>= 0.25), libprotobuf-lite9v5 (>= 2.6.1), libprotobuf9v5 (>=2.6.1), libmagick++-6.q16-5v5 (>=6.8.9.9)
+Depends: libtesseract4 (>= 4), libncurses5 (>= 6.0), libexiv2-14 (>= 0.25), libprotobuf-lite9v5 (>= 2.6.1), libprotobuf9v5 (>=2.6.1), libmagick++-6.q16-5v5 (>=6.8.9.9), libarchive13 (>=3.1.2)
 Maintainer: Innovation <cyril.tisserand@docapost.fr>
 Description: Automatise l'Ocr par Tesseract sur plusieur thread et dans plusieur modes différents
 Homepage: http://docapost.com" >> "/tmp/Package/DEBIAN/control"

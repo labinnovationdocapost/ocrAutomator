@@ -161,7 +161,7 @@ void Display::DrawBody(const std::unordered_set<MasterFileStatus*> files, FileSu
 			}
 			else
 			{
-				wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", cstring.str().c_str(), (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, _file->name.c_str());
+				//wprintw(mMainWindow, "%-15s %-6d %-15s %2d %s\n", cstring.str().c_str(), (*j)->thread, (*j)->hostname.c_str(), (*j)->filePosition, _file->name.c_str());
 			}
 		}
 		else

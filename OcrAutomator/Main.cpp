@@ -17,7 +17,7 @@ void ShowHelp(char** argv, std::vector<std::pair<string, po::options_description
 
 	for (auto desc : descs)
 	{
-		std::cout << "\n"<< desc.first <<":\n";
+		std::cout << "\n" << desc.first << ":\n";
 		std::cout << desc.second << std::endl;
 	}
 
@@ -125,7 +125,8 @@ int main(int argc, char* argv[])
 		("prefixe,f", value<std::string>()->value_name("SEPARATOR")->implicit_value("__"), "Ajout le chemin relatif a [input] en prefixe du fichier.Defaut: __")
 		("input,i", value<std::string>()->value_name("DOSSIER"), "Dossier d'entree a partir de laquelle seront listee les fichiers a traiter")
 		("image", value<std::string>()->value_name("FORMAT")->default_value("jpg"), "Format de l'image de sortie")
-		("copy", value<std::vector<std::string>>()->value_name("FORMAT"), "Copie de l'image dans different scaling, le paramètre peut être specifié plusieur fois pour avoir plusieur sorties");
+		("copy", value<std::vector<std::string>>()->value_name("FORMAT"), "Copie de l'image dans different scaling, le paramètre peut être specifié plusieur fois pour avoir plusieur sorties")
+		("http", "Lance le server HTTP pour envoyer des images/PDF a l'application");
 
 	po::options_description slaveDesc;
 	slaveDesc.add_options()
@@ -185,6 +186,9 @@ int main(int argc, char* argv[])
 #ifdef __linux__
 		freopen("/var/log/TesseractAutomatorStdErr_Slave.log", "w", stderr);
 #endif
+#ifdef _WIN32
+		freopen("TesseractAutomatorStdErr_Master.log", "w", stderr);
+#endif
 		Slave(argv, vm);
 	}
 	else
@@ -192,8 +196,11 @@ int main(int argc, char* argv[])
 #ifdef __linux__
 		freopen("/var/log/TesseractAutomatorStdErr_Master.log", "w", stderr);
 #endif
+#ifdef _WIN32
+		freopen("TesseractAutomatorStdErr_Master.log", "w", stderr);
+#endif
 		Master(argv, vm);
-	}
+}
 
 
 	return 0;

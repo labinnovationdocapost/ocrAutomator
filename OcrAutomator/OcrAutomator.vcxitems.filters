@@ -58,6 +58,12 @@
     <Filter Include="Header Files\Ocr\NoOcr">
       <UniqueIdentifier>{76df56e8-d073-4078-a0be-35f27e4d866e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Http">
+      <UniqueIdentifier>{892f7328-4821-4b17-bcb8-e1376610347a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Http">
+      <UniqueIdentifier>{ffbca926-f87a-46be-b494-a1e0a6dc6e91}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)BaseFileStatus.h">
@@ -207,6 +213,13 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)OcrAutomatorMaster.h">
       <Filter>Header Files\Master</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)HttpServer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)AutoResetEvent.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)httplib.h">
+      <Filter>Header Files\Http</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Protobuf\Broadcast.pb.cc">
@@ -295,6 +308,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)OcrAutomatorMaster.cpp">
       <Filter>Source Files\Master</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)HttpServer.cpp">
+      <Filter>Source Files\Http</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

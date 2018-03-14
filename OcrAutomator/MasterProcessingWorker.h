@@ -135,8 +135,8 @@ namespace Docapost {
 				std::thread* Run(int nbThread) override;
 				void SetOutput(boost::unordered_map<OutputFlags, fs::path> folders);
 
-				int AddPdfFile(std::string id, char* pdf, int len);
-				void AddImageFile(std::string id, char* image, int len);
+				int AddPdfFile(std::string id, char* pdf, int len, std::vector<boost::uuids::uuid>& uid);
+				void AddImageFile(std::string id, char* image, int len, boost::uuids::uuid& uids);
 
 				std::set<std::string> extensions = { ".tif", ".tiff", ".png", ".jpg", ".jpeg", ".pdf" };
 

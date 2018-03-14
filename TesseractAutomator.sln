@@ -6,6 +6,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OcrAutomatorLinux", "OcrAut
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EA140BF6-A107-4812-87AF-26832857466A}"
 	ProjectSection(SolutionItems) = preProject
+		API.md = API.md
 		CHANGELOG = CHANGELOG
 		CreatePackage.sh = CreatePackage.sh
 		Deploy.sh = Deploy.sh

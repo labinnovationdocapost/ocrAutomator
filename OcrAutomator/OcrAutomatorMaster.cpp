@@ -162,13 +162,22 @@ void OcrAutomatorMaster::CreateInstance(Docapost::IA::Tesseract::OutputFlags typ
 	d_ptr->mWorker = std::make_unique<Docapost::IA::Tesseract::MasterProcessingWorker>(*d_ptr->mOcr, type, port);
 }
 
-void OcrAutomatorMaster::AddImage(std::string id, char* img, int len)
+void OcrAutomatorMaster::AddImage(std::string id, char* img, int len, std::string& s_uid)
 {
-	d_ptr->mWorker->AddImageFile(id, img, len);
+	boost::uuids::uuid uid;
+	d_ptr->mWorker->AddImageFile(id, img, len, uid);
+	s_uid = boost::uuids::to_string(uid);
 }
-int OcrAutomatorMaster::AddPdf(std::string id, char* img, int len)
+int OcrAutomatorMaster::AddPdf(std::string id, char* img, int len, std::vector<std::string>& s_uids)
 {
-	return d_ptr->mWorker->AddPdfFile(id, img, len);
+	std::vector<boost::uuids::uuid> uids;
+	auto nbpages = d_ptr->mWorker->AddPdfFile(id, img, len, uids);
+	s_uids.clear();
+	for(auto& uid : uids)
+	{
+		s_uids.push_back(boost::uuids::to_string(uid));
+	}
+	return nbpages;
 }
 
 void OcrAutomatorMaster::Start(int maxThread, std::function<void(OcrResult*)> callback)
