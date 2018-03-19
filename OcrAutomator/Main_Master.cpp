@@ -1,7 +1,7 @@
 #include "Main.h"
 #include <boost/algorithm/string/predicate.hpp>
-#include "ExtraOutput.h"
-#include "HttpServer.h"
+#include "Base/ExtraOutput.h"
+#include "Http/HttpServer.h"
 
 Docapost::IA::Tesseract::MasterProcessingWorker* workerM;
 

@@ -1,7 +1,9 @@
 
 #include <boost/thread/thread.hpp>
-#include "Error.h"
+#include "Base/Error.h"
 #include "DisplayManager.h"
+#include "Master/Display.h"
+#include "Slave/SlaveDisplay.h"
 
 
 #if DISPLAY

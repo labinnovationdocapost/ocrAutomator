@@ -10,12 +10,12 @@
 #include <chrono>
 #include <iomanip>
 #include <csignal>
-#include "Version.h"
-#include "SlaveProcessingWorker.h"
+#include "Base/Version.h"
+#include "Slave/SlaveProcessingWorker.h"
 #include <google/protobuf/extension_set.h>
-#include "Error.h"
-#include "TesseractFactory.h"
-#include "ImageFormatEnum.h"
+#include "Base/Error.h"
+#include "Ocr/Tesseract/TesseractFactory.h"
+#include "Base/ImageFormatEnum.h"
 using std::string;
 
 #include <tesseract/baseapi.h>
@@ -31,9 +31,9 @@ using std::string;
 namespace po = boost::program_options;
 using boost::program_options::value;
 
-#include "MasterProcessingWorker.h"
-#include "Network.h"
-#include "BaseDisplay.h"
+#include "Master/MasterProcessingWorker.h"
+#include "Master/Network/Network.h"
+#include "Base/BaseDisplay.h"
 
 
 extern Docapost::IA::Tesseract::MasterProcessingWorker* workerM;

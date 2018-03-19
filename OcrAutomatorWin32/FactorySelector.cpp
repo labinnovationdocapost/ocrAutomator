@@ -1,6 +1,6 @@
 #include "Main.h"
-#include "A2IAFactory.h"
-#include "NoOcrFactory.h"
+#include "Ocr/A2IA/A2IAFactory.h"
+#include "Ocr/NoOcr/NoOcrFactory.h"
 
 Docapost::IA::Tesseract::OcrFactory* CreateOcrFactory(po::variables_map& vm)
 {

@@ -1,9 +1,10 @@
+
 # Tesseract Automator
 
 
 Le projet est compilé grâce à Visual Studio for Linux Development (inclus dans l'installation de Visual Studio 2017)
 
-## Build
+## Pre-Compile binaries
 ### Linux
 - https://outils.docapost.tech/nexus/#browse/browse/assets:innovation-raw
 - https://outils.docapost.tech/recettenexus/service/rest/repository/browse/innovation-apt/
@@ -19,7 +20,17 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
 
 >Pour l'utilisation avec WSL (Windows Subsystem for Linux)
 - Suivre le tutoriel : https://blogs.msdn.microsoft.com/vcblog/2017/02/08/targeting-windows-subsystem-for-linux-from-visual-studio/
-
+## Dépendances:
+- MuPDF 1.12
+- JpegTurbo
+- RapidJson
+- A2IA (Windows uniquement)
+- Exiv2
+- Zlib
+- RTTR 0.9.5
+- Archive
+- Tesseract 4.00
+- Leptonica 1.74
 ## Configuration pour compiler un ELF (Linux)
 - Installer le package Tesseract 4.0 LSTM : https://launchpad.net/~alex-p/+archive/ubuntu/tesseract-ocr
 - Installer les package libtesseract-dev, tesseract-ocr-fra, libleptonica-dev, libncurses5-dev, libexiv2-dev, libmagick++-dev, libprotobuf-dev et libarchive `sudo apt install libtesseract-dev libtesseract-ocr-fra libleptonica-dev libncurses5-dev libexiv2-dev libmagick++-dev libprotobuf-dev libarchive-dev`
@@ -42,47 +53,19 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
 - Executer le script Deploy.sh
 
 ## Configuration pour compiler un EXE (Windows)
-- Telecharger les trois librairies suivantes : 
-  - leptonica (https://github.com/DanBloomberg/leptonica)
-  - tesseract4 LTSM (https://github.com/tesseract-ocr/tesseract)
 - Instaler les outils nécéssaire et ajouter les a votre PATH
   - cmake (https://cmake.org/)
-  - CPPAN (https://cppan.org/client/)
-  - VCPKG
-  - Visual studio 2017
-- Leptonica:
-  - Suivez la procédure de génération du projet
-    - depuis le dossier ou ce situe les sources de leptonica
-    - ```cppan .```
-    - Lancer **cmake**
-      - Entrer le chemin vers le code source de leptonica et le chemin de sortie de la génération 
-      - Bouton ```Configure```
-      - Modifier la propriété **CPPAN_BUILD_SHARED_LIBS** pour qu'elle soit =0
-      - Bouton ```Generate```
-  - compiler en 64bits (ALL_BUILD)
-  - installer le (INSTALL), un dossier ```c:\programmes\leptonica``` doit être créer
+  - VCPKG (ou un autre Package Manager)
+  - Visual studio 2017 ou ultérieur
 - Tesseract
   - Suivez la procédure de génération du projet
     - Lancer **cmake**
+	  - Spécifié votre toolchain si besoin: ```Specify toolchain file for cross-compiling``` pour la liaison des dépendances
       - Entrer le chemin vers le code source de tesseract et le chemin de sortie de la génération 
       - Bouton ```Configure```
-      - Si leptonica a bien été installer la propriété **Leptonica_DIR** est préremplie
+      - Si Leptonica a bien été installer la propriété **Leptonica_DIR** est préremplie
       - Vous pouvez decocher la propriété **BUILD_TRAINING_TOOLS**
       - Bouton ```Generate```
-  - Ouvrer le projet et modifier ses propriétés
-    - Click droit Properties sur libtesseract
-    - ```Configuration properties```
-    - ```C/C++```
-    - ```General```
-    - ```Additional Include Directories```
-    - Ajouter ```C:\Program Files\leptonica\include```
-    - Ajouter ```C:\Program Files\leptonica\include\leptonica```
-    - ```Configuration properties```
-    - ```Linker```
-    - ```Input```
-    - ```Additional Directories```
-    - Supprimer toutes les références à pvt.cppan.demo.* 
-  - compiler en 64bits (ALL_BUILD)
   - installer le (INSTALL), un dossier ```c:\programmes\tesseract``` doit être créer
   - Créer un dossier ```c:\programmes\tesseract\tessdata```
   - Télécharger dans ce dossier vos packs de langues (https://github.com/tesseract-ocr/tesseract/wiki/Data-Files)

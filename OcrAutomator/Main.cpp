@@ -1,6 +1,7 @@
 #include "Main.h"
 #include <boost/assign/list_of.hpp>
 #include <rttr/registration.h>
+#include "Base/Version.h"
 
 boost::thread* th = nullptr;
 std::mutex g_console_mutex;
