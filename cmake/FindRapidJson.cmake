@@ -23,6 +23,16 @@
 
 find_path(RapidJson_INCLUDE_DIR turbojpeg.h)
 
+if(JpegTurbo_INCLUDE_DIR AND EXISTS "${JpegTurbo_INCLUDE_DIR}/jconfig.h")
+# #define LIBJPEG_TURBO_VERSION 1.5.3
+  set(_JpegTurbo_VERSION_REGEX "^#define[ \t]+LIBJPEG_TURBO_VERSION[ \t]+([0-9]+)\\.([0-9]+)\\.([0-9]+)[^\"]*.*$")
+  file(STRINGS "${JpegTurbo_INCLUDE_DIR}/jconfig.h" _JpegTurbo_VERSION_STRING LIMIT_COUNT 1 REGEX "${_JpegTurbo_VERSION_REGEX}")
+  if(_JpegTurbo_VERSION_STRING)
+    string(REGEX REPLACE "${_JpegTurbo_VERSION_REGEX}" "\\1.\\2.\\3" JpegTurbo_VERSION "${_JpegTurbo_VERSION_STRING}")
+  endif()
+  unset(_JpegTurbo_VERSION_REGEX)
+  unset(_JpegTurbo_VERSION_STRING)
+endif()
 
 include(${CMAKE_ROOT}/Modules/FindPackageHandleStandardArgs.cmake)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(RapidJson DEFAULT_MSG RapidJson_INCLUDE_DIR)

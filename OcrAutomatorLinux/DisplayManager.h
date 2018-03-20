@@ -1,6 +1,6 @@
 #pragma once
-#include "MasterProcessingWorker.h"
-#include "SlaveProcessingWorker.h"
+#include "Master/MasterProcessingWorker.h"
+#include "Slave/SlaveProcessingWorker.h"
 
 void MasterDisplayUI();
 void SlaveDisplayUI();
@@ -9,8 +9,8 @@ extern Docapost::IA::Tesseract::MasterProcessingWorker* workerM;
 extern Docapost::IA::Tesseract::SlaveProcessingWorker* workerS;
 
 #if DISPLAY
-#include "Display.h"
-#include "SlaveDisplay.h"
+#include "Master/Display.h"
+#include "Slave/SlaveDisplay.h"
 
 void resizeHandler(int sig);
 

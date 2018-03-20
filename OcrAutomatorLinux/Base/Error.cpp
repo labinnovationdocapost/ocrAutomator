@@ -1,6 +1,6 @@
-#include "Error.h"
-#include "Display.h"
-#include "SlaveDisplay.h"
+#include "Base/Error.h"
+#include "Master/Display.h"
+#include "Slave/SlaveDisplay.h"
 #include <cstdio>
 #include <execinfo.h>
 #include <stdexcept>
@@ -19,8 +19,8 @@
 #include <boost/log/sinks/text_ostream_backend.hpp>
 #include <boost/log/expressions/formatters/date_time.hpp>
 #include <boost/log/attributes.hpp>
-#include "SlaveProcessingWorker.h"
-#include "MasterProcessingWorker.h"
+#include "Slave/SlaveProcessingWorker.h"
+#include "Master/MasterProcessingWorker.h"
 
 namespace logging = boost::log;
 namespace keywords = boost::log::keywords;

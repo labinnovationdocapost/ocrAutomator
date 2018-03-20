@@ -1,5 +1,5 @@
-#include "SlaveDisplay.h"
-#include "TesseractFactory.h"
+#include "Slave/SlaveDisplay.h"
+#include "Ocr/Tesseract/TesseractFactory.h"
 #include <boost/uuid/uuid_io.hpp>
 
 #define COLOR_GREY 8
