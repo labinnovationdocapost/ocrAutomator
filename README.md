@@ -15,36 +15,32 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
   - Verifier l'instalation avec ```TesseractAutomator -v```
 
 ## Installation
-- Suivre le tutoriel suivant : https://blogs.msdn.microsoft.com/vcblog/2016/03/30/visual-c-for-linux-development/
-- Si vous voulez avoir l'auto complétion, copiez les fichiers sources de `/user/include/*` vers le dossier Includes de la solution
-
->Pour l'utilisation avec WSL (Windows Subsystem for Linux)
-- Suivre le tutoriel : https://blogs.msdn.microsoft.com/vcblog/2017/02/08/targeting-windows-subsystem-for-linux-from-visual-studio/
+- Utiliser CMake (https://cmake.org/) pour généré le projet en fonction de votre environnement et IDE
 ## Dépendances:
 - MuPDF 1.12
-- JpegTurbo
+- JpegTurbo 1.4.0
 - RapidJson
 - A2IA (Windows uniquement)
-- Exiv2
-- Zlib
+- Exiv2 0.25
+- Zlib 1.2.11
 - RTTR 0.9.5
-- Archive
-- Tesseract 4.00
+- Archive 3.3.2
+- Tesseract 4.00.00
 - Leptonica 1.74
 ## Configuration pour compiler un ELF (Linux)
 - Installer le package Tesseract 4.0 LSTM : https://launchpad.net/~alex-p/+archive/ubuntu/tesseract-ocr
 - Installer les package libtesseract-dev, tesseract-ocr-fra, libleptonica-dev, libncurses5-dev, libexiv2-dev, libmagick++-dev, libprotobuf-dev et libarchive `sudo apt install libtesseract-dev libtesseract-ocr-fra libleptonica-dev libncurses5-dev libexiv2-dev libmagick++-dev libprotobuf-dev libarchive-dev`
-- Télécharger Boost : `wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.bz2` puis extraire dans `/root/boost_1_65_1` avec `tar --bzip2 -xf /path/to/boost_1_65_1.tar.bz2`.
-- puis suivre la procédure : (http://www.boost.org/doc/libs/1_65_1/more/getting_started/unix-variants.html)
-- Si vous souhaitez utiliser les lib static de Boost, enlever les .so générés précédemments
-- Télécharge Podofo : `wget https://mupdf.com/downloads/mupdf-1.12.0-source.tar.gz -o mupdf-1.12.0-source.tar.gz` puis extraire avec `tar -xf /path/to/mupdf-1.12.0-source.tar.gz`.
-- puis suivre la procédure : (https://mupdf.com/docs/building.html)
+- Télécharger Boost : (https://dl.bintray.com/boostorg/release/)
+	- puis suivre la procédure : (http://www.boost.org/doc/libs/1_66_0/more/getting_started/unix-variants.html)
+	- Si vous souhaitez utiliser les lib static de Boost, enlever les .so générés précédemments
+- Télécharge MuPDF: `wget https://mupdf.com/downloads/mupdf-1.12.0-source.tar.gz -o mupdf-1.12.0-source.tar.gz`
+	- puis suivre la procédure : (https://mupdf.com/docs/building.html)
 - Télécharge RTTR : `wget http://www.rttr.org/releases/rttr-0.9.5-src.tar.gz -o rttr-0.9.5-src.tar.gz` puis extraire avec `tar -xf /path/to/rttr-0.9.5-src.tar.gz`.
-- puis suivre la procédure : (http://www.rttr.org/doc/master/building_install_page.html)
-- Pour compiler une lib static : ```cmake -DBUILD_STATIC=ON```
-- Copier le contenu du dossier ```install``` dans ```/user/local``` (pincipalement ```lib``` et ```include```)
-- Télécharge Podofo : `wget https://github.com/Tencent/rapidjson/archive/v1.1.0.zip -o rapidjson-1.1.0.tar.gz` puis extraire avec `tar -xf /path/to/rapidjson-1.1.0.tar.gz`.
-- Suivez la procédure : https://github.com/Tencent/rapidjson (```cmake .; make install```)
+	- puis suivre la procédure : (http://www.rttr.org/doc/master/building_install_page.html)
+	- Pour compiler une lib static : ```cmake -DBUILD_STATIC=ON```
+	- Copier le contenu du dossier ```install``` dans ```/user/local``` (pincipalement ```lib``` et ```include```)
+- Télécharge RapidJson: `wget https://github.com/Tencent/rapidjson/archive/v1.1.0.zip -o rapidjson-1.1.0.tar.gz` puis extraire avec `tar -xf /path/to/rapidjson-1.1.0.tar.gz`.
+	- Suivez la procédure : https://github.com/Tencent/rapidjson (```cmake .; make install```)
 
 ## Configuration pour créer un .deb et le deploiyer (Linux)
 - Copier le fichier Env/env-example.config vers Env/env.config et renseiger les informations de connexion
@@ -60,13 +56,18 @@ Le projet est compilé grâce à Visual Studio for Linux Development (inclus dan
 - Tesseract
   - Suivez la procédure de génération du projet
     - Lancer **cmake**
-	  - Spécifié votre toolchain si besoin: ```Specify toolchain file for cross-compiling``` pour la liaison des dépendances
+	  - Spécifié votre toolchain si besoin: ```Specify toolchain file for cross-compiling``` pour la liaison des dépendances si vous en avez une (Avec VCPKG par exemple)
       - Entrer le chemin vers le code source de tesseract et le chemin de sortie de la génération 
       - Bouton ```Configure```
       - Si Leptonica a bien été installer la propriété **Leptonica_DIR** est préremplie
       - Vous pouvez decocher la propriété **BUILD_TRAINING_TOOLS**
       - Bouton ```Generate```
+  - Ouvre le projet avec Visual Studio et compiler le.
   - installer le (INSTALL), un dossier ```c:\programmes\tesseract``` doit être créer
+  - Si le chemin de vers la lib tesseract contient un espace (ex: c:\programme files\tesseract)
+	  - modifier le fichier cmake/TesseractConfig.cmake
+	  - Ligne 37 ajouter un backslash ```\``` devants chaque espace du chemin
+	  - Exemple : ``C:/Program Files/tesseract/include;C:/Program Files/tesseract/include/tesseract`` vers ``C:/Program\ Files/tesseract/include;C:/Program\ Files/tesseract/include/tesseract``
   - Créer un dossier ```c:\programmes\tesseract\tessdata```
   - Télécharger dans ce dossier vos packs de langues (https://github.com/tesseract-ocr/tesseract/wiki/Data-Files)
 

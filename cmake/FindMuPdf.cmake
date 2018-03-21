@@ -23,8 +23,8 @@
 
 find_path(MuPdf_INCLUDE_DIR mupdf/fitz.h)
 
-find_library(MuPdf_LIBRARY NAMES mupdf )
-find_library(MuPdf_LIBRARY_TIER NAMES mupdfthird )
+find_library(MuPdf_LIBRARY NAMES mupdf libmupdf )
+find_library(MuPdf_LIBRARY_TIER NAMES mupdfthird libmupdfthird )
 
 
 
