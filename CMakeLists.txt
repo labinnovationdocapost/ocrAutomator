@@ -9,11 +9,9 @@ set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 
-message(${CMAKE_CURRENT_LIST_DIR})
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 file(GLOB_RECURSE WIN32 RELATIVE ${CMAKE_SOURCE_DIR} "OcrAutomatorWin32/*.cpp" "OcrAutomatorWin32/*.c" "OcrAutomatorWin32/*.h")
-file(GLOB_RECURSE LINUX RELATIVE ${CMAKE_SOURCE_DIR} "OcrAutomatorLinux/*.cpp" "OcrAutomatorWin32/*.c" "OcrAutomatorWin32/*.h")
 file(GLOB_RECURSE LINUX RELATIVE ${CMAKE_SOURCE_DIR} "OcrAutomatorLinux/*.cpp" "OcrAutomatorLinux/*.c" "OcrAutomatorLinux/*.h")
 
 ##############################################################
@@ -130,14 +128,14 @@ include_directories(${EXIV2_INCLUDE_DIR})
 include_directories(${SHARED_ROOT})
 
 # Library
-add_library(OcrAutomatorShared STATIC ${SHARED_HEADER} ${SHARED_CXX})
-set_target_properties(OcrAutomatorShared PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/OcrAutomator/"
-)
+#add_library(OcrAutomatorShared STATIC ${SHARED_HEADER} ${SHARED_CXX})
+#set_target_properties(OcrAutomatorShared PROPERTIES
+#  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/OcrAutomator/"
+#)
 
 IF (MSVC)
 # Executable
-	add_executable(OcrAutomator ${WIN32} ${SHARED_HEADER})
+	add_executable(OcrAutomator ${SHARED_HEADER} ${SHARED_CXX} ${WIN32} )
 
 	FILE(TO_NATIVE_PATH "${A2ia_DLL}/*.dll" srcDir)
 	FILE(TO_NATIVE_PATH $<TARGET_FILE_DIR:OcrAutomator> srcDest)
@@ -149,35 +147,24 @@ IF (MSVC)
 	target_include_directories(OcrAutomator PUBLIC ${WIN32_ROOT})
 else()
 	include_directories(${CURSES_INCLUDE_DIR})
-	add_executable(OcrAutomator ${LINUX} ${SHARED_HEADER})
+	add_executable(OcrAutomator ${LINUX} ${SHARED_HEADER} ${SHARED_CXX})
 	target_include_directories(OcrAutomator PUBLIC ${LINUX_ROOT})
 endif()
-target_compile_options(OcrAutomatorShared PUBLIC "$<$<CONFIG:DEBUG>:${MY_DEBUG_OPTIONS}>")
-target_compile_options(OcrAutomatorShared PUBLIC "$<$<CONFIG:RELEASE>:${MY_RELEASE_OPTIONS}>")
+
+
+#target_compile_options(OcrAutomatorShared PUBLIC "$<$<CONFIG:DEBUG>:${MY_DEBUG_OPTIONS}>")
+#target_compile_options(OcrAutomatorShared PUBLIC "$<$<CONFIG:RELEASE>:${MY_RELEASE_OPTIONS}>")
 
 target_compile_options(OcrAutomator PUBLIC "$<$<CONFIG:DEBUG>:${MY_DEBUG_OPTIONS}>")
 target_compile_options(OcrAutomator PUBLIC "$<$<CONFIG:RELEASE>:${MY_RELEASE_OPTIONS}>")
 	   
-target_link_libraries(OcrAutomator OcrAutomatorShared)
-target_link_libraries(OcrAutomator ${MuPdf_LIBRARIES})
-target_link_libraries(OcrAutomatorShared ${JPEG_LIBRARIES})
-target_link_libraries(OcrAutomatorShared ${JpegTurbo_LIBRARY})
+set(SHARED_LIB ${MuPdf_LIBRARIES} ${JPEG_LIBRARIES} ${JpegTurbo_LIBRARY} ${EXIV2_LIBRARY} ${ZLIB_LIBRARIES} ${RTTR_LIBRARY} ${Boost_LIBRARIES} ${LibArchive_LIBRARY} ${Tesseract_LIBRARIES} ${Leptonica_LIBRARIES})
+#target_link_libraries(OcrAutomator OcrAutomatorShared)
 if(MSVC)
-	target_link_libraries(OcrAutomatorShared "${CMAKE_CURRENT_BINARY_DIR}/Libs/Win32/Debug/libprotobuf.lib")
-	target_link_libraries(OcrAutomatorShared A2ialib)
+	set(SYSTEM_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/Libs/Win32/Debug/libprotobuf.lib" A2ialib)
 else()
-	target_link_libraries(OcrAutomatorShared protobuf)
-	target_link_libraries(OcrAutomatorShared pthread)
-	target_link_libraries(OcrAutomatorShared ${CURSES_LIBRARIES})
+	set(SYSTEM_LIBRARY protobuf pthread ${CURSES_LIBRARIES})
 endif()
+target_link_libraries(OcrAutomator ${SHARED_LIB})
+target_link_libraries(OcrAutomator ${SYSTEM_LIBRARY})
 
-target_link_libraries(OcrAutomatorShared ${EXIV2_LIBRARY})
-target_link_libraries(OcrAutomatorShared debug ${ZLIB_LIBRARY_DEBUG})
-target_link_libraries(OcrAutomatorShared optimized ${ZLIB_LIBRARY_RELEASE})
-target_link_libraries(OcrAutomatorShared ${RTTR_LIBRARY})
-target_link_libraries(OcrAutomatorShared ${Boost_LIBRARIES})
-target_link_libraries(OcrAutomatorShared ${LibArchive_LIBRARY})
-target_link_libraries(OcrAutomatorShared ${Tesseract_LIBRARIES})
-target_link_libraries(OcrAutomatorShared ${Leptonica_LIBRARIES})
-
-INSTALL(TARGETS OcrAutomator RUNTIME DESTINATION ${PROJECT_BINARY_BIN}/bin)
