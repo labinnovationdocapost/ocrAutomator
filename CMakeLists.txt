@@ -87,7 +87,6 @@ endforeach()
 #ADD_SUBDIRECTORY(mySubDir1)
 
 find_package(Boost 1.65 REQUIRED COMPONENTS filesystem chrono date_time log program_options system thread)
-find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 
 
 find_package(MuPdf 1.12.0 REQUIRED)
