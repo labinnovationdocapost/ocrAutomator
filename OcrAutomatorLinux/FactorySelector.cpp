@@ -1,5 +1,5 @@
 #include "Main.h"
-#include "TesseractFactory.h"
+#include "Ocr/Tesseract/TesseractFactory.h"
 
 Docapost::IA::Tesseract::OcrFactory* CreateOcrFactory(po::variables_map& vm)
 {

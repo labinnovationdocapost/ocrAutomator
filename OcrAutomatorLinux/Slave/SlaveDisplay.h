@@ -3,10 +3,10 @@
 #include <string>
 #include <ncurses.h>
 #include <vector>
-#include "SlaveFileStatus.h"
+#include "Slave/SlaveFileStatus.h"
 using std::string;
-#include "SlaveProcessingWorker.h"
-#include "FileSum.h"
+#include "Slave/SlaveProcessingWorker.h"
+#include "Base/FileSum.h"
 
 class SlaveDisplay
 {

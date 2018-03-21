@@ -1,7 +1,7 @@
-#include "Display.h"
-#include "TesseractFactory.h"
+#include "Master/Display.h"
+#include "Ocr/Tesseract/TesseractFactory.h"
 #include <math.h>
-#include "MasterLocalFileStatus.h"
+#include "Master/MasterLocalFileStatus.h"
 
 #define COLOR_GREY 8
 

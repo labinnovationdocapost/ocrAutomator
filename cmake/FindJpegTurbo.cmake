@@ -26,17 +26,41 @@ find_path(JpegTurbo_INCLUDE_DIR turbojpeg.h)
 set(JpegTurbo_NAMES ${JpegTurbo_NAMES} turbojpeg)
 find_library(JpegTurbo_LIBRARY NAMES ${JpegTurbo_NAMES} )
 
+if(JpegTurbo_INCLUDE_DIR AND EXISTS "${JpegTurbo_INCLUDE_DIR}/jconfig.h")
+# #define LIBJPEG_TURBO_VERSION 1.5.3
+  set(_JpegTurbo_VERSION_REGEX "^#define[ \t]+LIBJPEG_TURBO_VERSION[ \t]+([0-9]+)\\.([0-9]+)\\.([0-9]+)[^\"]*.*$")
+  file(STRINGS "${JpegTurbo_INCLUDE_DIR}/jconfig.h" _JpegTurbo_VERSION_STRING LIMIT_COUNT 1 REGEX "${_JpegTurbo_VERSION_REGEX}")
+  if(_JpegTurbo_VERSION_STRING)
+    string(REGEX REPLACE "${_JpegTurbo_VERSION_REGEX}" "\\1.\\2.\\3" JpegTurbo_VERSION "${_JpegTurbo_VERSION_STRING}")
+  endif()
+  unset(_JpegTurbo_VERSION_REGEX)
+  unset(_JpegTurbo_VERSION_STRING)
+endif()
+
+if(JpegTurbo_INCLUDE_DIR AND EXISTS "${JpegTurbo_INCLUDE_DIR}/x86_64-linux-gnu/jconfig.h")
+# #define LIBJPEG_TURBO_VERSION 1.5.3
+  set(_JpegTurbo_VERSION_REGEX "^#define[ \t]+LIBJPEG_TURBO_VERSION[ \t]+([0-9]+)\\.([0-9]+)\\.([0-9]+)[^\"]*.*$")
+  file(STRINGS "${JpegTurbo_INCLUDE_DIR}/x86_64-linux-gnu/jconfig.h" _JpegTurbo_VERSION_STRING LIMIT_COUNT 1 REGEX "${_JpegTurbo_VERSION_REGEX}")
+  if(_JpegTurbo_VERSION_STRING)
+    string(REGEX REPLACE "${_JpegTurbo_VERSION_REGEX}" "\\1.\\2.\\3" JpegTurbo_VERSION "${_JpegTurbo_VERSION_STRING}")
+  endif()
+  unset(_JpegTurbo_VERSION_REGEX)
+  unset(_JpegTurbo_VERSION_STRING)
+endif()
+
 include(${CMAKE_ROOT}/Modules/FindPackageHandleStandardArgs.cmake)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(JpegTurbo DEFAULT_MSG JpegTurbo_LIBRARY JpegTurbo_INCLUDE_DIR)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(JpegTurbo REQUIRED_VARS JpegTurbo_LIBRARY JpegTurbo_INCLUDE_DIR VERSION_VAR JpegTurbo_VERSION)
 
 if(JpegTurbo_FOUND)
   set(JpegTurbo_LIBRARIES ${JpegTurbo_LIBRARY})
 endif()
 
-# Deprecated declarations.
-set (NATIVE_JpegTurbo_INCLUDE_PATH ${JpegTurbo_INCLUDE_DIR} )
-if(JpegTurbo_LIBRARY)
-  get_filename_component (NATIVE_JpegTurbo_LIB_PATH ${JpegTurbo_LIBRARY} PATH)
-endif()
+add_library(JpegTurbo SHARED IMPORTED)
+set_target_properties(JpegTurbo PROPERTIES
+  INTERFACE_COMPILE_DEFINITIONS "JpegTurbo_DLL"
+  INTERFACE_INCLUDE_DIRECTORIES "${JpegTurbo_INCLUDE_DIR}"
+  IMPORTED_IMPLIB ${JpegTurbo_LIBRARIES}
+  VERSION ${JpegTurbo_VERSION}
+)
 
 mark_as_advanced(JpegTurbo_LIBRARY JpegTurbo_INCLUDE_DIR )

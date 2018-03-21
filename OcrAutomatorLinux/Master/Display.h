@@ -3,12 +3,12 @@
 #include <string>
 #include <ncurses.h>
 #include <vector>
-#include "MasterFileStatus.h"
-#include "FileSum.h"
+#include "Master/MasterFileStatus.h"
+#include "Base/FileSum.h"
 #include <unordered_set>
 struct FileSum;
 using std::string;
-#include "MasterProcessingWorker.h"
+#include "Master/MasterProcessingWorker.h"
 
 class Display
 {

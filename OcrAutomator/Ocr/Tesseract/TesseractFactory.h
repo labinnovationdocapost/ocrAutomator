@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <memory>
-#include "Tesseract.h"
+#include "Ocr/Tesseract/Tesseract.h"
 #include <rttr/registration>
 
 namespace Docapost {
