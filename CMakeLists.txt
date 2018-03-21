@@ -1,5 +1,7 @@
 cmake_minimum_required (VERSION 3.0)
-project (OcrAutomator)
+
+set(PROJECT_NAME OcrAutomator CACHE STRING "")
+project (${PROJECT_NAME})
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -134,28 +136,28 @@ include_directories(${SHARED_ROOT})
 
 IF (MSVC)
 # Executable
-	add_executable(OcrAutomator ${SHARED_HEADER} ${SHARED_CXX} ${WIN32} )
+	add_executable(${PROJECT_NAME} ${SHARED_HEADER} ${SHARED_CXX} ${WIN32} )
 
 	FILE(TO_NATIVE_PATH "${A2ia_DLL}/*.dll" srcDir)
-	FILE(TO_NATIVE_PATH $<TARGET_FILE_DIR:OcrAutomator> srcDest)
+	FILE(TO_NATIVE_PATH $<TARGET_FILE_DIR:${PROJECT_NAME}> srcDest)
 	# Copy dll to output
 	if(MSVC)
-		add_custom_command(TARGET OcrAutomator POST_BUILD COMMAND xcopy /y /d /s ${srcDir} \"$(TargetDir)\")
+		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND xcopy /y /d /s ${srcDir} \"$(TargetDir)\")
 	endif()
 
-	target_include_directories(OcrAutomator PUBLIC ${WIN32_ROOT})
+	target_include_directories(${PROJECT_NAME} PUBLIC ${WIN32_ROOT})
 else()
 	include_directories(${CURSES_INCLUDE_DIR})
-	add_executable(OcrAutomator ${LINUX} ${SHARED_HEADER} ${SHARED_CXX})
-	target_include_directories(OcrAutomator PUBLIC ${LINUX_ROOT})
+	add_executable(${PROJECT_NAME} ${LINUX} ${SHARED_HEADER} ${SHARED_CXX})
+	target_include_directories(${PROJECT_NAME} PUBLIC ${LINUX_ROOT})
 endif()
 
 
 #target_compile_options(OcrAutomatorShared PUBLIC "$<$<CONFIG:DEBUG>:${MY_DEBUG_OPTIONS}>")
 #target_compile_options(OcrAutomatorShared PUBLIC "$<$<CONFIG:RELEASE>:${MY_RELEASE_OPTIONS}>")
 
-target_compile_options(OcrAutomator PUBLIC "$<$<CONFIG:DEBUG>:${MY_DEBUG_OPTIONS}>")
-target_compile_options(OcrAutomator PUBLIC "$<$<CONFIG:RELEASE>:${MY_RELEASE_OPTIONS}>")
+target_compile_options(${PROJECT_NAME} PUBLIC "$<$<CONFIG:DEBUG>:${MY_DEBUG_OPTIONS}>")
+target_compile_options(${PROJECT_NAME} PUBLIC "$<$<CONFIG:RELEASE>:${MY_RELEASE_OPTIONS}>")
 	   
 set(SHARED_LIB ${MuPdf_LIBRARIES} ${JPEG_LIBRARIES} ${JpegTurbo_LIBRARY} ${EXIV2_LIBRARY} ${ZLIB_LIBRARIES} ${RTTR_LIBRARY} ${Boost_LIBRARIES} ${LibArchive_LIBRARY} ${Tesseract_LIBRARIES} ${Leptonica_LIBRARIES})
 #target_link_libraries(OcrAutomator OcrAutomatorShared)
@@ -164,6 +166,6 @@ if(MSVC)
 else()
 	set(SYSTEM_LIBRARY protobuf pthread ${CURSES_LIBRARIES})
 endif()
-target_link_libraries(OcrAutomator ${SHARED_LIB})
-target_link_libraries(OcrAutomator ${SYSTEM_LIBRARY})
+target_link_libraries(${PROJECT_NAME} ${SHARED_LIB})
+target_link_libraries(${PROJECT_NAME} ${SYSTEM_LIBRARY})
 
