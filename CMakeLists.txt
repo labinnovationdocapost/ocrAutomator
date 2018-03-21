@@ -1,5 +1,6 @@
 cmake_minimum_required (VERSION 3.0)
 project (OcrAutomator)
+option(RUN_TEST "Build all tests." OFF) # Makes boolean 'test' available.
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -11,6 +12,7 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
+file(GLOB_RECURSE TEST RELATIVE ${CMAKE_SOURCE_DIR} "OcrAutomatorTest/*.cpp" "OcrAutomatorTest/*.c" "OcrAutomatorTest/*.h")
 file(GLOB_RECURSE WIN32 RELATIVE ${CMAKE_SOURCE_DIR} "OcrAutomatorWin32/*.cpp" "OcrAutomatorWin32/*.c" "OcrAutomatorWin32/*.h")
 file(GLOB_RECURSE LINUX RELATIVE ${CMAKE_SOURCE_DIR} "OcrAutomatorLinux/*.cpp" "OcrAutomatorLinux/*.c" "OcrAutomatorLinux/*.h")
 
@@ -20,7 +22,9 @@ file(GLOB_RECURSE LINUX RELATIVE ${CMAKE_SOURCE_DIR} "OcrAutomatorLinux/*.cpp" "
 set(SHARED_ROOT "${CMAKE_SOURCE_DIR}/OcrAutomator")
 set(WIN32_ROOT "${CMAKE_SOURCE_DIR}/OcrAutomatorWin32")
 set(LINUX_ROOT "${CMAKE_SOURCE_DIR}/OcrAutomatorLinux")
+set(TEST_ROOT "${CMAKE_SOURCE_DIR}/OcrAutomatorTest")
 
+ 
 # Headers
 file(
     GLOB_RECURSE SHARED_HEADER 
@@ -86,7 +90,11 @@ endforeach()
 
 #ADD_SUBDIRECTORY(mySubDir1)
 
-find_package(Boost 1.65 REQUIRED COMPONENTS filesystem chrono date_time log program_options system thread)
+if(RUN_TEST)
+	find_package(Boost 1.65 REQUIRED COMPONENTS filesystem chrono date_time log program_options system thread unit_test_framework)
+else()
+	find_package(Boost 1.65 REQUIRED COMPONENTS filesystem chrono date_time log program_options system thread)
+endif()
 
 
 find_package(MuPdf 1.12.0 REQUIRED)
@@ -167,3 +175,30 @@ endif()
 target_link_libraries(OcrAutomator ${SHARED_LIB})
 target_link_libraries(OcrAutomator ${SYSTEM_LIBRARY})
 
+INSTALL(TARGETS OcrAutomator RUNTIME DESTINATION ${PROJECT_BINARY_BIN}/bin)
+
+if(RUN_TEST)
+message("Test enable: ${SHARED_LIB}" )
+	ENABLE_TESTING()
+	#add_boost_test(DimensionedQuantities
+	# ${SHARED_ROOT}
+	# ${TEST_ROOT})
+	 
+	#list(FILTER SHARED_HEADER EXCLUDE REGEX ".*Main.h$")
+	list(FILTER SHARED_CXX EXCLUDE REGEX ".*Main.cpp$")
+	
+IF (MSVC)
+	add_executable(OcrAutomatorTest ${SHARED_HEADER} ${SHARED_CXX} ${WIN32} ${TEST}  )
+	target_include_directories(OcrAutomatorTest PUBLIC ${WIN32_ROOT})
+else()
+	add_executable(OcrAutomatorTest ${SHARED_HEADER} ${SHARED_CXX} ${LINUX} ${TEST}  )
+	target_include_directories(OcrAutomatorTest PUBLIC ${LINUX_ROOT})
+endif()
+	target_include_directories(OcrAutomatorTest PUBLIC ${TEST_ROOT})
+	
+	target_link_libraries(OcrAutomatorTest ${SHARED_LIB})
+	target_link_libraries(OcrAutomatorTest ${SYSTEM_LIBRARY})
+	target_link_libraries(OcrAutomatorTest ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+	
+	add_test(NAME Test COMMAND OcrAutomatorTest WORKING_DIRECTORY $<TARGET_FILE_DIR:OcrAutomatorTest>)
+ endif()
