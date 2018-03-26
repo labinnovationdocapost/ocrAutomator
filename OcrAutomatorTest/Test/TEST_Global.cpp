@@ -5,6 +5,8 @@
 #include <codecvt>
 #define BOOST_TEST_MODULE TesseractAutomator
 #include <boost/test/unit_test.hpp>
+#include <curl/curl.h>
+#include <archive_entry.h>
 
 //#include <boost/test/output_test_stream.hpp>
 /*struct cout_redirect {
@@ -747,7 +749,7 @@ BOOST_AUTO_TEST_CASE(TEST_Global)
 	auto s_file = file.string();
 	auto s_output_t = output_t.string();
 	auto s_output_e = output_e.string();
-	std::vector<char*> arg = { "Test", "-i", (char*)s_file.c_str(), "-e",(char*)s_output_e.c_str(), "-t",(char*)s_output_t.c_str(),  "-s" };
+	std::vector<char*> arg = { "Test", "-i", const_cast<char*>(s_file.c_str()), "-e",const_cast<char*>(s_output_e.c_str()), "-t",const_cast<char*>(s_output_t.c_str()),  "-s" };
 
 	_main(arg.size(), &arg[0]);
 
@@ -780,4 +782,147 @@ BOOST_AUTO_TEST_CASE(TEST_Global)
 
 	if (boost::filesystem::exists(output_test_path))
 		boost::filesystem::remove_all(output_test_path);
+}
+
+size_t CurlWrite_CallbackFunc_StdString(void *contents, size_t size, size_t nmemb, std::string *s)
+{
+	size_t newLength = size * nmemb;
+	size_t oldLength = s->size();
+	try
+	{
+		s->resize(oldLength + newLength);
+	}
+	catch (std::bad_alloc &e)
+	{
+		//handle memory problem
+		return 0;
+	}
+
+	std::copy((char*)contents, (char*)contents + newLength, s->begin() + oldLength);
+	return size * nmemb;
+}
+void OcrFile_Http_Get(Docapost::IA::Tesseract::TesseractFactory* factory)
+{
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif | Docapost::IA::Tesseract::OutputFlags::MemoryImage | Docapost::IA::Tesseract::OutputFlags::MemoryText);
+	http = new HttpServer(*test_worker->worker, L"0.0.0.0", 8888);
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+	test_worker->worker->Run(1);
+
+	CURL *curl = nullptr;
+	curl_global_init(CURL_GLOBAL_ALL);
+	curl = curl_easy_init();
+	
+	std::string s;
+	curl_easy_setopt(curl, CURLOPT_URL, "localhost:8888");
+	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
+	curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWrite_CallbackFunc_StdString);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &s);
+
+	auto res = curl_easy_perform(curl);
+	BOOST_CHECK(res == CURLE_OK);
+	BOOST_TEST_MESSAGE(s);
+	delete http;
+}
+
+void OcrFile_Http_Post(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder)
+{
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif | Docapost::IA::Tesseract::OutputFlags::MemoryImage | Docapost::IA::Tesseract::OutputFlags::MemoryText);
+	http = new HttpServer(*test_worker->worker, L"0.0.0.0", 8888);
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+	test_worker->worker->Run(1);
+
+	CURL *curl = nullptr;
+	curl_global_init(CURL_GLOBAL_ALL);
+	curl = curl_easy_init();
+
+	struct curl_httppost* post = NULL;
+	struct curl_httppost* last = NULL;
+
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "image",
+		CURLFORM_FILE, (input_test_path / folder / "TestOcr" / "Image1.jpg").string().c_str(),
+		CURLFORM_CONTENTTYPE, "image/jpeg", CURLFORM_END);
+
+	std::string s;
+	curl_easy_setopt(curl, CURLOPT_URL, "localhost:8888");
+	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
+	curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWrite_CallbackFunc_StdString);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &s);
+	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
+
+	auto res = curl_easy_perform(curl);
+	BOOST_CHECK(res == CURLE_OK);
+	std::ofstream stream("e:\\test.zip", std::ios_base::out | std::ios_base::binary);
+	stream.write((char*)s.data(), s.length());
+
+	struct archive_entry *entry;
+	int r = 0;
+
+	struct archive *a = archive_read_new();
+	archive_read_support_filter_all(a);
+	archive_read_support_format_all(a);
+	archive_read_open_memory(a, (void*)s.data(), s.length());
+	BOOST_CHECK(r == ARCHIVE_OK);
+
+
+	std::set<std::string> result = { "Image1/Image1.jpg", "Image1/Image1.txt"};
+	while (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
+		BOOST_TEST_MESSAGE(archive_entry_pathname(entry));
+		BOOST_CHECK(result.count(archive_entry_pathname(entry)));
+		result.erase(archive_entry_pathname(entry));
+	}
+
+	archive_read_close(a);
+	delete http;
+}
+void OcrFilePdf_Http_Post(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder)
+{
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif | Docapost::IA::Tesseract::OutputFlags::MemoryImage | Docapost::IA::Tesseract::OutputFlags::MemoryText);
+	http = new HttpServer(*test_worker->worker, L"0.0.0.0", 8888);
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+	test_worker->worker->Run(1);
+
+	CURL *curl = nullptr;
+	curl_global_init(CURL_GLOBAL_ALL);
+	curl = curl_easy_init();
+
+	struct curl_httppost* post = NULL;
+	struct curl_httppost* last = NULL;
+
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "image",
+		CURLFORM_FILE, (input_test_path / folder / "TestOcr" / "Pdf1.pdf").string().c_str(),
+		CURLFORM_CONTENTTYPE, "application/pdf", CURLFORM_END);
+
+	std::string s;
+	curl_easy_setopt(curl, CURLOPT_URL, "localhost:8888");
+	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
+	curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWrite_CallbackFunc_StdString);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &s);
+	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
+
+	auto res = curl_easy_perform(curl);
+	BOOST_CHECK(res == CURLE_OK);
+	std::ofstream stream("e:\\test.zip", std::ios_base::out | std::ios_base::binary);
+	stream.write((char*)s.data(), s.length());
+
+	struct archive_entry *entry;
+	int r = 0;
+
+	struct archive *a = archive_read_new();
+	archive_read_support_filter_all(a);
+	archive_read_support_format_all(a);
+	archive_read_open_memory(a, (void*)s.data(), s.length());
+	BOOST_CHECK(r == ARCHIVE_OK);
+
+	std::set<std::string> result = { "Pdf1/Pdf1[0].jpg", "Pdf1/Pdf1[0].txt", "Pdf1/Pdf1[1].jpg", "Pdf1/Pdf1[1].txt" };
+	while (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
+		BOOST_TEST_MESSAGE(archive_entry_pathname(entry));
+		BOOST_CHECK(result.count(archive_entry_pathname(entry)));
+		result.erase(archive_entry_pathname(entry));
+	}
+
+	archive_read_close(a);
+	delete http;
 }

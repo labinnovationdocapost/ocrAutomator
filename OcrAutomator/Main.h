@@ -5,6 +5,7 @@
 #include "Slave/SlaveProcessingWorker.h"
 #include "Base/Error.h"
 #include "Ocr/Tesseract/TesseractFactory.h"
+#include "Http/HttpServer.h"
 using std::string;
 
 #include <boost/program_options.hpp>
@@ -22,6 +23,7 @@ extern Docapost::IA::Tesseract::SlaveProcessingWorker* workerS;
 
 extern boost::thread* th;
 extern std::mutex g_console_mutex;
+extern HttpServer* http;
 
 
 void Master(char** argv, po::variables_map& vm);

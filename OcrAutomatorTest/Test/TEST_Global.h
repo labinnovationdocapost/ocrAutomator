@@ -110,3 +110,7 @@ void OcrFilePdf_Slave(Docapost::IA::Tesseract::TesseractFactory* factory, Docapo
 
 void OcrFile_Slave_Inverse(Docapost::IA::Tesseract::TesseractFactory* factory, Docapost::IA::Tesseract::TesseractFactory* factory2, std::string folder = "Image");
 void OcrFilePdf_Slave_Inverse(Docapost::IA::Tesseract::TesseractFactory* factory, Docapost::IA::Tesseract::TesseractFactory* factory2, std::string folder = "Pdf");
+
+void OcrFile_Http_Get(Docapost::IA::Tesseract::TesseractFactory* factory);
+void OcrFile_Http_Post(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder = "Image");
+void OcrFilePdf_Http_Post(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder = "Pdf");

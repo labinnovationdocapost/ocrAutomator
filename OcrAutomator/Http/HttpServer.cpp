@@ -9,7 +9,7 @@ using tcp = boost::asio::ip::tcp;
 HttpServer::Request::Request(int nbpage) : mNbPage(nbpage), mSemaphore(new Semaphore(0)), mBuff(new char[mBuffLen]), mArchive(archive_write_new())
 {
 	archive_write_set_format_zip(mArchive);
-	archive_write_set_format_pax_restricted(mArchive);
+	//archive_write_set_format_pax_restricted(mArchive);
 	archive_write_open_memory(mArchive, mBuff, mBuffLen, &mSize);
 
 }
@@ -38,9 +38,17 @@ void HttpServer::Request::AddEntry(MasterFileStatus* file, void* data, size_t le
 {
 	if (mIsDelete)
 		return;
-	struct archive_entry *entry = archive_entry_new(); ;
-	archive_entry_set_pathname(entry, (boost::format("%s/%s%s") % file->uid % file->name % ext).str().c_str());
-	archive_entry_set_size(entry, file->buffer->len());
+	struct archive_entry *entry = archive_entry_new();
+	auto filenameNoExt = boost::filesystem::change_extension(file->name, "").string();
+	if(file->filePosition >= 0)
+	{
+		archive_entry_set_pathname(entry, (boost::format("%s/%s[%i]%s") % filenameNoExt % filenameNoExt % file->filePosition % ext).str().c_str());
+	}
+	else
+	{
+		archive_entry_set_pathname(entry, (boost::format("%s/%s%s") % filenameNoExt % filenameNoExt % ext).str().c_str());
+	}
+	archive_entry_set_size(entry, len);
 	archive_entry_set_filetype(entry, AE_IFREG);
 	archive_write_header(mArchive, entry);
 	archive_write_data(mArchive, data, len);
@@ -156,6 +164,7 @@ HttpServer::HttpServer(Docapost::IA::Tesseract::MasterProcessingWorker& tessR, s
 
 HttpServer::~HttpServer()
 {
+	svr.stop();
 }
 
 /*void HttpServer::handle_get(web::http::http_request message)

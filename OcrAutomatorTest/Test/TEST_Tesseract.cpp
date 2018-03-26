@@ -119,4 +119,18 @@ BOOST_AUTO_TEST_CASE(TEST_TesseractFilePdf_Slave_Inverse)
 {
 	OcrFilePdf_Slave_Inverse(CreateTesseractFactory(), CreateTesseractFactory());
 }
+
+
+BOOST_AUTO_TEST_CASE(TEST_TesseractFile_Http_Get)
+{
+	OcrFile_Http_Get(CreateTesseractFactory());
+}
+BOOST_AUTO_TEST_CASE(TEST_TesseractFile_Http_Post)
+{
+	OcrFile_Http_Post(CreateTesseractFactory());
+}
+BOOST_AUTO_TEST_CASE(TEST_TesseractFilePdf_Http_Post)
+{
+	OcrFilePdf_Http_Post(CreateTesseractFactory());
+}
 BOOST_AUTO_TEST_SUITE_END()
