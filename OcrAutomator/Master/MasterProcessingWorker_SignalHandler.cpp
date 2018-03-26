@@ -52,6 +52,8 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 			MergeResult(file);
 			mDone++;
 
+			onEndProcessFile(file);
+
 			RemoveFileSend(uuid);
 
 			FreeBuffers(file, mOutputTypes & OutputFlags::MemoryImage, mOutputTypes & OutputFlags::MemoryText);

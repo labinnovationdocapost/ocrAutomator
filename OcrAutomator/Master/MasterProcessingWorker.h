@@ -55,6 +55,8 @@ namespace Docapost {
 				std::thread* mNetworkThread;
 				std::thread* ListingThread;
 
+				bool IsNetworkInit = false;
+
 				void ThreadLoop(int id) override;
 
 				void _AddFolder(fs::path folder, bool resume);
@@ -145,11 +147,13 @@ namespace Docapost {
 				boost::signals2::signal<void(MasterFileStatus*)> onEndProcessFile;
 				boost::signals2::signal<void()> onProcessEnd;
 
-				bool NetworkEnable() const { return mNetwork != nullptr/* && mNetworkThread != nullptr*/; }
+				bool NetworkEnable() const { return IsNetworkInit && mNetwork != nullptr/* && mNetworkThread != nullptr*/; }
 				int Port() const
 				{
 					if (NetworkEnable())
+					{
 						return mNetwork->Port();
+					}
 
 					return 0;
 				}

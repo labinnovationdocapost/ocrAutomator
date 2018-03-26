@@ -242,7 +242,7 @@ void NetworkClient::Connect(int port, ip::address_v4 ip, std::string version)
 
 
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Sending broadcast, Version : " << ni.version() << " Port : " << ni.port();
-	mUdpSocket.async_send_to(boost::asio::buffer(*buffer, coded_output.ByteCount()), senderEndpoint, [this, self, timer](boost::system::error_code ec, std::size_t bytes_transferred)
+	mUdpSocket.async_send_to(boost::asio::buffer(*buffer, coded_output.ByteCount()), senderEndpoint, [this, self, timer, buffer](boost::system::error_code ec, std::size_t bytes_transferred)
 	{
 		if (ec)
 		{
@@ -394,6 +394,12 @@ void NetworkClient::Stop()
 		mUdpSocket.close();
 		mTcpSocket.close();
 	});
+	if (!mService->stopped())
+	{
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Stoping";
+		mService->stop();
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Stopped";
+	}
 }
 
 NetworkClient::~NetworkClient()
@@ -418,10 +424,12 @@ NetworkClient::~NetworkClient()
 	}
 	while(mTcpSocket.is_open() || mUdpSocket.is_open()){}
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destroying Netowrk";
-	if (!mService->stopped())
+	if (mService != nullptr && !mService->stopped())
 	{
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Stoping";
 		mService->stop();
+		delete mService;
+		mService == nullptr;
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Stopped";
 	}
 	delete mService;

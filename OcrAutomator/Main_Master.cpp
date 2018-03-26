@@ -2,9 +2,11 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include "Base/ExtraOutput.h"
 #include "Http/HttpServer.h"
+#include "DisplayManager.h"
 
 Docapost::IA::Tesseract::MasterProcessingWorker* workerM;
-
+Display* display;
+HttpServer* http;
 
 void Master(char** argv, po::variables_map& vm)
 {
@@ -171,7 +173,7 @@ void Master(char** argv, po::variables_map& vm)
 
 	try
 	{
-		new HttpServer(*workerM, L"0.0.0.0", 8888);
+		http = new HttpServer(*workerM, L"0.0.0.0", 8888);
 	}
 	catch(std::exception& e)
 	{
@@ -218,6 +220,8 @@ void Master(char** argv, po::variables_map& vm)
 #else
 	workerM->Wait();
 #endif
+
+	delete http;
 
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cleaning MasterProcessingWorker instance";
 

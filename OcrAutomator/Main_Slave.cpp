@@ -1,6 +1,8 @@
 #include "Main.h"
+#include "DisplayManager.h"
 
 Docapost::IA::Tesseract::SlaveProcessingWorker* workerS;
+SlaveDisplay* sdisplay;
 
 void Slave(char** argv, po::variables_map& vm)
 {

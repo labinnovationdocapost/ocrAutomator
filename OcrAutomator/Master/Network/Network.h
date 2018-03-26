@@ -33,7 +33,7 @@ private:
 	void RespondBroadcast();
 
 
-	int mPort;
+	int mPort = 0;
 
 	boost::unordered_map<boost::uuids::uuid, NetworkSession*> mConnections;
 	boost::uuids::basic_random_generator<boost::mt19937> mGen = boost::uuids::basic_random_generator<boost::mt19937>();

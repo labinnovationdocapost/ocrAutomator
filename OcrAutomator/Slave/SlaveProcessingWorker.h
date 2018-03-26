@@ -14,8 +14,8 @@ namespace Docapost {
 				std::atomic<int> threadToRun;
 								
 				std::shared_ptr<NetworkClient> mNetwork;
-				boost::thread* mNetworkThread;
-				std::thread* mAsioThread;
+				boost::thread* mNetworkThread = nullptr;
+				std::thread* mAsioThread = nullptr;
 				std::mutex mStackToSendMutex;
 
 				std::atomic<int> mPending{ 0 };
@@ -38,6 +38,7 @@ namespace Docapost {
 				void OnMasterStatusChangedHandler(int threadToRun, int done, int skip, int total, int psm, int oem, std::string lang);
 				void OnMasterSynchroHandler(int thread, int done, int skip, int total, bool end, int pending, boost::unordered_map<std::string, MemoryFileBuffer*> files);
 			public:
+				boost::signals2::signal<void(SlaveFileStatus*)> onEndProcessFile;
 				boost::signals2::signal<void(SlaveFileStatus*)> onStartProcessFile;
 				boost::signals2::signal<void()> onProcessEnd;
 				boost::signals2::signal<void()> onNewBatch;
