@@ -2,9 +2,10 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include "Base/ExtraOutput.h"
 #include "Http/HttpServer.h"
+#include "DisplayManager.h"
 
 Docapost::IA::Tesseract::MasterProcessingWorker* workerM;
-
+Display* display;
 
 void Master(char** argv, po::variables_map& vm)
 {

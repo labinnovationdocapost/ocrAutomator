@@ -40,7 +40,8 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::OnMasterDisconnectHandler()
 	mFiles.clear();
 
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "joining";
-	mNetworkThread->join();
+	if(mNetworkThread != nullptr)
+		mNetworkThread->join();
 
 	if(mNetwork)
 	{
@@ -152,6 +153,18 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::NetwordLoop()
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	}
+
+	std::unique_lock<std::mutex> lockManagement(mStackMutex, std::try_to_lock);
+	if (lockManagement.owns_lock())
+	{
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "NetwordLoop Stoping without join";
+		mNetworkThread->detach();
+		mNetworkThread = nullptr;
+	}
+	else
+	{
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "NetwordLoop Stoping with join";
+	}
 }
 
 void Docapost::IA::Tesseract::SlaveProcessingWorker::ThreadLoop(int id)
@@ -191,6 +204,7 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::ThreadLoop(int id)
 			file->ellapsed = file->end - file->start;
 			file->isEnd = true;
 
+			onEndProcessFile(file);
 			AddFileToSend(file);
 
 			boost::lock_guard<std::mutex> lock(mThreadMutex);
@@ -213,14 +227,24 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::ThreadLoop(int id)
 
 void Docapost::IA::Tesseract::SlaveProcessingWorker::TerminateThread(int id)
 {
-	boost::lock_guard<std::mutex> lock(mThreadMutex);
-
-	mThreads[id]->detach();
-	delete mThreads[id];
-	mThreads.erase(id);
+	{
+		std::unique_lock<std::mutex> lockManagement(mThreadManagementMutex, std::try_to_lock);
+		if (lockManagement.owns_lock())
+		{
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Thread " << id << " owned, removed from thread list";
+			mThreads[id]->detach();
+			delete mThreads[id];
+		}
+		else
+		{
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Thread " << id << " not owned, removed and delete delegate to caller";
+		}
+		mThreads.erase(id);
+	}
 
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Thread " << id << " Terminated";
 
+	boost::lock_guard<std::mutex> lock(mThreadMutex);
 	if (mThreads.size() == 0)
 	{
 		mEnd = boost::posix_time::second_clock::local_time();
@@ -264,22 +288,27 @@ Docapost::IA::Tesseract::SlaveProcessingWorker::~SlaveProcessingWorker()
 		onProcessEnd.disconnect_all_slots();
 		onStartProcessFile.disconnect_all_slots();
 
-		mNetwork.reset();
-
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Network Stop & Reset";
-		ptr->Stop();
-		ptr.reset();
-		
-
-		/*BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Join" << " file(s)";
-		mNetworkThread->join();*/
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Delete Network thread";
-		if(mNetworkThread != nullptr)
 		{
-			if (mNetworkThread->joinable())
-				mNetworkThread->join();
+			//Ensure the scope of the lock
+			boost::lock_guard<std::mutex> lock(mStackMutex);
+			mNetwork.reset();
 
-			delete mNetworkThread;
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Network Stop & Reset";
+			ptr->Stop();
+			ptr.reset();
+
+
+			/*BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destructor Join" << " file(s)";
+			mNetworkThread->join();*/
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Delete Network thread";
+			if (mNetworkThread != nullptr)
+			{
+				if (mNetworkThread->joinable())
+					mNetworkThread->join();
+
+				delete mNetworkThread;
+				mNetworkThread = nullptr;
+			}
 		}
 
 
@@ -288,10 +317,25 @@ Docapost::IA::Tesseract::SlaveProcessingWorker::~SlaveProcessingWorker()
 		{
 			mAsioThread->join();
 			delete mAsioThread;
-			mAsioThread = nullptr;
+		}
+		mAsioThread = nullptr;
+
+
+
+		boost::lock_guard<std::mutex> lockThread(mThreadManagementMutex);
+		const auto ths = mThreads;
+		for (auto th : ths)
+		{
+			if (th.second != nullptr && th.second->joinable())
+				th.second->join();
+
+			delete th.second;
 		}
 
-
+		/*boost::lock_guard<std::mutex> lock2(mStackToSendMutex);
+		boost::lock_guard<std::mutex> lock3(mThreadMutex);
+		boost::lock_guard<std::mutex> lock4(mStackMutex);
+		boost::lock_guard<std::mutex> lock5(mIsWorkDoneMutex);*/
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "End" << " file(s)";
 	}
 }

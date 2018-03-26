@@ -14,7 +14,7 @@ extern Docapost::IA::Tesseract::SlaveProcessingWorker* workerS;
 
 void resizeHandler(int sig);
 
-Display* display;
-SlaveDisplay* sdisplay;
+extern Display* display;
+extern SlaveDisplay* sdisplay;
 
 #endif

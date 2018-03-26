@@ -150,7 +150,7 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::BaseOcrWithL
 	{
 		if (MasterLocalFileStatus* _file = dynamic_cast<MasterLocalFileStatus*>(file))
 		{
-			FILE* f = fopen(file->name.c_str(), "r");
+			FILE* f = fopen(file->name.c_str(), "rb");
 			if (f == nullptr)
 			{
 				std::cerr << "Impossible d'ouvrir le fichier " << file->name << std::endl;
@@ -164,7 +164,7 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::BaseOcrWithL
 			file->buffer = new ArrayMemoryFileBuffer(size);
 
 			rewind(f);
-			fread(file->buffer->data(), sizeof(unsigned char), size, f);
+			auto read = fread(file->buffer->data(), sizeof(unsigned char), size, f);
 			fclose(f);
 
 			return file->buffer;

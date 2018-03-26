@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 3.0)
 option(RUN_TEST "Build all tests." OFF) # Makes boolean 'test' available.
 
+add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 set(PROJECT_NAME OcrAutomator CACHE STRING "")
 set(PROJECT_NAME_TEST "${PROJECT_NAME}Test")
 project (${PROJECT_NAME})
@@ -15,6 +16,7 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Test_Data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(GLOB_RECURSE TEST RELATIVE ${CMAKE_SOURCE_DIR} "OcrAutomatorTest/*.cpp" "OcrAutomatorTest/*.c" "OcrAutomatorTest/*.h")
 file(GLOB_RECURSE WIN32 RELATIVE ${CMAKE_SOURCE_DIR} "OcrAutomatorWin32/*.cpp" "OcrAutomatorWin32/*.c" "OcrAutomatorWin32/*.h")
 file(GLOB_RECURSE LINUX RELATIVE ${CMAKE_SOURCE_DIR} "OcrAutomatorLinux/*.cpp" "OcrAutomatorLinux/*.c" "OcrAutomatorLinux/*.h")
@@ -60,10 +62,6 @@ endforeach()
 # OcrAutomatorWin32
 ##############################################################
 # Headers
-
-set(WIN32_ROOT "${CMAKE_SOURCE_DIR}/OcrAutomatorWin32")
-
-# Headers
 file(
     GLOB_RECURSE WIN32_HEADER 
     LIST_DIRECTORIES false
@@ -87,6 +85,38 @@ file(
 foreach(_source IN ITEMS ${WIN32_CXX})
     get_filename_component(_source_path "${_source}" PATH)
     file(RELATIVE_PATH _source_path_rel "${WIN32_ROOT}" "${_source_path}")
+    string(REPLACE "/" "\\" _group_path "${_source_path_rel}")
+    source_group("Source Files\\${_group_path}" FILES "${_source}")
+endforeach()
+
+##############################################################
+# OcrAutomatorTest
+##############################################################
+# Headers
+file(
+    GLOB_RECURSE TEST_HEADER 
+    LIST_DIRECTORIES false
+    "${TEST_ROOT}/*.h*"
+)
+
+foreach(_source IN ITEMS ${TEST_HEADER})
+    get_filename_component(_source_path "${_source}" PATH)
+    file(RELATIVE_PATH _source_path_rel "${TEST_ROOT}" "${_source_path}")
+    string(REPLACE "/" "\\" _group_path "${_source_path_rel}")
+    source_group("Header Files\\${_group_path}" FILES "${_source}")
+endforeach()
+
+# .c, .cpp, .c*
+file(
+    GLOB_RECURSE TEST_CXX 
+    LIST_DIRECTORIES false
+    "${TEST_ROOT}/*.c*"
+)
+message(${TEST_CXX})
+
+foreach(_source IN ITEMS ${TEST_CXX})
+    get_filename_component(_source_path "${_source}" PATH)
+    file(RELATIVE_PATH _source_path_rel "${TEST_ROOT}" "${_source_path}")
     string(REPLACE "/" "\\" _group_path "${_source_path_rel}")
     source_group("Source Files\\${_group_path}" FILES "${_source}")
 endforeach()
@@ -118,6 +148,7 @@ find_package(leptonica 1.74 REQUIRED)
 
 if(MSVC)
 	add_definitions(-D_WIN32_WINNT=0x0A01)
+	add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 endif()
 add_definitions(-DLIB_EXPORT)
 add_definitions(-DBOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE)
@@ -171,7 +202,6 @@ target_link_libraries(${PROJECT_NAME} ${SYSTEM_LIBRARY})
 INSTALL(TARGETS OcrAutomator RUNTIME DESTINATION ${PROJECT_BINARY_BIN}/bin)
 
 if(RUN_TEST)
-message("Test enable: ${SHARED_LIB}" )
 	ENABLE_TESTING()
 	
 	list(FILTER SHARED_CXX EXCLUDE REGEX ".*Main.cpp$")

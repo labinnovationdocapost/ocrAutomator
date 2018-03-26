@@ -52,6 +52,7 @@ Docapost::IA::Tesseract::MasterProcessingWorker::MasterProcessingWorker(OcrFacto
 
 				mNetwork->InitBroadcastReceiver();
 				mNetwork->InitComm();
+				IsNetworkInit = true;
 				mNetwork->Start();
 				break;
 			}
@@ -116,6 +117,10 @@ fs::path Docapost::IA::Tesseract::MasterProcessingWorker::ConstructNewTextFilePa
 
 void Docapost::IA::Tesseract::MasterProcessingWorker::MergeResult(MasterFileStatus* mfile)
 {
+	// IF we do not require text writing, just do not merge
+	if (!(mOutputTypes & OutputFlags::Text))
+		return;
+
 	MasterLocalFileStatus* file = dynamic_cast<MasterLocalFileStatus*>(mfile);
 	if (file == nullptr)
 		return;
@@ -231,7 +236,7 @@ bool Docapost::IA::Tesseract::MasterProcessingWorker::ExifExist(fs::path path) c
 
 string Docapost::IA::Tesseract::MasterProcessingWorker::CreatePdfOutputPath(fs::path path, int i)
 {
-	return (boost::format("%s/%s-%d%d") % path.parent_path().string() % fs::change_extension(path.filename(), "").string() % i % mOcrFactory.GetExtension()).str();
+	return (boost::format("%s%s%s-%d%d") % path.parent_path().string() % kPathSeparator % fs::change_extension(path.filename(), "").string() % i % mOcrFactory.GetExtension()).str();
 }
 
 void Docapost::IA::Tesseract::MasterProcessingWorker::InitPdfMasterFileStatus(MasterFileStatus* file, std::mutex* mutex_siblings, std::vector<MasterFileStatus*>* siblings, int i)
@@ -504,11 +509,11 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 				output << (*file->result)[i];
 				output.close();
 
-				if (i == 0)
-				{
+				//if (i == 0)
+				//{
 					file->output.push_back(new_path.string());
-					file->relative_output.push_back(fs::relative(new_path, mOutputs[OutputFlags::Text]).string());
-				}
+					file->relative_output.push_back(file->relative_name);
+				//}
 			}
 		}
 	}
@@ -583,7 +588,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 			stream.write((char*)file->buffer->data(), file->buffer->len());
 
 			file->output.push_back(new_path.string());
-			file->relative_output.push_back(fs::relative(new_path, mOutputs[OutputFlags::Exif]).string());
+			file->relative_output.push_back(file->relative_name);
 		}
 	}
 }
@@ -617,6 +622,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 	catch (UninitializedOcrException& e)
 	{
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Thread " << id << " - " << e.message();
+		return;
 	}
 
 	while (ocr != nullptr && !mIsTerminated)
