@@ -133,4 +133,8 @@ BOOST_AUTO_TEST_CASE(TEST_TesseractFilePdf_Http_Post)
 {
 	OcrFilePdf_Http_Post(CreateTesseractFactory());
 }
+BOOST_AUTO_TEST_CASE(TEST_Tesseract_Api)
+{
+	Api_Test("Tesseract");
+}
 BOOST_AUTO_TEST_SUITE_END()

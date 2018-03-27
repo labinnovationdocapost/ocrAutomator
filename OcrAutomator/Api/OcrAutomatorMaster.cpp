@@ -1,60 +1,30 @@
-#include "Master/OcrAutomatorMaster.h"
+#include "OcrAutomatorMaster.h"
 #include "Master/MasterProcessingWorker.h"
 #include <rttr/registration.h>
 #include "Ocr/Tesseract/Tesseract.h"
 #include "Ocr/Tesseract/TesseractFactory.h"
-
-struct OcrResult::Impl
-{
-	Impl() {}
-	~Impl() {}
-
-	MasterFileStatus* file;
-};
+#include "Ocr/OcrFactory.h"
 
 struct OcrAutomatorMaster::Impl
 {
 	Impl() {}
 	~Impl()
 	{
-		delete mOcr;
+		if (mOcr != nullptr)
+			delete mOcr;
 	}
 	std::unique_ptr<Docapost::IA::Tesseract::MasterProcessingWorker> mWorker;
-	Docapost::IA::Tesseract::OcrFactory* mOcr;
+	Docapost::IA::Tesseract::OcrFactory* mOcr = nullptr;
 	std::unique_ptr<rttr::type> mOcrType;
 
 
 	void ReceiveFile(MasterFileStatus* file, std::function<void(OcrResult*)> callback)
 	{
 		auto result = new OcrResult();
-		result->data->file = file;
+		result->File(file);
 		callback(result);
 	}
 };
-
-OcrResult::OcrResult()
-{
-	data = std::make_unique<OcrResult::Impl>();
-}
-
-OcrResult::~OcrResult()
-{
-}
-
-std::string OcrResult::Name()
-{
-	return data->file->name;
-}
-
-std::vector<std::string>* OcrResult::Text()
-{
-	return data->file->result.get();
-}
-
-Docapost::IA::Tesseract::MemoryFileBuffer* OcrResult::Image()
-{
-	return data->file->buffer;
-}
 
 OcrAutomatorMaster::OcrAutomatorMaster()
 {
@@ -66,47 +36,10 @@ OcrAutomatorMaster::~OcrAutomatorMaster()
 {
 }
 
-std::vector<std::string> OcrAutomatorMaster::GetOcrs()
-{
-	auto classs_type = rttr::type::get_by_name("OcrFactory").get_derived_classes();
-	std::vector<std::string> ret;
-	for (auto& type : classs_type)
-	{
-		ret.push_back(type.get_name());
-	}
-	return ret;
-}
-
-
-std::list<calculated_struct*> OcrAutomatorMaster::GetOcrParametersDefinition(std::string ocr)
-{
-	rttr::type classs_type = rttr::type::get_by_name(ocr.c_str());
-	auto props = classs_type.get_properties();
-
-	std::list<calculated_struct*> ret;
-	for (auto& prop : props)
-	{
-		calculated_struct* stru = new calculated_struct();
-		ret.push_back(stru);
-
-		stru->name = prop.get_name();
-		stru->typeName = prop.get_type().get_name();
-		stru->isEnum = prop.get_type().is_enumeration();
-		if (stru->isEnum)
-		{
-			for (auto e : prop.get_type().get_enumeration().get_values())
-			{
-				stru->enu.push_back(e.to_string());
-			}
-		}
-	}
-	return ret;
-}
-
 void OcrAutomatorMaster::CreateFactory(std::string ocr)
 {
 	d_ptr->mOcrType = std::make_unique<rttr::type>(rttr::type::get_by_name(ocr.c_str()));
-	d_ptr->mOcr = d_ptr->mOcrType->create().get_value<Docapost::IA::Tesseract::OcrFactory*>();
+	d_ptr->mOcr = Docapost::IA::Tesseract::OcrFactory::CreateNew(ocr);
 }
 
 template<typename T>
@@ -121,9 +54,18 @@ void OcrAutomatorMaster::SetFactoryProperty(std::string prop, std::string param)
 	auto p = d_ptr->mOcrType->get_property(prop.c_str());
 	if (p.get_type().is_enumeration())
 	{
-		auto val = p.get_type().get_enumeration().name_to_value(param);
+		char* p_s;
+		long converted = strtol(param.c_str(), &p_s, 10);
+		if(*p_s)
+		{
+			auto val = p.get_type().get_enumeration().name_to_value(param);
 
-		p.set_value(d_ptr->mOcr, val);
+			p.set_value(d_ptr->mOcr, val);
+		}
+		else
+		{
+			
+		}
 	}
 	else
 	{

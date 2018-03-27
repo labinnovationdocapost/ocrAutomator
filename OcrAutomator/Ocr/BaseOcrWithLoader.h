@@ -1,11 +1,11 @@
 #pragma once
-#include "BaseOcr.h"
+#include "Ocr.h"
 
 namespace Docapost {
 	namespace IA {
 		namespace Tesseract {
 
-			class BaseOcrWithLoader : public BaseOcr
+			class BaseOcrWithLoader : public Ocr
 			{
 			protected:
 				static const int mMaxPdfCreationThread = 4;
@@ -21,7 +21,7 @@ namespace Docapost {
 				virtual ~BaseOcrWithLoader() = default;
 
 				explicit BaseOcrWithLoader(ImageFormatEnum format)
-					: BaseOcr(format)
+					: Ocr(format)
 				{
 				}
 

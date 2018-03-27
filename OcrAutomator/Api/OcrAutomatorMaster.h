@@ -4,42 +4,12 @@
 #include <unordered_map>
 #include <vector>
 #include "Buffer/MemoryFileBuffer.h"
-
-#ifdef _WIN32
-#ifdef LIB_EXPORT
-#define SHARED_EXPORT __declspec(dllexport)
-#else
-#define SHARED_EXPORT __declspec(dllimport)
-#endif
-#else
-#define SHARED_EXPORT
-#endif
-
-struct calculated_struct
-{
-public:
-	std::string name;
-	std::string typeName;
-	bool isEnum;
-	std::vector<std::string> enu;
-};
-
-class SHARED_EXPORT OcrResult
-{
-private:
-	struct Impl;
-	std::unique_ptr<Impl> data;
-	friend class OcrAutomatorMaster;
-public:
-	std::string Name();
-	std::vector<std::string>* Text();
-	Docapost::IA::Tesseract::MemoryFileBuffer* Image();
-	OcrResult();
-	~OcrResult();
-};
+#include "Export.h"
+#include "OcrProperty.h"
+#include "OcrResult.h"
 
 
- namespace detail
+namespace detail
  {
 	 
  }
@@ -58,17 +28,6 @@ public:
 	 */
 	~OcrAutomatorMaster();
 
-	/**
-	 * \brief Liste l'ensemble des moteur d'OCR disponible sur cette instance
-	 * \return liste des noms des moteur d'ocr disponible
-	 */
-	std::vector<std::string> GetOcrs();
-	/**
-	 * \brief Liste l'ensemble des propriété d'un moteur d'OCR
-	 * \param ocr nom de l'OCR
-	 * \return liste des propiété, avec si ce son des enum, l'ensemble des valeurs possibles
-	 */
-	std::list<calculated_struct*> GetOcrParametersDefinition(std::string ocr);
 	/**
 	 * \brief créer une instance du moteur d'OCR
 	 * \param ocr nom de l'OCR
@@ -138,8 +97,6 @@ public:
 	 */
 	void Start(int maxThread, std::function<void(OcrResult*)> callback);
 private:
-
-	friend class OcrResult;
 	struct Impl;
 	std::unique_ptr<Impl> d_ptr;
 };

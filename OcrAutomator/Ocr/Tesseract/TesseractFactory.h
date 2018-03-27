@@ -3,6 +3,7 @@
 #include <memory>
 #include "Ocr/Tesseract/Tesseract.h"
 #include <rttr/registration>
+#include "Ocr/OcrFactory.h"
 
 namespace Docapost {
 	namespace IA {

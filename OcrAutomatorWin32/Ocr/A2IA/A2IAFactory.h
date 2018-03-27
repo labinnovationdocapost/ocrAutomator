@@ -1,6 +1,7 @@
 #pragma once
-#include "Ocr/BaseOcr.h"
+#include "Ocr/Ocr.h"
 #include "Ocr/A2IA/A2IA.h"
+#include "Ocr/OcrFactory.h"
 
 namespace Docapost {
 	namespace IA {
