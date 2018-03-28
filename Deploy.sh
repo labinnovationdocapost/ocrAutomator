@@ -1,6 +1,6 @@
 source Env/env.config
 
-VERSION=1.4.8
+VERSION=$(./OcrAutomator -v | grep Version | cut -d ':' -f 2 | cut -d " " -f 2)
 
 printf "Copy to Nexus"
 curl --fail --progress-bar -u $NEXUSACCOUNT --upload-file ./TesseractAutomator$VERSION.deb "$NEXUSURL/OcrAutomator$VERSION.deb"

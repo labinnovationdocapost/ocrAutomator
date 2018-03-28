@@ -113,7 +113,6 @@ file(
     LIST_DIRECTORIES false
     "${TEST_ROOT}/*.c*"
 )
-message(${TEST_CXX})
 
 foreach(_source IN ITEMS ${TEST_CXX})
     get_filename_component(_source_path "${_source}" PATH)
@@ -195,6 +194,9 @@ IF (MSVC)
 
 	target_include_directories(${PROJECT_NAME} PUBLIC ${WIN32_ROOT})
 else()
+	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/CreatePackage.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Deploy.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Env DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 	include_directories(${CURSES_INCLUDE_DIR})
 	add_executable(${PROJECT_NAME} ${LINUX} ${SHARED_HEADER} ${SHARED_CXX})
 	target_include_directories(${PROJECT_NAME} PUBLIC ${LINUX_ROOT})

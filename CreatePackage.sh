@@ -1,5 +1,5 @@
 
-VERSION=$(OcrAutomatorLinux/bin/x64/Release/TesseractAutomator -v | grep Version | cut -d ':' -f 2 | cut -d " " -f 2)
+VERSION=$(./OcrAutomator -v | grep Version | cut -d ':' -f 2 | cut -d " " -f 2)
 echo "Version: ${VERSION}"
 if [ -z $VERSION ]
 then
@@ -9,7 +9,7 @@ fi
 mkdir -p "/tmp/Package/DEBIAN"
 mkdir -p "/tmp/Package/usr/bin"
 touch "/tmp/Package/DEBIAN/control"
-cp "OcrAutomatorLinux/bin/x64/Release/TesseractAutomator" "/tmp/Package/usr/bin/"
+cp "OcrAutomator" "/tmp/Package/usr/bin/"
 echo "" > "/tmp/Package/DEBIAN/control"
 echo "Package: TesseractAutomator
 Version: $VERSION
