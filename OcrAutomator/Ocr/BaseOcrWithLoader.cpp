@@ -83,14 +83,14 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::BaseOcrWithL
 		Docapost::IA::MuPDF::MuPDF pdf;
 		pdf.Extract(file, mImageFormat);
 	}
-	catch (std::exception &e)
+	catch (std::runtime_error &e)
 	{
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cannot extract PDF file " << file->name << " error: " << e.what();
 		std::lock_guard<std::mutex> lock(mCreationThreadMutex);
 		mCurrentPdfCreationThread--;
 		throw std::runtime_error("Cannot extract PDF file " + file->name + " error: " + e.what());
 	}
-	catch (std::runtime_error &e)
+	catch (std::exception &e)
 	{
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cannot extract PDF file " << file->name << " error: " << e.what();
 		std::lock_guard<std::mutex> lock(mCreationThreadMutex);
@@ -174,5 +174,6 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::BaseOcrWithL
 			file->buffer = new ArrayMemoryFileBuffer((unsigned char*)_file->OriginalFile(), _file->Length());
 			return file->buffer;
 		}
+		return nullptr;
 	}
 }
