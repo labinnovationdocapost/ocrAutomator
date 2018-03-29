@@ -3,10 +3,15 @@
 
 Docapost::IA::Tesseract::OcrFactory* CreateOcrFactory(po::variables_map& vm)
 {
-	Docapost::IA::Tesseract::TesseractFactory* factory = new Docapost::IA::Tesseract::TesseractFactory();
-	factory->Lang(vm["lang"].as<std::string>());
-	factory->Oem(static_cast<tesseract::OcrEngineMode>(vm["oem"].as<int>()));
-	factory->Psm(static_cast<tesseract::PageSegMode>(vm["psm"].as<int>()));
+	auto factory = Docapost::IA::Tesseract::OcrFactory::CreateNew("Tesseract");
+	auto props = factory->GetOcrParametersDefinition();
+	for (auto& prop : props)
+	{
+		if (vm.count(prop->name))
+		{
+			factory->SetFactoryProperty(prop->name, vm[prop->name].as<std::string>());
+		}
+	}
 
 	return factory;
 }

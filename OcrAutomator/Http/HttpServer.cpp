@@ -164,6 +164,7 @@ HttpServer::HttpServer(Docapost::IA::Tesseract::MasterProcessingWorker& tessR, s
 
 HttpServer::~HttpServer()
 {
+	onEndProcessFile.disconnect();
 	svr.stop();
 }
 

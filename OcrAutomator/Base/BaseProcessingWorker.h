@@ -19,7 +19,7 @@
 using std::string;
 
 #include "Base/BaseFileStatus.h"
-#include "Ocr/BaseOcr.h"
+#include "Ocr/OcrFactory.h"
 
 namespace Docapost {
 	namespace IA {

@@ -613,7 +613,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 {
 	CatchAllErrorSignals();
 
-	BaseOcr* ocr = nullptr;
+	Ocr* ocr = nullptr;
 	try
 	{
 		ocr = mOcrFactory.CreateNew();

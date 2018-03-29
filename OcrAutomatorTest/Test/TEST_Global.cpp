@@ -236,8 +236,8 @@ void OcrFile_DifferentDir(Docapost::IA::Tesseract::TesseractFactory* factory, st
 	auto txt = boost::filesystem::change_extension(new_path, ".txt");
 	BOOST_CHECK(boost::filesystem::exists(txt));
 	BOOST_CHECK(boost::filesystem::exists(ffile->new_name));
-	if (boost::filesystem::exists(output_test_path))
-		boost::filesystem::remove_all(output_test_path);
+	if (boost::filesystem::exists(output_test_path / folder))
+		boost::filesystem::remove_all(output_test_path / folder);
 }
 void OcrFilePdf_DifferentDir(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder)
 {
@@ -277,8 +277,8 @@ void OcrFilePdf_DifferentDir(Docapost::IA::Tesseract::TesseractFactory* factory,
 	BOOST_CHECK(boost::filesystem::exists(new_path));
 	BOOST_CHECK(boost::filesystem::exists(new_path2));
 		
-	if (boost::filesystem::exists(output_test_path))
-		boost::filesystem::remove_all(output_test_path);
+	if (boost::filesystem::exists(output_test_path / folder))
+		boost::filesystem::remove_all(output_test_path / folder);
 }
 
 void OcrFile_DifferentDir_Flatern(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder)
@@ -304,8 +304,8 @@ void OcrFile_DifferentDir_Flatern(Docapost::IA::Tesseract::TesseractFactory* fac
 	auto txt = boost::filesystem::change_extension(new_path, ".txt");
 	BOOST_CHECK(boost::filesystem::exists(txt));
 	BOOST_CHECK(boost::filesystem::exists(ffile->new_name));
-	if (boost::filesystem::exists(output_test_path))
-		boost::filesystem::remove_all(output_test_path);
+	if (boost::filesystem::exists(output_test_path / folder))
+		boost::filesystem::remove_all(output_test_path / folder);
 }
 
 void OcrFilePdf_DifferentDir_Flatern(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder)
@@ -349,11 +349,11 @@ void OcrFilePdf_DifferentDir_Flatern(Docapost::IA::Tesseract::TesseractFactory* 
 	BOOST_CHECK(boost::filesystem::exists(new_path));
 	BOOST_CHECK(boost::filesystem::exists(new_path2));
 
-	if (boost::filesystem::exists(output_test_path))
-		boost::filesystem::remove_all(output_test_path);
+	if (boost::filesystem::exists(output_test_path / folder))
+		boost::filesystem::remove_all(output_test_path / folder);
 
-	if (boost::filesystem::exists(output_test_path))
-		boost::filesystem::remove_all(output_test_path);
+	if (boost::filesystem::exists(output_test_path / folder))
+		boost::filesystem::remove_all(output_test_path / folder);
 }
 
 void OcrFile_DifferentDir_MultiFile_SingleThread(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder)
@@ -382,8 +382,8 @@ void OcrFile_DifferentDir_MultiFile_SingleThread(Docapost::IA::Tesseract::Tesser
 	}
 	BOOST_CHECK(files.size() == 8);
 
-	if (boost::filesystem::exists(output_test_path))
-		boost::filesystem::remove_all(output_test_path);
+	if (boost::filesystem::exists(output_test_path / folder))
+		boost::filesystem::remove_all(output_test_path / folder);
 }
 
 void OcrFilePdf_DifferentDir_MultiFile_SingleThread(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder)
@@ -419,8 +419,8 @@ void OcrFilePdf_DifferentDir_MultiFile_SingleThread(Docapost::IA::Tesseract::Tes
 		BOOST_CHECK(boost::filesystem::exists(new_path));
 	}
 
-	if (boost::filesystem::exists(output_test_path))
-		boost::filesystem::remove_all(output_test_path);
+	if (boost::filesystem::exists(output_test_path / folder))
+		boost::filesystem::remove_all(output_test_path / folder);
 }
 
 void OcrFile_DifferentDir_MultiFile_MultiThread(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder)
@@ -449,8 +449,8 @@ void OcrFile_DifferentDir_MultiFile_MultiThread(Docapost::IA::Tesseract::Tessera
 	}
 	BOOST_CHECK(files.size() == 8);
 
-	if (boost::filesystem::exists(output_test_path))
-		boost::filesystem::remove_all(output_test_path);
+	if (boost::filesystem::exists(output_test_path / folder))
+		boost::filesystem::remove_all(output_test_path / folder);
 
 }
 
@@ -488,8 +488,8 @@ void OcrFilePdf_DifferentDir_MultiFile_MultiThread(Docapost::IA::Tesseract::Tess
 		BOOST_CHECK(boost::filesystem::exists(new_path));
 	}
 
-	if (boost::filesystem::exists(output_test_path))
-		boost::filesystem::remove_all(output_test_path);
+	if (boost::filesystem::exists(output_test_path / folder))
+		boost::filesystem::remove_all(output_test_path / folder);
 
 }
 
@@ -528,8 +528,8 @@ void OcrFile_Utf8(Docapost::IA::Tesseract::TesseractFactory* factory, std::strin
 	input.close();
 
 
-	if (boost::filesystem::exists(output_test_path))
-		boost::filesystem::remove_all(output_test_path);
+	if (boost::filesystem::exists(output_test_path / folder))
+		boost::filesystem::remove_all(output_test_path / folder);
 }
 void OcrFilePdf_Utf8(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder)
 {
@@ -580,8 +580,8 @@ void OcrFilePdf_Utf8(Docapost::IA::Tesseract::TesseractFactory* factory, std::st
 	input2.close();
 
 
-	if (boost::filesystem::exists(output_test_path))
-		boost::filesystem::remove_all(output_test_path);
+	if (boost::filesystem::exists(output_test_path / folder))
+		boost::filesystem::remove_all(output_test_path / folder);
 }
 
 void OcrFile_Slave(Docapost::IA::Tesseract::TesseractFactory* factory, Docapost::IA::Tesseract::TesseractFactory* factory2, std::string folder)
@@ -616,8 +616,8 @@ void OcrFile_Slave(Docapost::IA::Tesseract::TesseractFactory* factory, Docapost:
 		BOOST_CHECK(boost::filesystem::exists(ffile->new_name));
 	}
 
-	if (boost::filesystem::exists(output_test_path))
-		boost::filesystem::remove_all(output_test_path);
+	if (boost::filesystem::exists(output_test_path / folder))
+		boost::filesystem::remove_all(output_test_path / folder);
 }
 void OcrFilePdf_Slave(Docapost::IA::Tesseract::TesseractFactory* factory, Docapost::IA::Tesseract::TesseractFactory* factory2, std::string folder)
 {
@@ -658,8 +658,8 @@ void OcrFilePdf_Slave(Docapost::IA::Tesseract::TesseractFactory* factory, Docapo
 		BOOST_CHECK(boost::filesystem::exists(new_path));
 	}
 
-	if (boost::filesystem::exists(output_test_path))
-		boost::filesystem::remove_all(output_test_path);
+	if (boost::filesystem::exists(output_test_path / folder))
+		boost::filesystem::remove_all(output_test_path / folder);
 }
 
 void OcrFile_Slave_Inverse(Docapost::IA::Tesseract::TesseractFactory* factory, Docapost::IA::Tesseract::TesseractFactory* factory2, std::string folder)
@@ -694,8 +694,8 @@ void OcrFile_Slave_Inverse(Docapost::IA::Tesseract::TesseractFactory* factory, D
 		BOOST_CHECK(boost::filesystem::exists(ffile->new_name));
 	}
 
-	if (boost::filesystem::exists(output_test_path))
-		boost::filesystem::remove_all(output_test_path);
+	if (boost::filesystem::exists(output_test_path / folder))
+		boost::filesystem::remove_all(output_test_path / folder);
 }
 
 void OcrFilePdf_Slave_Inverse(Docapost::IA::Tesseract::TesseractFactory* factory, Docapost::IA::Tesseract::TesseractFactory* factory2, std::string folder)
@@ -737,14 +737,14 @@ void OcrFilePdf_Slave_Inverse(Docapost::IA::Tesseract::TesseractFactory* factory
 		BOOST_CHECK(boost::filesystem::exists(new_path));
 	}
 
-	if (boost::filesystem::exists(output_test_path))
-		boost::filesystem::remove_all(output_test_path);
+	if (boost::filesystem::exists(output_test_path / folder))
+		boost::filesystem::remove_all(output_test_path / folder);
 }
 
 BOOST_AUTO_TEST_CASE(TEST_Global)
 {
-	auto output_t = output_test_path / "TestSlave" / "Text";
-	auto output_e = output_test_path / "TestSlave" / "Exif";
+	auto output_t = output_test_path / "Global" / "Text";
+	auto output_e = output_test_path / "Global" / "Exif";
 	auto file = input_test_path / "Pdf" / "TestMulti";
 	auto s_file = file.string();
 	auto s_output_t = output_t.string();
@@ -780,8 +780,8 @@ BOOST_AUTO_TEST_CASE(TEST_Global)
 	BOOST_CHECK(file_folder2_nb == 6);
 	BOOST_CHECK(folder_nb == 2);
 
-	if (boost::filesystem::exists(output_test_path))
-		boost::filesystem::remove_all(output_test_path);
+	if (boost::filesystem::exists(output_test_path / "Global"))
+		boost::filesystem::remove_all(output_test_path / "Global");
 }
 
 size_t CurlWrite_CallbackFunc_StdString(void *contents, size_t size, size_t nmemb, std::string *s)
@@ -925,4 +925,18 @@ void OcrFilePdf_Http_Post(Docapost::IA::Tesseract::TesseractFactory* factory, st
 
 	archive_read_close(a);
 	delete http;
+}
+
+void Api_Test(std::string name)
+{
+	for(auto& ocr : Docapost::IA::Tesseract::OcrFactory::GetOcrs())
+	{
+		BOOST_TEST_MESSAGE(ocr);
+	}
+	BOOST_CHECK(Docapost::IA::Tesseract::OcrFactory::OcrExist("Tesseract"));
+
+	auto params1 = Docapost::IA::Tesseract::OcrFactory::GetOcrParametersDefinition("Tesseract");
+	auto ocr = Docapost::IA::Tesseract::OcrFactory::CreateNew("Tesseract");
+	auto params2 = ocr->GetOcrParametersDefinition();
+
 }

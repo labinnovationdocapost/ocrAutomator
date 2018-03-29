@@ -145,7 +145,25 @@ void Master(char** argv, po::variables_map& vm)
 		}
 	}
 
-	std::unique_ptr<Docapost::IA::Tesseract::OcrFactory> factory = std::unique_ptr<Docapost::IA::Tesseract::OcrFactory>(CreateOcrFactory(vm));
+	std::unique_ptr<Docapost::IA::Tesseract::OcrFactory> factory;
+	if(vm.count("ocr"))
+	{
+		if(Docapost::IA::Tesseract::OcrFactory::OcrExist(vm["ocr"].as<std::string>()))
+		{
+			factory = std::unique_ptr<Docapost::IA::Tesseract::OcrFactory>(Docapost::IA::Tesseract::OcrFactory::CreateNew(vm["ocr"].as<std::string>()));
+			auto props = factory->GetOcrParametersDefinition();
+			for(auto& prop : props)
+			{
+				if(vm.count(prop->name))
+				{
+					factory->SetFactoryProperty(prop->name, vm[prop->name].as<std::string>());
+				}
+			}
+		}
+	}
+
+	if(!factory)
+		factory = std::unique_ptr<Docapost::IA::Tesseract::OcrFactory>(CreateOcrFactory(vm));
 
 	if (vm.count("image"))
 	{

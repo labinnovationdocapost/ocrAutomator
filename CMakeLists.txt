@@ -4,6 +4,7 @@ option(RUN_TEST "Build all tests." OFF) # Makes boolean 'test' available.
 add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 set(PROJECT_NAME OcrAutomator CACHE STRING "")
 set(PROJECT_NAME_TEST "${PROJECT_NAME}Test")
+set(A2ia_INTEGRATION false CACHE BOOL "")
 project (${PROJECT_NAME})
 
 set(CMAKE_CXX_STANDARD 14)
@@ -112,7 +113,6 @@ file(
     LIST_DIRECTORIES false
     "${TEST_ROOT}/*.c*"
 )
-message(${TEST_CXX})
 
 foreach(_source IN ITEMS ${TEST_CXX})
     get_filename_component(_source_path "${_source}" PATH)
@@ -135,7 +135,16 @@ find_package(MuPdf 1.12.0 REQUIRED)
 find_package(JpegTurbo 1.4.0 REQUIRED)
 find_package(RapidJson REQUIRED)
 if(MSVC)
-	find_package(A2ia REQUIRED)
+	if(A2ia_INTEGRATION)
+		find_package(A2ia REQUIRED)
+		# find_package(VLD QUIET)
+		 # if(VLD_FOUND)         
+			 # add_definitions(-DHAVE_VLD)         
+			 # include_directories(${VLD_INCLUDE_DIRS})         
+			 # set(PLATFORM_LIBS ${PLATFORM_LIBS} ${VLD_LIBRARIES})         
+			 # link_directories(${VLD_LIBRARY_DIRS})     
+		 # endif()
+	endif()
 else()
 	find_package(Curses REQUIRED)
 endif()
@@ -176,15 +185,18 @@ IF (MSVC)
 # Executable
 	add_executable(${PROJECT_NAME} ${SHARED_HEADER} ${SHARED_CXX} ${WIN32} )
 
-	FILE(TO_NATIVE_PATH "${A2ia_DLL}/*.dll" srcDir)
-	FILE(TO_NATIVE_PATH $<TARGET_FILE_DIR:${PROJECT_NAME}> srcDest)
-	# Copy dll to output
-	if(MSVC)
+	if(A2ia_INTEGRATION)
+		FILE(TO_NATIVE_PATH "${A2ia_DLL}/*.dll" srcDir)
+		FILE(TO_NATIVE_PATH $<TARGET_FILE_DIR:${PROJECT_NAME}> srcDest)
+		# Copy dll to output
 		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND xcopy /y /d /s ${srcDir} \"$(TargetDir)\")
 	endif()
 
 	target_include_directories(${PROJECT_NAME} PUBLIC ${WIN32_ROOT})
 else()
+	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/CreatePackage.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Deploy.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Env DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 	include_directories(${CURSES_INCLUDE_DIR})
 	add_executable(${PROJECT_NAME} ${LINUX} ${SHARED_HEADER} ${SHARED_CXX})
 	target_include_directories(${PROJECT_NAME} PUBLIC ${LINUX_ROOT})
@@ -196,7 +208,10 @@ target_compile_options(${PROJECT_NAME} PUBLIC "$<$<CONFIG:RELEASE>:${MY_RELEASE_
 set(SHARED_LIB ${MuPdf_LIBRARIES} ${JPEG_LIBRARIES} ${JpegTurbo_LIBRARY} ${EXIV2_LIBRARY} ${ZLIB_LIBRARIES} ${RTTR_LIBRARY} ${Boost_LIBRARIES} ${LibArchive_LIBRARY} ${Tesseract_LIBRARIES} ${Leptonica_LIBRARIES})
 
 if(MSVC)
-	set(SYSTEM_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/Libs/Win32/Debug/libprotobuf.lib" A2ialib)
+	set(SYSTEM_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/Libs/Win32/Debug/libprotobuf.lib")
+	if(A2ia_INTEGRATION)
+		list(APPEND SYSTEM_LIBRARY A2ialib)
+	endif()
 else()
 	set(SYSTEM_LIBRARY protobuf pthread ${CURSES_LIBRARIES})
 endif()

@@ -9,17 +9,22 @@ std::mutex g_console_mutex;
 //./TesseractAutomator -i "/mnt/e/LinuxHeader/rpa2" -p 3 --PSM 1 --OEM 3 -l fra -e /mnt/e/RPA/OutputE -t /mnt/e/RPA/OutputT -f
 //-i /mnt/e/LinuxHeader/rpa2/ -p 1 --PSM 1 --OEM 3 -l fra -o /mnt/e/LinuxHeader/rpa3/ -e -t /root/outputT/ -s
 
-void ShowHelp(char** argv, std::vector<std::pair<string, po::options_description&>>& descs)
+void ShowHelp(char** argv, std::vector<std::pair<string, po::options_description&>>& descs, std::vector<std::pair<string, po::options_description*>>& opts)
 {
 	std::cout << "Usage:\n";
 	std::cout << argv[0] << " --help\n";
-	std::cout << argv[0] << " [options...] /folder/of/images\n";
+	std::cout << argv[0] << " --ocr Tesseract --help\n";
 	std::cout << argv[0] << " [options...] --input /folder/of/images [options...]\n";
 
 	for (auto desc : descs)
 	{
 		std::cout << "\n" << desc.first << ":\n";
 		std::cout << desc.second << std::endl;
+	}
+	for (auto desc : opts)
+	{
+		std::cout << "\n" << desc.first << ":\n";
+		std::cout << *desc.second << std::endl;
 	}
 
 	std::cout << R"V0G0N(
@@ -60,13 +65,23 @@ OCR Engine modes:
 Image type:
   - png
   - jpg (default)
-	
-copy parameter's format:
-  - xN:FOLDER : N is a floating point number witch represent the new size of the image (>1 : greater size, <1 : lower size). FOLDER is the folder where the new image is write, if it's empty the default folder is use
-	Example: x0.25 for an image 4 times less
-  - Npx:FOLDER : N is the maximum width and height allow for the new image
-	Example: 150px:/usr/example/myfolder/thumbnail/ for an image of a maximum of 150px width and weight (if the image is 300x200 pixel, the new image is 150x100 pixel)
 )V0G0N";
+	
+	std::cout << R"V0G0N(
+OCR engine available:
+)V0G0N";
+
+	for (auto& ocr : Docapost::IA::Tesseract::OcrFactory::GetOcrs())
+	{
+		std::cout << "  - " << ocr << "\n";
+	}
+
+	/*copy parameter's format:
+	  - xN:FOLDER : N is a floating point number witch represent the new size of the image (>1 : greater size, <1 : lower size). FOLDER is the folder where the new image is write, if it's empty the default folder is use
+		Example: x0.25 for an image 4 times less
+	  - Npx:FOLDER : N is the maximum width and height allow for the new image
+		Example: 150px:/usr/example/myfolder/thumbnail/ for an image of a maximum of 150px width and weight (if the image is 300x200 pixel, the new image is 150x100 pixel)
+	)V0G0N";*/
 }
 
 int _main(int argc, char* argv[])
@@ -75,7 +90,6 @@ int _main(int argc, char* argv[])
 	CatchAllErrorSignals();
 	CatchAllExceptions();
 #endif
-	//Log::InitLogger();
 
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Starting Logger";
 	//SetCapability();
@@ -116,9 +130,9 @@ int _main(int argc, char* argv[])
 
 	po::options_description desc;
 	desc.add_options()
-		("psm", value<int>()->default_value(3)->value_name("NUM"), "Page Segmentation Mode")
-		("oem", value<int>()->default_value(3)->value_name("NUM"), "Ocr Engine Mode")
-		("lang,l", value <std::string>()->default_value("fra")->value_name("LANG"), "Langue utilise pour l'OCR")
+		//("psm", value<int>()->default_value(3)->value_name("NUM"), "Page Segmentation Mode")
+		//("oem", value<int>()->default_value(3)->value_name("NUM"), "Ocr Engine Mode")
+		//("lang,l", value <std::string>()->default_value("fra")->value_name("LANG"), "Langue utilise pour l'OCR")
 		("output,o", value<std::string>()->value_name("DOSSIER")->default_value(boost::filesystem::current_path().string()), "Dossier de sortie (defaut: dossier actuel)")
 		("continue,c", "le fichier (ou la page pour le PDF) n'est pas traite si le fichier text et/ou l'exif existe deja")
 		("exif,e", value<std::string>()->value_name("DOSSIER")->implicit_value(""), "Copier l'image dans le fichier de sortie et écrire le resulat dans les Exif. Si non sépcifié le paramètre --output est utilisé")
@@ -126,16 +140,32 @@ int _main(int argc, char* argv[])
 		("prefixe,f", value<std::string>()->value_name("SEPARATOR")->implicit_value("__"), "Ajout le chemin relatif a [input] en prefixe du fichier.Defaut: __")
 		("input,i", value<std::string>()->value_name("DOSSIER"), "Dossier d'entree a partir de laquelle seront listee les fichiers a traiter")
 		("image", value<std::string>()->value_name("FORMAT")->default_value("jpg"), "Format de l'image de sortie")
-		("copy", value<std::vector<std::string>>()->value_name("FORMAT"), "Copie de l'image dans different scaling, le paramètre peut être specifié plusieur fois pour avoir plusieur sorties")
-		("http", "Lance le server HTTP pour envoyer des images/PDF a l'application");
+		//("copy", value<std::vector<std::string>>()->value_name("FORMAT"), "Copie de l'image dans different scaling, le paramètre peut être specifié plusieur fois pour avoir plusieur sorties")
+		("http", "Lance le server HTTP pour envoyer des images/PDF a l'application")
+		("ocr", value<std::string>()->value_name("FORMAT")->default_value(""), "Définit le moteur d'OCR à utiliser")
+		("param", value<std::string>()->value_name("FORMAT")->default_value(""), "Définit les paramètre du moteur OCR");
 
 	po::options_description slaveDesc;
 	slaveDesc.add_options()
 		("slave,a", "Le programme agira comme un noeud de calcul et cherchera a ce connecter a un noeud maitre disponible pour récupérer des images a traiter")
-		("ip", value<std::string>()->value_name("IP")->default_value(""), "Ip specifique à laquelle ce connecter");;
+		("ip", value<std::string>()->value_name("IP")->default_value(""), "Ip specifique à laquelle ce connecter");
+
 
 	po::options_description cmdline_options;
 	cmdline_options.add(globalDesc).add(desc).add(slaveDesc).add(shareDesc);
+
+	std::vector<std::pair<string, po::options_description*>> options;
+	for (auto& ocr : Docapost::IA::Tesseract::OcrFactory::GetOcrs())
+	{
+		po::options_description* od = new po::options_description{};
+		for (auto& prop : Docapost::IA::Tesseract::OcrFactory::GetOcrParametersDefinition(ocr))
+		{
+			od->add_options()(prop->name.c_str(), value<std::string>(), prop->description.c_str());
+		}
+		options.push_back({ ocr, od });
+		cmdline_options.add(*od);
+	}
+
 
 	po::variables_map vm;
 	try
@@ -162,7 +192,7 @@ int _main(int argc, char* argv[])
 
 	if (vm.count("help")) {
 		std::vector<std::pair<string, po::options_description&>>  opts = { {"Options",globalDesc}, { "Communes", shareDesc}, { "Master", desc },{ "Slave", slaveDesc} };
-		ShowHelp(argv, opts);
+		ShowHelp(argv, opts, options);
 		return 0;
 	}
 
@@ -191,7 +221,7 @@ int _main(int argc, char* argv[])
 		freopen("TesseractAutomatorStdErr_Master.log", "w", stderr);
 #endif
 		Slave(argv, vm);
-	}
+}
 	else
 	{
 #ifdef __linux__

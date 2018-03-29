@@ -20,6 +20,7 @@ using std::string;
 #include "Network/Network.h"
 #include "MasterFileStatus.h"
 #include "Base/Export.h"
+#include "Ocr/OcrFactory.h"
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;

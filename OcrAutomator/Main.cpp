@@ -6,5 +6,6 @@
 
 int main(int argc, char** argv)
 {
+	Log::InitLogger();
 	_main(argc, argv);
 }
