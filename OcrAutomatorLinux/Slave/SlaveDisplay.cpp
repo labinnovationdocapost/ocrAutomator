@@ -10,6 +10,10 @@
 #define HCTRL 1
 #define HWIN(h) h - (HTOP + HHEADER + HBOTTOM + HCTRL)
 
+#ifndef TESSERACT_VERSION_STR
+#define TESSERACT_VERSION_STR "Unknown"
+#endif
+
 void SlaveDisplay::Init(bool create)
 {
 	boost::lock_guard<std::mutex> lock(mLoopMutex);

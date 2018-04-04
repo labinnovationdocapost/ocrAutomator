@@ -53,7 +53,7 @@ set_target_properties(TesseractLib PROPERTIES
   INTERFACE_COMPILE_DEFINITIONS "Tesseract_DLL"
   INTERFACE_INCLUDE_DIRECTORIES "${Tesseract_INCLUDE_DIR}"
   IMPORTED_IMPLIB ${Tesseract_LIBRARIES}
-  VERSION ${Tesseract_VERSION}
+  VERSION "${Tesseract_VERSION}"
 )
 
 mark_as_advanced(Tesseract_INCLUDE_DIRS Tesseract_LIBRARIES)
