@@ -43,6 +43,10 @@ BOOST_AUTO_TEST_CASE(TEST_TesseractMemoryPdf)
 {
 	OcrMemoryPdf(CreateTesseractFactory());
 }
+BOOST_AUTO_TEST_CASE(TEST_TesseractCorruptPdf)
+{
+	OcrCorruptPdf(CreateTesseractFactory());
+}
 
 
 BOOST_AUTO_TEST_CASE(TEST_TesseractFile)

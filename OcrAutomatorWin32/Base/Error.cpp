@@ -63,14 +63,14 @@ void formatter(logging::record_view const& rec, logging::formatting_ostream& str
 #ifdef WIN32
 #define LOG_FOLDER "log"
 #else
-#define LOG_FOLDER "/tmp/TesseractAutomator/log"
+#define LOG_FOLDER "OcrAutomator/log"
 #endif
 
 void Log::InitLogger()
 {
 	logging::add_common_attributes();
 	boost::shared_ptr< sinks::text_file_backend > backend = boost::make_shared< sinks::text_file_backend >(
-		keywords::file_name = "TesseractAutomator_Log_%5N.log",
+		keywords::file_name = "OcrAutomator_Log_%5N.log",
 		keywords::rotation_size = 5 * 1024 * 1024,
 		keywords::time_based_rotation = sinks::file::rotation_at_time_interval(boost::posix_time::seconds(1))
 		);
@@ -137,7 +137,7 @@ void terminated()
 	}
 	catch (...)
 	{
-		std::cout << "Exception  happened\n" << "View /var/log/TesseractAutomatorException.log for more details" << std::endl << std::flush;
+		std::cout << "Exception  happened\n" << "View logs for more details" << std::endl << std::flush;
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "[Unhandled exception]: ";
 	}
 }

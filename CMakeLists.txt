@@ -152,7 +152,7 @@ find_package(exiv2 0.25 REQUIRED)
 find_package(zlib 1.2.11 REQUIRED)
 find_package(rttr 0.9.5 REQUIRED)
 find_package(libarchive 3.3.2 REQUIRED)
-find_package(tesseract 4.00.00 REQUIRED)
+find_package(tesseract REQUIRED)
 find_package(leptonica 1.74 REQUIRED)
 
 

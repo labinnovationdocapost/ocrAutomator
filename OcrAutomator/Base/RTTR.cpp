@@ -53,7 +53,6 @@ RTTR_REGISTRATION
 		value("OEM_LSTM_ONLY", tesseract::OcrEngineMode::OEM_LSTM_ONLY),
 		value("OEM_TESSERACT_LSTM_COMBINED", tesseract::OcrEngineMode::OEM_TESSERACT_LSTM_COMBINED),
 		value("OEM_DEFAULT", tesseract::OcrEngineMode::OEM_DEFAULT),
-		value("OEM_CUBE_ONLY", tesseract::OcrEngineMode::OEM_CUBE_ONLY),
-		value("OEM_TESSERACT_CUBE_COMBINED", tesseract::OcrEngineMode::OEM_TESSERACT_CUBE_COMBINED)
+		value("OEM_COUNT", tesseract::OcrEngineMode::OEM_COUNT)
 	);
 }

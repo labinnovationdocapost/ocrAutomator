@@ -87,6 +87,8 @@ private:
 void OcrMemory(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder = "Image");
 void OcrMemoryPdf(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder = "Pdf");
 
+void OcrCorruptPdf(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder = "Pdf");
+
 void OcrFile(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder = "Image");
 void OcrFilePdf(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder = "Pdf");
 

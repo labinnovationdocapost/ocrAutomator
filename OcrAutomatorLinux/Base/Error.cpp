@@ -61,12 +61,12 @@ void formatter(logging::record_view const& rec, logging::formatting_ostream& str
 	strm << rec[expr::smessage];
 }
 
-#define LOG_FOLDER "/tmp/TesseractAutomator/log"
+#define LOG_FOLDER "OcrAutomator/log"
 void Log::InitLogger()
 {
 	logging::add_common_attributes();
 	boost::shared_ptr< sinks::text_file_backend > backend = boost::make_shared< sinks::text_file_backend >(
-		keywords::file_name = "TesseractAutomator_Log_%5N.log",
+		keywords::file_name = "OcrAutomator_Log_%5N.log",
 		keywords::rotation_size = 5 * 1024 * 1024,
 		keywords::time_based_rotation = sinks::file::rotation_at_time_interval(boost::posix_time::hours(1))
 		);
@@ -104,7 +104,7 @@ void segfault_action(int sig, siginfo_t *info, void *secret)
 	int i, trace_size = 0;
 	ucontext_t *uc = (ucontext_t *)secret;
 
-	auto file = fopen("/var/log/TesseractAutomatorLog.log", "w");
+	auto file = fopen("/var/log/OcrAutomatorLog.log", "w");
 
 	/* Do something useful with siginfo_t */
 	if (sig == SIGSEGV)
@@ -120,7 +120,7 @@ void segfault_action(int sig, siginfo_t *info, void *secret)
 		fprintf(file, "Got signal %d\n", sig);
 	}
 
-	std::cout << "Segfault happened view /var/log/TesseractAutomatorLog.log for more details" << std::endl << std::flush;
+	std::cout << "Segfault happened view /var/log/OcrAutomatorLog.log for more details" << std::endl << std::flush;
 
 	trace_size = backtrace(trace, 16);
 	/* overwrite sigaction with caller's address */
@@ -243,7 +243,7 @@ void terminated()
 	catch (...)
 	{
 		std::string n = eptr.__cxa_exception_type()->name();
-		std::cout << "Exception " << util_demangle(__cxxabiv1::__cxa_current_exception_type()->name()) << " happened\n" << "View /var/log/TesseractAutomatorException.log for more details" << std::endl << std::flush;
+		std::cout << "Exception " << util_demangle(__cxxabiv1::__cxa_current_exception_type()->name()) << " happened\n" << "View /var/log/OcrAutomatorException.log for more details" << std::endl << std::flush;
 		std::cerr << "Unhandled exception " << n << std::endl;
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "[Unhandled exception]: " << n;
 	}
