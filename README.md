@@ -2,17 +2,7 @@
 # Tesseract Automator
 
 
-Le projet est compilé grâce à Visual Studio for Linux Development (inclus dans l'installation de Visual Studio 2017)
-
-## Pre-Compile binaries
-### Linux
-- https://outils.docapost.tech/nexus/#browse/browse/assets:innovation-raw
-- https://outils.docapost.tech/recettenexus/service/rest/repository/browse/innovation-apt/
-  - Ajoutez le repository : ```sudo add-apt-repository https://outils.docapost.tech/recettenexus/repository/innovation-apt/```
-  - Ajoutez les authorisation : ```sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5E0C99EE```
-  - Mettez a jour : ```sudo apt update```
-  - Mettez a jour : ```sudo apt install tesseractautomator```
-  - Verifier l'instalation avec ```TesseractAutomator -v```
+Le projet a été testé sur Visual Studio (Windows) et GCC (linux/Ubuntu 16.04)
 
 ## Installation
 - Utiliser CMake (https://cmake.org/) pour généré le projet en fonction de votre environnement et IDE
