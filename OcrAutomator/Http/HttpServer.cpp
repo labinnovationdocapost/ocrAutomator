@@ -42,7 +42,7 @@ void HttpServer::Request::AddEntry(MasterFileStatus* file, void* data, size_t le
 	auto filenameNoExt = boost::filesystem::change_extension(file->name, "").string();
 	if(file->filePosition >= 0)
 	{
-		archive_entry_set_pathname(entry, (boost::format("%s/%s[%i]%s") % filenameNoExt % filenameNoExt % file->filePosition % ext).str().c_str());
+		archive_entry_set_pathname(entry, (boost::format("%s/%s-%i%s") % filenameNoExt % filenameNoExt % file->filePosition % ext).str().c_str());
 	}
 	else
 	{

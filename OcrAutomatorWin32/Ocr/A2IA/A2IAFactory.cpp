@@ -1,6 +1,16 @@
 #include "A2IAFactory.h"
 #include "A2IA.h"
 
+std::string Docapost::IA::Tesseract::A2IAFactory::Version()
+{
+	std::string buf(A2iARC_ProductVersion);
+	buf.append(".");
+	buf.append(A2iARC_ProductRelease);
+	buf.append(".");
+	buf.append(A2iARC_ProductBuild);
+	return buf;
+}
+
 Docapost::IA::Tesseract::A2IAFactory::A2IAFactory()
 {
 	mExtension = { ".txt", ".json" };

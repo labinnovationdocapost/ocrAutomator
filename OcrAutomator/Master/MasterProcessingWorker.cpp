@@ -16,6 +16,20 @@
 #include "MasterLocalFileStatus.h"
 #include "MasterMemoryFileStatus.h"
 
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/stream.hpp>
+
+#define TXMP_STRING_TYPE std::string
+#define XMP_INCLUDE_XMPFILES 1 
+#include "XMP.incl_cpp"
+#include "XMP.hpp"
+#include "XMP_IO.hpp"
+#include "XMP/MemoryXMPIO.h"
+#include "Base/Version.h"
+
+const XMP_StringPtr kXMP_NS_OCRAUTOMATOR = "http://leia.io/meta/1.0/OcrAutomator/";
+const XMP_StringPtr kXMP_NS_OCRAUTOMATOR_OCR = "http://leia.io/meta/1.0/OcrAutomator/Ocr/";
+
 #if defined(MSDOS) || defined(OS2) || defined(WIN32) || defined(__CYGWIN__)
 #  include <fcntl.h>
 #  include <io.h>
@@ -52,7 +66,7 @@ Docapost::IA::Tesseract::MasterProcessingWorker::MasterProcessingWorker(OcrFacto
 
 				mNetwork->InitBroadcastReceiver();
 				mNetwork->InitComm();
-				IsNetworkInit = true;
+				mIsNetworkInit = true;
 				mNetwork->Start();
 				break;
 			}
@@ -411,7 +425,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::_AddFolder(fs::path folder
 }
 void Docapost::IA::Tesseract::MasterProcessingWorker::AddFolder(fs::path folder, bool resume)
 {
-	ListingThread = new std::thread([this, folder, resume]()
+	mListingThread = new std::thread([this, folder, resume]()
 	{
 		CatchAllErrorSignals();
 		if (mFiles.size() > 0)
@@ -423,8 +437,8 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::AddFolder(fs::path folder,
 
 		if (!mIsTerminated)
 		{
-			ListingThread->detach();
-			delete ListingThread;
+			mListingThread->detach();
+			delete mListingThread;
 		}
 	});
 }
@@ -520,54 +534,63 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 
 	if (mOutputTypes & OutputFlags::MemoryImage || mOutputTypes & OutputFlags::Exif)
 	{
+		auto init = SXMPMeta::Initialize();
 		Exiv2::ExifData exifData;
-		for (int i = 0; i < _file->result->size(); i++)
-		{
-			if (i == 0)
-			{
-				auto v = std::make_unique<Exiv2::AsciiValue>();
-				if (v->read((*_file->result)[i]))
-				{
-					if (MasterLocalFileStatus* file = dynamic_cast<MasterLocalFileStatus*>(_file))
-					{
-						BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "cannot read " << file->name;
-					}
-					else
-					{
-						BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "cannot read memory file";
-					}
-				}
 
-				Exiv2::ExifKey key("Exif.Image.ImageDescription");
-				exifData.add(key, v.get());
+		try
+		{
+			SXMPMeta meta;
+			auto io = new MemoryXMPIO(_file->buffer);
+			XMP_OptionBits options = 0;
+			SXMPFiles::Initialize(options);
+			SXMPFiles xmpfile;
+			xmpfile.OpenFile((XMP_IO*)io, kXMP_UnknownFile, kXMPFiles_OpenForUpdate | kXMPFiles_OpenUseSmartHandler);
+			auto res = xmpfile.GetXMP(&meta);
+			
+			std::string ns;
+			meta.RegisterNamespace(kXMP_NS_OCRAUTOMATOR, "OcrAutomator", &ns);
+			meta.RegisterNamespace(kXMP_NS_OCRAUTOMATOR_OCR, "Ocr", &ns);
+			
+			auto ocrName = mOcrFactory.Name();
+
+
+			meta.SetStructField(kXMP_NS_OCRAUTOMATOR, ocrName.c_str(), kXMP_NS_OCRAUTOMATOR_OCR, "Outputs", 0, kXMP_PropValueIsArray | kXMP_PropArrayIsOrdered);
+			std::string path;
+			SXMPUtils::ComposeStructFieldPath(kXMP_NS_OCRAUTOMATOR, ocrName.c_str(), kXMP_NS_OCRAUTOMATOR_OCR, "Outputs", &path);
+			for (int i = 0; i < _file->result->size(); i++)
+			{
+				meta.AppendArrayItem(kXMP_NS_OCRAUTOMATOR, path.c_str(), 0, (*_file->result)[i], 0);
+			}
+			meta.SetStructField(kXMP_NS_OCRAUTOMATOR, ocrName.c_str(), kXMP_NS_OCRAUTOMATOR_OCR, "EngineName", mOcrFactory.Name());
+			meta.SetStructField(kXMP_NS_OCRAUTOMATOR, ocrName.c_str(), kXMP_NS_OCRAUTOMATOR_OCR, "EngineVersion", mOcrFactory.Version());
+			meta.SetStructField(kXMP_NS_OCRAUTOMATOR, ocrName.c_str(), kXMP_NS_OCRAUTOMATOR_OCR, "Version", VERSION);
+
+			for(auto& externalProp : mExternalXmp)
+			{
+				meta.SetStructField(kXMP_NS_OCRAUTOMATOR, ocrName.c_str(), kXMP_NS_OCRAUTOMATOR_OCR, externalProp.first.c_str(), externalProp.second);
 			}
 
-			auto data = Compress((*_file->result)[i]);
-			auto v = std::make_unique<Exiv2::DataValue>((unsigned char*)data.data(), data.size());
+			auto t = std::time(nullptr);
+			auto tm = *std::localtime(&t);
+			std::ostringstream oss;
+			oss << std::put_time(&tm, "%Y-%m-%dT%H:%M:%S%z");
+			auto str = oss.str();
 
-			//auto str = (*file->result)[i].substr(0, 57830);
-			/*if(v->read(str))
-			{
-			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "cannot read " << file->name;
-			}*/
-			Exiv2::ExifKey key(EXIF_FIELD[i]);
-			exifData.add(key, v.get());
+			meta.SetStructField(kXMP_NS_OCRAUTOMATOR, ocrName.c_str(), kXMP_NS_OCRAUTOMATOR_OCR, "Date", str.c_str());
+			std::string strStd;
+			std::string strEx;
+			std::string digestEx;
+			SXMPUtils::PackageForJPEG(meta, &strStd, &strEx, &digestEx);
+			xmpfile.PutXMP(strStd);
+			if(strEx.empty())
+				xmpfile.PutXMP(strEx);
+			xmpfile.CloseFile();
+			_file->buffer = io->Buffer();
 		}
-		if (MasterLocalFileStatus* file = dynamic_cast<MasterLocalFileStatus*>(_file))
+		catch (XMP_Error& wmp_err)
 		{
-			exifData["Exif.Image.ImageID"] = fs::relative(file->name, mInput).string();
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "cannot Write XMP : " << wmp_err.GetErrMsg();
 		}
-		exifData["Exif.Image.ProcessingSoftware"] = mSoftName;
-
-		auto o_image = Exiv2::ImageFactory::open(_file->buffer->data(), _file->buffer->len());
-		o_image->setExifData(exifData);
-		o_image->writeMetadata();
-		auto buffersize = o_image->io().size();
-		o_image->io().seek(0, Exiv2::BasicIo::beg);
-		auto exif_data = o_image->io().read(buffersize);
-
-		delete _file->buffer;
-		_file->buffer = new ExivMemoryFileBuffer(exif_data);
 	}
 
 	if (mOutputTypes & OutputFlags::Exif && std::find(_file->capability.begin(), _file->capability.end(), OutputFlags::Exif) != _file->capability.end())

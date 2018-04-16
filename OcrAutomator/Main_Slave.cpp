@@ -4,7 +4,7 @@
 Docapost::IA::Tesseract::SlaveProcessingWorker* workerS;
 SlaveDisplay* sdisplay;
 
-void Slave(char** argv, po::variables_map& vm)
+void Slave(int argc, char** argv, po::variables_map& vm)
 {
 	int nb_process = 1;
 	if (vm.count("parallel"))

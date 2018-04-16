@@ -9,6 +9,8 @@ namespace Docapost {
 			{
 				int num;
 			public:
+				std::string Name() override { return "NoOcr"; }
+				std::string Version() override { return "0.0"; }
 				int Num() const
 				{
 					return num;
