@@ -141,40 +141,6 @@ std::list<std::shared_ptr<Docapost::IA::Tesseract::Tesseract::Box>> Docapost::IA
 	return boxs;
 }
 
-/*void Docapost::IA::Tesseract::Tesseract::CreateJSON(rapidjson::Writer<rapidjson::StringBuffer>& writer, A2iARC_TranscriptionLevelResults& result)
-{
-	if (result.subLevelResults.cTab == 0)
-		return;
-	writer.Key("SubLevel");
-	writer.StartArray();
-	for (int i = 0; i < result.subLevelResults.cTab; i++)
-	{
-		writer.StartObject();
-		{
-			writer.Key("Score");
-			writer.Uint(result.subLevelResults.pTab[i].score);
-			writer.Key("Text");
-			writer.String(result.subLevelResults.pTab[i].reco);
-			writer.Key("Location");
-			writer.StartObject();
-			{
-				writer.Key("X1");
-				writer.Double(result.subLevelResults.pTab[i].extractedImage.location.x_tl);
-				writer.Key("X2");
-				writer.Double(result.subLevelResults.pTab[i].extractedImage.location.x_br);
-				writer.Key("Y1");
-				writer.Double(result.subLevelResults.pTab[i].extractedImage.location.y_tl);
-				writer.Key("Y2");
-				writer.Double(result.subLevelResults.pTab[i].extractedImage.location.y_br);
-			}
-			writer.EndObject();
-			CreateJSON(writer, result.subLevelResults.pTab[i]);
-		}
-		writer.EndObject();
-	}
-	writer.EndArray();
-}*/
-
 void Docapost::IA::Tesseract::Tesseract::InitEngine()
 {
 	int res;

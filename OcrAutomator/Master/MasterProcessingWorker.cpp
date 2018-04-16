@@ -548,8 +548,8 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 			auto res = xmpfile.GetXMP(&meta);
 			
 			std::string ns;
-			meta.RegisterNamespace(kXMP_NS_OCRAUTOMATOR, "OcrAutomator", &ns);
-			meta.RegisterNamespace(kXMP_NS_OCRAUTOMATOR_OCR, "Ocr", &ns);
+			SXMPMeta::RegisterNamespace(kXMP_NS_OCRAUTOMATOR, "OcrAutomator", &ns);
+			SXMPMeta::RegisterNamespace(kXMP_NS_OCRAUTOMATOR_OCR, "Ocr", &ns);
 			
 			auto ocrName = mOcrFactory.Name();
 
@@ -582,7 +582,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 			std::string digestEx;
 			SXMPUtils::PackageForJPEG(meta, &strStd, &strEx, &digestEx);
 			xmpfile.PutXMP(strStd);
-			if(strEx.empty())
+			if(!strEx.empty())
 				xmpfile.PutXMP(strEx);
 			xmpfile.CloseFile();
 			_file->buffer = io->Buffer();
