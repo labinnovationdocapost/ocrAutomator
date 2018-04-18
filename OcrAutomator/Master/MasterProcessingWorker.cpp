@@ -525,8 +525,8 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 
 				//if (i == 0)
 				//{
-					file->output.push_back(new_path.string());
-					file->relative_output.push_back(file->relative_name);
+				file->output.push_back(new_path.string());
+				file->relative_output.push_back(file->relative_name);
 				//}
 			}
 		}
@@ -546,17 +546,50 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 			SXMPFiles xmpfile;
 			xmpfile.OpenFile((XMP_IO*)io, kXMP_UnknownFile, kXMPFiles_OpenForUpdate | kXMPFiles_OpenUseSmartHandler);
 			auto res = xmpfile.GetXMP(&meta);
-			
+
 			std::string ns;
 			SXMPMeta::RegisterNamespace(kXMP_NS_OCRAUTOMATOR, "OcrAutomator", &ns);
 			SXMPMeta::RegisterNamespace(kXMP_NS_OCRAUTOMATOR_OCR, "Ocr", &ns);
-			
-			auto ocrName = mOcrFactory.Name();
 
+			auto ocrName = mOcrFactory.Name();
 
 			meta.SetStructField(kXMP_NS_OCRAUTOMATOR, ocrName.c_str(), kXMP_NS_OCRAUTOMATOR_OCR, "Outputs", 0, kXMP_PropValueIsArray | kXMP_PropArrayIsOrdered);
 			std::string path;
 			SXMPUtils::ComposeStructFieldPath(kXMP_NS_OCRAUTOMATOR, ocrName.c_str(), kXMP_NS_OCRAUTOMATOR_OCR, "Outputs", &path);
+
+
+			if (!meta.DoesPropertyExist(kXMP_NS_OCRAUTOMATOR, "Sections"))
+			{
+				meta.SetProperty(kXMP_NS_OCRAUTOMATOR, "Sections", 0, kXMP_PropValueIsArray);
+			}
+
+			if(!meta.DoesPropertyExist(kXMP_NS_OCRAUTOMATOR, ocrName.c_str()))
+			{
+				meta.AppendArrayItem(kXMP_NS_OCRAUTOMATOR, "Sections", 0, ocrName.c_str(), 0);
+			}
+			else
+			{
+				int nbSections = meta.CountArrayItems(kXMP_NS_OCRAUTOMATOR, "Sections");
+				bool sectionExist = false;
+				for(int i = 0; i < nbSections; i++)
+				{
+					std::string section;
+					meta.GetArrayItem(kXMP_NS_OCRAUTOMATOR, "Sections", i + 1, &section, 0);
+					if (section == ocrName)
+					{
+						sectionExist = true;
+						break;
+					}
+				}
+				if(!sectionExist)
+				{
+					meta.AppendArrayItem(kXMP_NS_OCRAUTOMATOR, "Sections", 0, ocrName.c_str(), 0);
+				}
+				// if the file already has this OCR output, delete, en rewrite it
+				meta.DeleteProperty(kXMP_NS_OCRAUTOMATOR, path.c_str());
+				meta.SetStructField(kXMP_NS_OCRAUTOMATOR, ocrName.c_str(), kXMP_NS_OCRAUTOMATOR_OCR, "Outputs", 0, kXMP_PropValueIsArray | kXMP_PropArrayIsOrdered);
+			}
+
 			for (int i = 0; i < _file->result->size(); i++)
 			{
 				meta.AppendArrayItem(kXMP_NS_OCRAUTOMATOR, path.c_str(), 0, (*_file->result)[i], 0);
@@ -565,7 +598,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 			meta.SetStructField(kXMP_NS_OCRAUTOMATOR, ocrName.c_str(), kXMP_NS_OCRAUTOMATOR_OCR, "EngineVersion", mOcrFactory.Version());
 			meta.SetStructField(kXMP_NS_OCRAUTOMATOR, ocrName.c_str(), kXMP_NS_OCRAUTOMATOR_OCR, "Version", VERSION);
 
-			for(auto& externalProp : mExternalXmp)
+			for (auto& externalProp : mExternalXmp)
 			{
 				meta.SetStructField(kXMP_NS_OCRAUTOMATOR, ocrName.c_str(), kXMP_NS_OCRAUTOMATOR_OCR, externalProp.first.c_str(), externalProp.second);
 			}
@@ -582,7 +615,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 			std::string digestEx;
 			SXMPUtils::PackageForJPEG(meta, &strStd, &strEx, &digestEx);
 			xmpfile.PutXMP(strStd);
-			if(!strEx.empty())
+			if (!strEx.empty())
 				xmpfile.PutXMP(strEx);
 			xmpfile.CloseFile();
 			_file->buffer = io->Buffer();
