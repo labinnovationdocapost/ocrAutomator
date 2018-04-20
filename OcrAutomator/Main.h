@@ -26,8 +26,8 @@ extern std::mutex g_console_mutex;
 extern HttpServer* http;
 
 
-void Master(char** argv, po::variables_map& vm);
-void Slave(char** argv, po::variables_map& vm);
+void Master(int argc, char** argv, po::variables_map& vm);
+void Slave(int argc, char** argv, po::variables_map& vm);
 
 Docapost::IA::Tesseract::OcrFactory* CreateOcrFactory(po::variables_map& vm);
 int _main(int argc, char* argv[]);

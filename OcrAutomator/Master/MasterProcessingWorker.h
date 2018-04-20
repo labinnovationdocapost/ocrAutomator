@@ -16,6 +16,7 @@
 #include <boost/unordered_map.hpp>
 #include "Base/OutputFlags.h"
 #include "Slave/SlaveState.h"
+#include <unordered_map>
 using std::string;
 #include "Network/Network.h"
 #include "MasterFileStatus.h"
@@ -41,6 +42,7 @@ namespace Docapost {
 				boost::unordered_map<boost::uuids::uuid, std::shared_ptr<SlaveState>> mSlaves;
 				boost::unordered_map<boost::uuids::uuid, MasterFileStatus*> mFileSend;
 
+				std::unordered_map<std::string, std::string> mExternalXmp;
 
 				OutputFlags mOutputTypes;
 
@@ -54,9 +56,9 @@ namespace Docapost {
 				boost::shared_ptr<Network> mNetwork;
 
 				std::thread* mNetworkThread;
-				std::thread* ListingThread;
+				std::thread* mListingThread;
 
-				bool IsNetworkInit = false;
+				bool mIsNetworkInit = false;
 
 				void ThreadLoop(int id) override;
 
@@ -86,7 +88,7 @@ namespace Docapost {
 				 * \brief Ajout un document PDF au pipeline
 				 * \param resume Faut il écraser les fichiers déja présent (false) ou ignorer le travail si il existe déja (true)
 				 * \param nbPages Nombre de page du PDF
-				 * \param path 
+				 * \param path
 				 */
 				int AddPdfFile(bool resume, fs::path path);
 				void AddImageFile(bool resume, fs::path path);
@@ -148,7 +150,7 @@ namespace Docapost {
 				boost::signals2::signal<void(MasterFileStatus*)> onEndProcessFile;
 				boost::signals2::signal<void()> onProcessEnd;
 
-				bool NetworkEnable() const { return IsNetworkInit && mNetwork != nullptr/* && mNetworkThread != nullptr*/; }
+				bool NetworkEnable() const { return mIsNetworkInit && mNetwork != nullptr/* && mNetworkThread != nullptr*/; }
 				int Port() const
 				{
 					if (NetworkEnable())
@@ -170,6 +172,8 @@ namespace Docapost {
 						total += slave.second->NbThread;
 					return total;
 				}
+				std::unordered_map<std::string, std::string>& ExternalXmp() { return mExternalXmp; }
+
 
 				boost::unordered_map<boost::uuids::uuid, std::shared_ptr<SlaveState>> Slaves() const { return mSlaves; }
 

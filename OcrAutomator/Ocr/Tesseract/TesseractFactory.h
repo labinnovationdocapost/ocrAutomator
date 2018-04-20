@@ -11,11 +11,12 @@ namespace Docapost {
 			class TesseractFactory : public OcrFactory
 			{
 			private:
-				std::vector<std::string> mExtesnion = {".txt", ".json"};
 				tesseract::PageSegMode mPsm = tesseract::PageSegMode::PSM_AUTO;
 				tesseract::OcrEngineMode mOem = tesseract::OcrEngineMode::OEM_DEFAULT;
 				std::string mLang = "fra";
 			public:
+				std::string Name() override { return "Tesseract"; }
+				std::string Version() override { return TESSERACT_VERSION_STR; }
 				tesseract::PageSegMode Psm() const { return mPsm; }
 				tesseract::OcrEngineMode Oem() const { return mOem; }
 				std::string Lang() const { return mLang; }
@@ -30,7 +31,7 @@ namespace Docapost {
 
 				TesseractFactory()
 				{
-					mExtension = { ".txt" };
+					mExtension = { ".txt", ".json" };
 				}
 
 

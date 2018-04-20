@@ -26,7 +26,7 @@ find_library(RTTR_LIBRARY NAMES RTTR libRTTR rttr_core
 
 
 # Get the version number from RTTR/version.hpp and store it in the cache:
-if(NOT "${Leptonica_INCLUDE_DIR}" EQUAL "RTTR_INCLUDE_DIR-NOTFOUND")
+if(NOT "${RTTR_INCLUDE_DIR}" EQUAL "RTTR_INCLUDE_DIR-NOTFOUND")
     file(STRINGS ${RTTR_INCLUDE_DIR}/rttr/detail/base/version.h RTTR_MAJOR_VERSION REGEX "RTTR_VERSION_MAJOR")
     file(STRINGS ${RTTR_INCLUDE_DIR}/rttr/detail/base/version.h RTTR_MINOR_VERSION REGEX "RTTR_VERSION_MINOR")
     file(STRINGS ${RTTR_INCLUDE_DIR}/rttr/detail/base/version.h RTTR_PATH_VERSION REGEX "RTTR_VERSION_PATCH")

@@ -193,6 +193,9 @@ namespace Docapost {
 					return true;
 				}
 
+				virtual std::string Name() = 0;
+				virtual std::string Version() = 0;
+
 
 				virtual ~OcrFactory() = default;
 				virtual Ocr* CreateNew() = 0;

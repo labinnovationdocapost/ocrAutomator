@@ -146,8 +146,12 @@ void OcrMemoryPdf(Docapost::IA::Tesseract::TesseractFactory* factory, std::strin
 	p_txtall.pop_back();
 	auto txt = boost::filesystem::change_extension(ffile->new_name, ".txt");
 	auto txt2 = boost::filesystem::change_extension(ffile2->new_name, ".txt");
+	auto json = boost::filesystem::change_extension(ffile->new_name, ".json");
+	auto json2 = boost::filesystem::change_extension(ffile2->new_name, ".json");
 	BOOST_CHECK(!boost::filesystem::exists(txt));
 	BOOST_CHECK(!boost::filesystem::exists(txt2));
+	BOOST_CHECK(!boost::filesystem::exists(json));
+	BOOST_CHECK(!boost::filesystem::exists(json2));
 	BOOST_CHECK(!boost::filesystem::exists(p_txtall + ".txt"));
 
 	BOOST_CHECK(!boost::filesystem::exists(ffile->new_name));
@@ -155,6 +159,8 @@ void OcrMemoryPdf(Docapost::IA::Tesseract::TesseractFactory* factory, std::strin
 
 	boost::filesystem::remove(txt);
 	boost::filesystem::remove(txt2);
+	boost::filesystem::remove(json);
+	boost::filesystem::remove(json2);
 	boost::filesystem::remove(p_txtall + ".txt");
 
 	boost::filesystem::remove(ffile->new_name);
@@ -209,7 +215,10 @@ void OcrFile(Docapost::IA::Tesseract::TesseractFactory* factory, std::string fol
 	BOOST_CHECK(ffile->relative_name == "Image1.jpg");
 	auto txt = boost::filesystem::change_extension(ffile->new_name, ".txt");
 	BOOST_CHECK(boost::filesystem::exists(txt));
+	auto json = boost::filesystem::change_extension(ffile->new_name, ".json");
+	BOOST_CHECK(boost::filesystem::exists(json));
 	boost::filesystem::remove(txt);
+	boost::filesystem::remove(json);
 }
 void OcrFilePdf(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder)
 {
@@ -232,8 +241,12 @@ void OcrFilePdf(Docapost::IA::Tesseract::TesseractFactory* factory, std::string 
 	p_txtall.pop_back();
 	auto txt = boost::filesystem::change_extension(ffile->new_name, ".txt");
 	auto txt2 = boost::filesystem::change_extension(ffile2->new_name, ".txt");
+	auto json = boost::filesystem::change_extension(ffile->new_name, ".json");
+	auto json2 = boost::filesystem::change_extension(ffile2->new_name, ".json");
 	BOOST_CHECK(boost::filesystem::exists(txt));
 	BOOST_CHECK(boost::filesystem::exists(txt2));
+	BOOST_CHECK(boost::filesystem::exists(json));
+	BOOST_CHECK(boost::filesystem::exists(json2));
 	BOOST_CHECK(boost::filesystem::exists(p_txtall + ".txt"));
 
 	BOOST_CHECK(boost::filesystem::exists(ffile->new_name));
@@ -241,6 +254,8 @@ void OcrFilePdf(Docapost::IA::Tesseract::TesseractFactory* factory, std::string 
 
 	boost::filesystem::remove(txt);
 	boost::filesystem::remove(txt2);
+	boost::filesystem::remove(json);
+	boost::filesystem::remove(json2);
 	boost::filesystem::remove(p_txtall + ".txt");
 
 	boost::filesystem::remove(ffile->new_name);
@@ -267,7 +282,9 @@ void OcrFile_DifferentDir(Docapost::IA::Tesseract::TesseractFactory* factory, st
 
 	auto new_path = fs::absolute(relative_path, output);
 	auto txt = boost::filesystem::change_extension(new_path, ".txt");
+	auto json = boost::filesystem::change_extension(new_path, ".json");
 	BOOST_CHECK(boost::filesystem::exists(txt));
+	BOOST_CHECK(boost::filesystem::exists(json));
 	BOOST_CHECK(boost::filesystem::exists(ffile->new_name));
 
 	if (boost::filesystem::exists(output))
@@ -301,11 +318,15 @@ void OcrFilePdf_DifferentDir(Docapost::IA::Tesseract::TesseractFactory* factory,
 	auto p_txtall = boost::filesystem::change_extension(new_path, "").string();
 	p_txtall.pop_back();
 	p_txtall.pop_back();
-
+	
 	auto txt = boost::filesystem::change_extension(new_path, ".txt");
 	auto txt2 = boost::filesystem::change_extension(new_path2, ".txt");
+	auto json = boost::filesystem::change_extension(new_path, ".json");
+	auto json2 = boost::filesystem::change_extension(new_path2, ".json");
 	BOOST_CHECK(boost::filesystem::exists(txt));
 	BOOST_CHECK(boost::filesystem::exists(txt2));
+	BOOST_CHECK(boost::filesystem::exists(json));
+	BOOST_CHECK(boost::filesystem::exists(json2));
 	BOOST_CHECK(boost::filesystem::exists(p_txtall + ".txt"));
 
 	BOOST_CHECK(boost::filesystem::exists(new_path));
@@ -806,9 +827,9 @@ BOOST_AUTO_TEST_CASE(TEST_Global)
 		static_cast<bool(*)(const fs::path&)>(fs::is_regular_file));
 
 
-	BOOST_CHECK(file_nb == 12);
-	BOOST_CHECK(file_folder1_nb == 6);
-	BOOST_CHECK(file_folder2_nb == 6);
+	BOOST_CHECK(file_nb == 20);
+	BOOST_CHECK(file_folder1_nb == 10);
+	BOOST_CHECK(file_folder2_nb == 10);
 	BOOST_CHECK(folder_nb == 2);
 
 	if (boost::filesystem::exists(output_test_path / "Global"))
@@ -895,7 +916,7 @@ void OcrFile_Http_Post(Docapost::IA::Tesseract::TesseractFactory* factory, std::
 	BOOST_CHECK(r == ARCHIVE_OK);
 
 
-	std::set<std::string> result = { "Image1/Image1.jpg", "Image1/Image1.txt"};
+	std::set<std::string> result = { "Image1/Image1.jpg", "Image1/Image1.txt", "Image1/Image1.json" };
 	while (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
 		BOOST_TEST_MESSAGE(archive_entry_pathname(entry));
 		BOOST_CHECK(result.count(archive_entry_pathname(entry)));
@@ -943,7 +964,7 @@ void OcrFilePdf_Http_Post(Docapost::IA::Tesseract::TesseractFactory* factory, st
 	archive_read_open_memory(a, (void*)s.data(), s.length());
 	BOOST_CHECK(r == ARCHIVE_OK);
 
-	std::set<std::string> result = { "Pdf1/Pdf1[0].jpg", "Pdf1/Pdf1[0].txt", "Pdf1/Pdf1[1].jpg", "Pdf1/Pdf1[1].txt" };
+	std::set<std::string> result = { "Pdf1/Pdf1-0.jpg", "Pdf1/Pdf1-0.txt", "Pdf1/Pdf1-0.json", "Pdf1/Pdf1-1.jpg", "Pdf1/Pdf1-1.txt", "Pdf1/Pdf1-1.json" };
 	while (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
 		BOOST_TEST_MESSAGE(archive_entry_pathname(entry));
 		BOOST_CHECK(result.count(archive_entry_pathname(entry)));

@@ -10,6 +10,8 @@ namespace Docapost {
 			{
 				A2iARC_DocumentTable mDocumentTable;
 			public:
+				std::string Name() override { return "A2IA"; }
+				std::string Version() override;
 				A2IAFactory();
 				A2IA* CreateNew() override;
 				RTTR_ENABLE(OcrFactory);

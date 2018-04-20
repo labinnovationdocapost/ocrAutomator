@@ -3,12 +3,13 @@
 #include "Base/ExtraOutput.h"
 #include "Http/HttpServer.h"
 #include "DisplayManager.h"
+#include <boost/algorithm/string/join.hpp>
 
 Docapost::IA::Tesseract::MasterProcessingWorker* workerM;
 Display* display;
 HttpServer* http;
 
-void Master(char** argv, po::variables_map& vm)
+void Master(int argc, char** argv, po::variables_map& vm)
 {
 	/*boost::interprocess::named_mutex ip_process {boost::interprocess::open_or_create, "OCRAutomator_Mutex"};
 	if(!ip_process.try_lock())
@@ -183,6 +184,7 @@ void Master(char** argv, po::variables_map& vm)
 	}
 
 	workerM = new Docapost::IA::Tesseract::MasterProcessingWorker(*factory, types, vm["port"].as<int>());
+	workerM->ExternalXmp()["CommandLine"] = boost::algorithm::join(std::vector<string>(argv, argv + argc), " ");
 	if (vm.count("prefixe"))
 	{
 		auto p = vm["prefixe"].as<std::string>();

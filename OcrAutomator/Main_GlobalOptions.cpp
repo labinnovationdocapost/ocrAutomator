@@ -220,7 +220,7 @@ int _main(int argc, char* argv[])
 #ifdef _WIN32
 		freopen("TesseractAutomatorStdErr_Master.log", "w", stderr);
 #endif
-		Slave(argv, vm);
+		Slave(argc, argv, vm);
 }
 	else
 	{
@@ -230,7 +230,7 @@ int _main(int argc, char* argv[])
 #ifdef _WIN32
 		freopen("TesseractAutomatorStdErr_Master.log", "w", stderr);
 #endif
-		Master(argv, vm);
+		Master(argc, argv, vm);
 }
 
 
