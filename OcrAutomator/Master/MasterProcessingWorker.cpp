@@ -542,6 +542,9 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 			SXMPMeta meta;
 			auto io = new MemoryXMPIO(_file->buffer);
 			XMP_OptionBits options = 0;
+#ifdef __linux__
+			options |= kXMPFiles_IgnoreLocalText;
+#endif
 			SXMPFiles::Initialize(options);
 			SXMPFiles xmpfile;
 			xmpfile.OpenFile((XMP_IO*)io, kXMP_UnknownFile, kXMPFiles_OpenForUpdate | kXMPFiles_OpenUseSmartHandler);
