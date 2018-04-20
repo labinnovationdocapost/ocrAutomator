@@ -27,8 +27,8 @@
 #include "XMP/MemoryXMPIO.h"
 #include "Base/Version.h"
 
-const XMP_StringPtr kXMP_NS_OCRAUTOMATOR = "http://leia.io/meta/1.0/OcrAutomator/";
-const XMP_StringPtr kXMP_NS_OCRAUTOMATOR_OCR = "http://leia.io/meta/1.0/OcrAutomator/Ocr/";
+const XMP_StringPtr kXMP_NS_OCRAUTOMATOR = "http://leia.io/meta/1.0/Xmp/";
+const XMP_StringPtr kXMP_NS_OCRAUTOMATOR_OCR = "http://leia.io/meta/1.0/Xmp/Ocr/";
 
 #if defined(MSDOS) || defined(OS2) || defined(WIN32) || defined(__CYGWIN__)
 #  include <fcntl.h>
@@ -746,7 +746,16 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 				continue;
 			}
 
-			CreateOutput(file);
+			try
+			{
+				CreateOutput(file);
+			}
+			catch(std::exception& e)
+			{
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cannot write output: " << e.what();
+				onFileCanceled(file);
+				AddFileBack(file);
+			}
 
 			MergeResult(file);
 

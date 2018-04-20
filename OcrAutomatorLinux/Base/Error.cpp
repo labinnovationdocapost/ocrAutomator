@@ -61,7 +61,7 @@ void formatter(logging::record_view const& rec, logging::formatting_ostream& str
 	strm << rec[expr::smessage];
 }
 
-#define LOG_FOLDER "OcrAutomator/log"
+#define LOG_FOLDER "OcrAutomatorLog/"
 void Log::InitLogger()
 {
 	logging::add_common_attributes();
