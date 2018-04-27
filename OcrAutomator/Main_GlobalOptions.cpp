@@ -215,7 +215,7 @@ int _main(int argc, char* argv[])
 	if (vm.count("slave"))
 	{
 #ifdef __linux__
-		freopen("/var/log/TesseractAutomatorStdErr_Slave.log", "w", stderr);
+		freopen("OcrAutomatorLog/StdErr_Slave.log", "w", stderr);
 #endif
 #ifdef _WIN32
 		freopen("TesseractAutomatorStdErr_Master.log", "w", stderr);
@@ -225,7 +225,7 @@ int _main(int argc, char* argv[])
 	else
 	{
 #ifdef __linux__
-		freopen("/var/log/TesseractAutomatorStdErr_Master.log", "w", stderr);
+		freopen("OcrAutomatorLog/StdErr_Master.log", "w", stderr);
 #endif
 #ifdef _WIN32
 		freopen("TesseractAutomatorStdErr_Master.log", "w", stderr);

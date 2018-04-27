@@ -31,7 +31,7 @@ namespace Docapost {
 					~Box()
 					{
 						if (text != nullptr)
-							delete text;
+							delete[] text;
 					}
 				};
 				void CreateJSON(rapidjson::Writer<rapidjson::StringBuffer>& writer, std::list<std::shared_ptr<Box>>& boxs);

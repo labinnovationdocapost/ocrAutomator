@@ -8,20 +8,6 @@
 #include <curl/curl.h>
 #include <archive_entry.h>
 
-//#include <boost/test/output_test_stream.hpp>
-/*struct cout_redirect {
-	cout_redirect( std::streambuf * new_buffer )
-		: old( std::cout.rdbuf( new_buffer ) )
-	{ }
-
-	~cout_redirect( ) {
-		std::cout.rdbuf( old );
-	}
-
-private:
-	std::streambuf * old;
-};*/
-
 int Fixature::port = 14000;
 
 TEST_OCRAUTOMATOR_SLAVE::TEST_OCRAUTOMATOR_SLAVE(Docapost::IA::Tesseract::TesseractFactory* factory, int port) : factory(factory)
@@ -549,7 +535,7 @@ void OcrFile_Utf8(Docapost::IA::Tesseract::TesseractFactory* factory, std::strin
 {
 	Fixature f; // Setup et deleter
 	files.clear();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif | Docapost::IA::Tesseract::OutputFlags::MemoryText);
 
 	auto file = input_test_path / folder / "/TestUtf8";
 	auto output = output_test_path / "TestUtf8";
@@ -587,7 +573,7 @@ void OcrFilePdf_Utf8(Docapost::IA::Tesseract::TesseractFactory* factory, std::st
 {
 	Fixature f; // Setup et deleter
 	files.clear();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif | Docapost::IA::Tesseract::OutputFlags::MemoryText);
 
 	auto file = input_test_path / folder / "/TestUtf8";
 	auto output = output_test_path / "TestUtf8";
@@ -664,7 +650,9 @@ void OcrFile_Slave(Docapost::IA::Tesseract::TesseractFactory* factory, Docapost:
 
 		auto new_path = fs::absolute(relative_path, output);
 		auto txt = boost::filesystem::change_extension(new_path, ".txt");
+		auto json = boost::filesystem::change_extension(new_path, ".json");
 		BOOST_CHECK(boost::filesystem::exists(txt));
+		BOOST_CHECK(boost::filesystem::exists(json));
 		BOOST_CHECK(boost::filesystem::exists(ffile->new_name));
 	}
 
@@ -704,7 +692,9 @@ void OcrFilePdf_Slave(Docapost::IA::Tesseract::TesseractFactory* factory, Docapo
 		p_txtall.pop_back();
 
 		auto txt = boost::filesystem::change_extension(new_path, ".txt");
+		auto json = boost::filesystem::change_extension(new_path, ".json");
 		BOOST_CHECK(boost::filesystem::exists(txt));
+		BOOST_CHECK(boost::filesystem::exists(json));
 		BOOST_CHECK(boost::filesystem::exists(p_txtall + ".txt"));
 
 		BOOST_CHECK(boost::filesystem::exists(new_path));
@@ -742,7 +732,9 @@ void OcrFile_Slave_Inverse(Docapost::IA::Tesseract::TesseractFactory* factory, D
 
 		auto new_path = fs::absolute(relative_path, output);
 		auto txt = boost::filesystem::change_extension(new_path, ".txt");
+		auto json = boost::filesystem::change_extension(new_path, ".json");
 		BOOST_CHECK(boost::filesystem::exists(txt));
+		BOOST_CHECK(boost::filesystem::exists(json));
 		BOOST_CHECK(boost::filesystem::exists(ffile->new_name));
 	}
 
@@ -783,7 +775,9 @@ void OcrFilePdf_Slave_Inverse(Docapost::IA::Tesseract::TesseractFactory* factory
 		p_txtall.pop_back();
 
 		auto txt = boost::filesystem::change_extension(new_path, ".txt");
+		auto json = boost::filesystem::change_extension(new_path, ".json");
 		BOOST_CHECK(boost::filesystem::exists(txt));
+		BOOST_CHECK(boost::filesystem::exists(json));
 		BOOST_CHECK(boost::filesystem::exists(p_txtall + ".txt"));
 
 		BOOST_CHECK(boost::filesystem::exists(new_path));

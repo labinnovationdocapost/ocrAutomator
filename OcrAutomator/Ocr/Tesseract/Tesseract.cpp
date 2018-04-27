@@ -19,6 +19,7 @@ Docapost::IA::Tesseract::Tesseract::Tesseract(tesseract::PageSegMode psm, tesser
 
 	mTessBaseAPI.SetVariable("debug_file", "/dev/null");
 	mTessBaseAPI.SetVariable("out", "quiet");
+	mTessBaseAPI.SetVariable("edges_debug", "0");
 
 }
 

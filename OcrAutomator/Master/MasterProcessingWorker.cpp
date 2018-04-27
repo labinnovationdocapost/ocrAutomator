@@ -26,6 +26,7 @@
 #include "XMP_IO.hpp"
 #include "XMP/MemoryXMPIO.h"
 #include "Base/Version.h"
+#include "Buffer/VectorMemoryFileBuffer.h"
 
 const XMP_StringPtr kXMP_NS_OCRAUTOMATOR = "http://leia.io/meta/1.0/Xmp/";
 const XMP_StringPtr kXMP_NS_OCRAUTOMATOR_OCR = "http://leia.io/meta/1.0/Xmp/Ocr/";
@@ -47,6 +48,13 @@ Docapost::IA::Tesseract::MasterProcessingWorker::MasterProcessingWorker(OcrFacto
 {
 	/*PoDoFo::PdfError::EnableDebug(false);
 	PoDoFo::PdfError::EnableLogging(false);*/
+
+	SXMPMeta::Initialize();
+	XMP_OptionBits options = 0;
+#ifdef __linux__
+	options |= kXMPFiles_IgnoreLocalText;
+#endif
+	SXMPFiles::Initialize(options);
 
 	mNetworkThread = new std::thread([this, port]()
 	{
@@ -129,66 +137,66 @@ fs::path Docapost::IA::Tesseract::MasterProcessingWorker::ConstructNewTextFilePa
 	return new_path;
 }
 
-void Docapost::IA::Tesseract::MasterProcessingWorker::MergeResult(MasterFileStatus* mfile)
+bool Docapost::IA::Tesseract::MasterProcessingWorker::MergeResult(MasterFileStatus* mfile)
 {
 	// IF we do not require text writing, just do not merge
 	if (!(mOutputTypes & OutputFlags::Text))
-		return;
+		return true;
 
 	MasterLocalFileStatus* file = dynamic_cast<MasterLocalFileStatus*>(mfile);
 	if (file == nullptr)
-		return;
+		return true;
 
-	if (file->filePosition >= 0)
+	if (file->filePosition < 0)
 	{
-		std::lock_guard<std::mutex>(*file->mutex_siblings);
 		file->isCompleted = true;
-		bool completed = true;
+		return true;
+	}
+
+	std::lock_guard<std::mutex>(*file->mutex_siblings);
+	file->isCompleted = true;
+	bool completed = true;
+	for (int i = 0; i < file->siblings->size(); i++)
+	{
+		auto item = (*file->siblings)[i];
+		if (item != nullptr)
+		{
+			if (!item->isCompleted)
+			{
+				completed = false;
+				break;
+			}
+		}
+	}
+
+	if (completed)
+	{
+		auto new_path = ConstructNewTextFilePath(file->name);
+		std::ofstream stream{ new_path.string(), std::ios::out | std::ios::trunc };
+
 		for (int i = 0; i < file->siblings->size(); i++)
 		{
 			auto item = (*file->siblings)[i];
 			if (item != nullptr)
 			{
-				if (!item->isCompleted)
+				stream << *(item->result->begin()) << std::endl;
+			}
+			else
+			{
+				auto pdf_path = CreatePdfOutputPath(file->name, i);
+				auto output_file = ConstructNewTextFilePath(pdf_path);
+				if (!fs::exists(output_file))
 				{
-					completed = false;
+					stream.close();
+					fs::remove(new_path);
 					break;
 				}
-			}
-		}
-
-		if (completed)
-		{
-			auto new_path = ConstructNewTextFilePath(file->name);
-			std::ofstream stream{ new_path.string(), std::ios::out | std::ios::trunc };
-
-			for (int i = 0; i < file->siblings->size(); i++)
-			{
-				auto item = (*file->siblings)[i];
-				if (item != nullptr)
-				{
-					stream << *(item->result->begin()) << std::endl;
-				}
-				else
-				{
-					auto pdf_path = CreatePdfOutputPath(file->name, i);
-					auto output_file = ConstructNewTextFilePath(pdf_path);
-					if (!fs::exists(output_file))
-					{
-						stream.close();
-						fs::remove(new_path);
-						break;
-					}
-					std::ifstream ifile(output_file.string(), std::ios::in);
-					stream << ifile.rdbuf() << std::endl;
-				}
+				std::ifstream ifile(output_file.string(), std::ios::in);
+				stream << ifile.rdbuf() << std::endl;
 			}
 		}
 	}
-	else
-	{
-		file->isCompleted = true;
-	}
+	return completed;
 }
 
 
@@ -226,7 +234,7 @@ bool Docapost::IA::Tesseract::MasterProcessingWorker::FileExist(fs::path path) c
 	return false;
 }
 
-bool Docapost::IA::Tesseract::MasterProcessingWorker::ExifExist(fs::path path) const
+bool Docapost::IA::Tesseract::MasterProcessingWorker::MetadataExist(fs::path path) const
 {
 	auto new_path = ConstructNewExifFilePath(path);
 
@@ -235,15 +243,56 @@ bool Docapost::IA::Tesseract::MasterProcessingWorker::ExifExist(fs::path path) c
 		return false;
 	}
 
-	Exiv2::Image::AutoPtr o_image = Exiv2::ImageFactory::open(new_path.string());
-	o_image->readMetadata();
-	Exiv2::ExifData &exifData = o_image->exifData();
-
-	Exiv2::ExifKey key("Exif.Image.ProcessingSoftware");
-	Exiv2::ExifData::iterator pos = exifData.findKey(key);
-	if (pos != exifData.end() && pos->value().toString() == mSoftName)
+	try
 	{
-		return true;
+		SXMPMeta meta;
+		SXMPFiles xmpfile;
+		auto res1 = xmpfile.OpenFile(new_path.string(), kXMP_UnknownFile, kXMPFiles_OpenForUpdate | kXMPFiles_OpenUseSmartHandler);
+		auto res = xmpfile.GetXMP(&meta);
+
+
+		std::string ns;
+		SXMPMeta::RegisterNamespace(kXMP_NS_OCRAUTOMATOR, "OcrAutomator", &ns);
+		SXMPMeta::RegisterNamespace(kXMP_NS_OCRAUTOMATOR_OCR, "Ocr", &ns);
+
+		auto ocrName = mOcrFactory.Name();
+		if (!meta.DoesPropertyExist(kXMP_NS_OCRAUTOMATOR, "Sections"))
+		{
+			if (meta.DoesPropertyExist(kXMP_NS_OCRAUTOMATOR, ocrName.c_str()))
+			{
+				// If the file does not possese a Section, correct it by creating one
+				meta.SetProperty(kXMP_NS_OCRAUTOMATOR, "Sections", 0, kXMP_PropValueIsArray);
+				meta.AppendArrayItem(kXMP_NS_OCRAUTOMATOR, "Sections", 0, ocrName.c_str(), 0);
+				xmpfile.PutXMP(meta);
+				xmpfile.CloseFile();
+				return true;
+			}
+			return false;
+		}
+
+		if (!meta.DoesPropertyExist(kXMP_NS_OCRAUTOMATOR, ocrName.c_str()))
+		{
+			return false;
+		}
+
+		int nbSections = meta.CountArrayItems(kXMP_NS_OCRAUTOMATOR, "Sections");
+		bool sectionExist = false;
+		for (int i = 0; i < nbSections; i++)
+		{
+			std::string section;
+			meta.GetArrayItem(kXMP_NS_OCRAUTOMATOR, "Sections", i + 1, &section, 0);
+			if (section == ocrName)
+			{
+				sectionExist = true;
+				break;
+			}
+		}
+
+		return sectionExist;
+	}
+	catch (XMP_Error& wmp_err)
+	{
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "cannot Write XMP : " << wmp_err.GetErrMsg();
 	}
 	return false;
 }
@@ -264,8 +313,16 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::InitPdfMasterFileStatus(Ma
 
 int Docapost::IA::Tesseract::MasterProcessingWorker::AddPdfFile(bool resume, fs::path path)
 {
-	MuPDF::MuPDF pdf;
-	auto nbPages = pdf.GetNbPage(path.string());
+	int nbPages = 0;
+	try
+	{
+		MuPDF::MuPDF pdf;
+		nbPages = pdf.GetNbPage(path.string());
+	}
+	catch (std::runtime_error& err)
+	{
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "cannot read pdf: " << path << "\nReason: " << err.what();
+	}
 
 	std::mutex* mutex_siblings = new std::mutex();
 
@@ -288,7 +345,7 @@ int Docapost::IA::Tesseract::MasterProcessingWorker::AddPdfFile(bool resume, fs:
 
 			if (mOutputTypes & OutputFlags::Exif)
 			{
-				toProcess = toProcess || !ExifExist(output_file);
+				toProcess = toProcess || !MetadataExist(output_file);
 			}
 
 			if (!toProcess)
@@ -301,14 +358,14 @@ int Docapost::IA::Tesseract::MasterProcessingWorker::AddPdfFile(bool resume, fs:
 		{
 			MasterFileStatus* file = new MasterLocalFileStatus(path.string(), fs::relative(path, mInput).string(), output_file);
 			InitPdfMasterFileStatus(file, mutex_siblings, siblings, i);
-			if (added == false)
+			if (!added)
 			{
 				added = true;
 				AddFileBack(file);
 			}
 		}
 	}
-	if (added == false)
+	if (!added)
 	{
 		delete mutex_siblings;
 		delete siblings;
@@ -351,7 +408,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::AddImageFile(bool resume, 
 
 		if (mOutputTypes & OutputFlags::Exif)
 		{
-			toProcess = toProcess || !ExifExist(path);
+			toProcess = toProcess || !MetadataExist(path);
 		}
 
 		if (!toProcess)
@@ -534,18 +591,12 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 
 	if (mOutputTypes & OutputFlags::MemoryImage || mOutputTypes & OutputFlags::Exif)
 	{
-		auto init = SXMPMeta::Initialize();
 		Exiv2::ExifData exifData;
 
 		try
 		{
 			SXMPMeta meta;
 			auto io = new MemoryXMPIO(_file->buffer);
-			XMP_OptionBits options = 0;
-#ifdef __linux__
-			options |= kXMPFiles_IgnoreLocalText;
-#endif
-			SXMPFiles::Initialize(options);
 			SXMPFiles xmpfile;
 			xmpfile.OpenFile((XMP_IO*)io, kXMP_UnknownFile, kXMPFiles_OpenForUpdate | kXMPFiles_OpenUseSmartHandler);
 			auto res = xmpfile.GetXMP(&meta);
@@ -566,7 +617,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 				meta.SetProperty(kXMP_NS_OCRAUTOMATOR, "Sections", 0, kXMP_PropValueIsArray);
 			}
 
-			if(!meta.DoesPropertyExist(kXMP_NS_OCRAUTOMATOR, ocrName.c_str()))
+			if (!meta.DoesPropertyExist(kXMP_NS_OCRAUTOMATOR, ocrName.c_str()))
 			{
 				meta.AppendArrayItem(kXMP_NS_OCRAUTOMATOR, "Sections", 0, ocrName.c_str(), 0);
 			}
@@ -574,7 +625,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 			{
 				int nbSections = meta.CountArrayItems(kXMP_NS_OCRAUTOMATOR, "Sections");
 				bool sectionExist = false;
-				for(int i = 0; i < nbSections; i++)
+				for (int i = 0; i < nbSections; i++)
 				{
 					std::string section;
 					meta.GetArrayItem(kXMP_NS_OCRAUTOMATOR, "Sections", i + 1, &section, 0);
@@ -584,7 +635,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 						break;
 					}
 				}
-				if(!sectionExist)
+				if (!sectionExist)
 				{
 					meta.AppendArrayItem(kXMP_NS_OCRAUTOMATOR, "Sections", 0, ocrName.c_str(), 0);
 				}
@@ -613,15 +664,10 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 			auto str = oss.str();
 
 			meta.SetStructField(kXMP_NS_OCRAUTOMATOR, ocrName.c_str(), kXMP_NS_OCRAUTOMATOR_OCR, "Date", str.c_str());
-			std::string strStd;
-			std::string strEx;
-			std::string digestEx;
-			SXMPUtils::PackageForJPEG(meta, &strStd, &strEx, &digestEx);
-			xmpfile.PutXMP(strStd);
-			if (!strEx.empty())
-				xmpfile.PutXMP(strEx);
+			xmpfile.PutXMP(meta);
 			xmpfile.CloseFile();
 			_file->buffer = io->Buffer();
+			delete io;
 		}
 		catch (XMP_Error& wmp_err)
 		{
@@ -652,7 +698,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 	}
 }
 
-void Docapost::IA::Tesseract::MasterProcessingWorker::FreeBuffers(MasterFileStatus* file, int memoryImage, int memoryText)
+void Docapost::IA::Tesseract::MasterProcessingWorker::FreeBuffers(MasterFileStatus* file, bool memoryImage, bool memoryText, bool canDeleteText)
 {
 	if (file->buffer == nullptr)
 		return;
@@ -662,10 +708,29 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::FreeBuffers(MasterFileStat
 		delete file->buffer;
 		file->buffer = nullptr;
 	}
-	/*if (!memoryText)
+
+	if (!memoryText && canDeleteText)
 	{
-		file->result.reset();
-	}*/
+		if (file->filePosition >= 0)
+		{
+			for (int i = 0; i < file->siblings->size(); i++)
+			{
+				auto item = (*file->siblings)[i];
+				if (item != nullptr)
+				{
+					if (!item->isCompleted)
+					{
+						item->result.reset();
+						break;
+					}
+				}
+			}
+		}
+		else
+		{
+			file->result.reset();
+		}
+	}
 }
 
 void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
@@ -750,16 +815,16 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 			{
 				CreateOutput(file);
 			}
-			catch(std::exception& e)
+			catch (std::exception& e)
 			{
 				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cannot write output: " << e.what();
 				onFileCanceled(file);
 				AddFileBack(file);
 			}
 
-			MergeResult(file);
+			auto isMerge = MergeResult(file);
 
-			FreeBuffers(file, mOutputTypes & OutputFlags::MemoryImage, mOutputTypes & OutputFlags::MemoryText);
+			FreeBuffers(file, mOutputTypes & OutputFlags::MemoryImage, (mOutputTypes & OutputFlags::MemoryText), isMerge);
 
 			mDone++;
 

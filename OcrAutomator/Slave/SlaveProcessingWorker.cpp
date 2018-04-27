@@ -189,9 +189,9 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::ThreadLoop(int id)
 			file->start = boost::posix_time::microsec_clock::local_time();
 
 			file->result = ocr->ProcessThroughOcr(file->buffer);
-			if (file->result->size() == 0)
+			if (file->result->empty())
 			{
-				std::cerr << "Get Tesseract Error" << std::endl;
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Ocr Error: result empty (" << file->uuid << ")" << std::endl;
 
 				continue;
 			}
@@ -245,7 +245,7 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::TerminateThread(int id)
 	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Thread " << id << " Terminated";
 
 	boost::lock_guard<std::mutex> lock(mThreadMutex);
-	if (mThreads.size() == 0)
+	if (mThreads.empty())
 	{
 		mEnd = boost::posix_time::second_clock::local_time();
 		/*mNetwork->Stop();

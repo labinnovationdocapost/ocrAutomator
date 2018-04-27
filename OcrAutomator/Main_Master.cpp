@@ -11,13 +11,6 @@ HttpServer* http;
 
 void Master(int argc, char** argv, po::variables_map& vm)
 {
-	/*boost::interprocess::named_mutex ip_process {boost::interprocess::open_or_create, "OCRAutomator_Mutex"};
-	if(!ip_process.try_lock())
-	{
-	std::cout << "Application already running, two application cannot run on the same PC\n";
-	return;
-	}*/
-
 	int nb_process = 1;
 	if (vm.count("parallel"))
 	{

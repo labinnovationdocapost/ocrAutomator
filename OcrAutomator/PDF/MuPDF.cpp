@@ -42,13 +42,15 @@ Docapost::IA::MuPDF::MuPDF::MuPDF()
 	{
 		auto msg = fz_caught_message(mContext);
 		fz_drop_context(mContext);
+		mContext = nullptr;
 		throw std::runtime_error(std::string("cannot register document handlers: ") + msg);
 	}
 }
 
 Docapost::IA::MuPDF::MuPDF::~MuPDF()
 {
-	fz_drop_context(mContext);
+	if(mContext != nullptr)
+		fz_drop_context(mContext);
 }
 
 int Docapost::IA::MuPDF::MuPDF::GetNbPage(std::string path)
@@ -62,6 +64,7 @@ int Docapost::IA::MuPDF::MuPDF::GetNbPage(std::string path)
 	{
 		auto msg = fz_caught_message(mContext);
 		fz_drop_context(mContext);
+		mContext = nullptr;
 		throw std::runtime_error(std::string("cannot open document: ") + msg);
 	}
 
@@ -96,6 +99,7 @@ int Docapost::IA::MuPDF::MuPDF::GetNbPage(char* pdf, int len)
 		if (stream != nullptr)
 			fz_drop_stream(mContext, stream);
 		fz_drop_context(mContext);
+		mContext = nullptr;
 		throw std::runtime_error(std::string("cannot open document: ") + msg);
 	}
 
@@ -140,6 +144,7 @@ void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::T
 		if (stream != nullptr)
 			fz_drop_stream(mContext,stream);
 		fz_drop_context(mContext);
+		mContext = nullptr;
 		throw std::runtime_error(std::string("cannot open document: ") + msg);
 	}
 
@@ -154,6 +159,7 @@ void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::T
 		if (stream != nullptr)
 			fz_drop_stream(mContext, stream);
 		fz_drop_context(mContext);
+		mContext = nullptr;
 		throw std::runtime_error(std::string("cannot count number of pages: ") + msg);
 	}
 	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Count page: " << pageCount;
@@ -211,6 +217,7 @@ void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::T
 			if (stream != nullptr)
 				fz_drop_stream(mContext, stream);
 			fz_drop_context(mContext);
+			mContext = nullptr;
 			throw std::runtime_error(std::string("cannot create device: ") + msg);
 		}
 
@@ -232,6 +239,7 @@ void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::T
 			if (stream != nullptr)
 				fz_drop_stream(mContext, stream);
 			fz_drop_context(mContext);
+			mContext = nullptr;
 			throw std::runtime_error(std::string("Cannot allocate: ") + msg);
 		}
 

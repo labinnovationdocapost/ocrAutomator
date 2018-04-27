@@ -10,4 +10,10 @@ public:
 	std::atomic<bool> Terminated{ false };
 	std::mutex ClientMutex{};
 	std::string Name;
+	boost::thread* Thread = nullptr;
+
+	~SlaveState()
+	{
+		delete Thread;
+	}
 };

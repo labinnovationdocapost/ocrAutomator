@@ -17,6 +17,7 @@
 #include "Base/OutputFlags.h"
 #include "Slave/SlaveState.h"
 #include <unordered_map>
+#include "Base/Error.h"
 using std::string;
 #include "Network/Network.h"
 #include "MasterFileStatus.h"
@@ -74,7 +75,7 @@ namespace Docapost {
 				 * \param path Chemin du document original
 				 * \return True si l'Exif existe
 				 */
-				bool ExifExist(fs::path path)  const;
+				bool MetadataExist(fs::path path)  const;
 				/**
 				 * \brief créer le chemin d'origine pour une page d'un document pdf
 				 * \param path chemin du pdf original
@@ -105,11 +106,11 @@ namespace Docapost {
 				 */
 				fs::path ConstructNewTextFilePath(fs::path path, std::string ext) const;
 
-				void MergeResult(MasterFileStatus* file);
+				bool MergeResult(MasterFileStatus* file);
 
 				std::string Compress(std::string& str, int compressionlevel);
 				void CreateOutput(MasterFileStatus* file);
-				void FreeBuffers(MasterFileStatus* file, int memoryImage, int memoryText);
+				void FreeBuffers(MasterFileStatus* file, bool memoryImage, bool memoryText, bool canDeleteText);
 
 				void TerminateThread(int id);
 
@@ -119,7 +120,7 @@ namespace Docapost {
 					std::lock_guard<std::mutex> lock(mNetworkMutex);
 					if (mFileSend[file->uuid] != nullptr)
 					{
-						std::cout << "File " << file->uuid << " exist already\n";
+						BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "File " << file->uuid << " exist already\n";
 					}
 					mFileSend[file->uuid] = file;
 				}

@@ -49,25 +49,23 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 
 			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << ns->Hostname() << "Writing Output " << file->name << "[" << file->filePosition << "]" << "\n";
 			CreateOutput(file);
-			MergeResult(file);
+			auto isMerge = MergeResult(file);
 			mDone++;
 
 			onEndProcessFile(file);
 
 			RemoveFileSend(uuid);
 
-			FreeBuffers(file, mOutputTypes & OutputFlags::MemoryImage, mOutputTypes & OutputFlags::MemoryText);
+			FreeBuffers(file, mOutputTypes & OutputFlags::MemoryImage, mOutputTypes & OutputFlags::MemoryText, isMerge);
 
 			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << ns->Hostname() << "Clean " << file->name << "[" << file->filePosition << "]" << "\n";
 		}
 
-		if (slave->PendingNotProcessed > 0 && slave->PendingProcessed > 0 && !mIsTerminated)
-		{
-			auto th = new std::thread(&MasterProcessingWorker::SendFilesToClient, this, ns);
-			th->detach();
-			delete th;
-		}
 		std::lock_guard<std::mutex> lock(slave->ClientMutex);
+		if (slave->PendingNotProcessed > 0 && slave->PendingProcessed > 0 && !mIsTerminated && slave->Thread == nullptr)
+		{
+			slave->Thread = new boost::thread(&MasterProcessingWorker::SendFilesToClient, this, ns);
+		}
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::debug) << "Synchro Ack";
 		ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, slave->PendingNotProcessed, boost::unordered_map<boost::uuids::uuid, Docapost::IA::Tesseract::MemoryFileBuffer*>());
 	}
@@ -83,6 +81,8 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveDisconnectHandler(N
 	if (ns == nullptr)
 		return;
 
+
+	if(mSlaves.find(ns->Id()) != mSlaves.end())
 	{
 		auto slave = mSlaves[ns->Id()];
 		slave->Terminated = true;
@@ -130,11 +130,9 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::SendFilesToClient(NetworkS
 	auto slave = mSlaves[ns->Id()];
 	try
 	{
-		std::cerr << std::this_thread::get_id() << " | Run Thread for network\n";
 		auto ocr = mOcrFactory.CreateNew();
 		while (HasFileToSend(slave))
 		{
-			std::cerr << std::this_thread::get_id() << " | Begining Loading\n";
 			MasterFileStatus*  file = GetFile();
 			if (file == nullptr)
 			{
@@ -152,8 +150,6 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::SendFilesToClient(NetworkS
 			file->hostname = ns->Hostname();
 
 
-			//mFileSend[id] = file;
-			std::cerr << std::this_thread::get_id() << " | Loading\n";
 			if (nullptr != ocr->LoadFile(file, [this](MasterFileStatus* file) {this->AddFile(file); }))
 			{
 				if (slave->Terminated)
@@ -206,5 +202,9 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::SendFilesToClient(NetworkS
 	{
 		std::cout << "ERROR !!! : " << e.what() << std::endl;
 	}
+	std::lock_guard<std::mutex> lock(slave->ClientMutex);
+	slave->Thread->detach();
+	delete slave->Thread;
+	slave->Thread = nullptr;
 
 }
