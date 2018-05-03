@@ -7,6 +7,7 @@
 
 std::mutex Docapost::IA::Tesseract::BaseOcrWithLoader::mCreationThreadMutex{};
 int Docapost::IA::Tesseract::BaseOcrWithLoader::mCurrentPdfCreationThread = 0;
+int Docapost::IA::Tesseract::BaseOcrWithLoader::mMaxPdfCreationThread = 4;
 #ifdef MAGICK
 Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::BaseOcrWithLoader::ExtractPdfFromImageMagick(MasterFileStatus* file, const std::function<void(MasterFileStatus*)>& AddFile)
 {
