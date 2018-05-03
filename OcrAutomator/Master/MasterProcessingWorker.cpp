@@ -409,7 +409,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::AddImageFile(bool resume, 
 
 		if (mOutputTypes & OutputFlags::Metadata)
 		{
-			toProcess = toProcess || !MetadataExist(path, false);
+			toProcess = toProcess || !MetadataExist(path, mOutputTypes & OutputFlags::FastScan);
 		}
 
 		if (!toProcess)
