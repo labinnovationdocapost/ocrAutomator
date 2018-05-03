@@ -745,7 +745,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 	}
 	catch (UninitializedOcrException& e)
 	{
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Thread " << id << " - " << e.message();
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::error) << "Thread " << id << " - " << e.message();
 		return;
 	}
 
@@ -766,30 +766,51 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 						break;
 					}
 				}
-				if (mDone == mTotal && mFileSend.size() == 0 && mIsEnd)
+				if (mDone == mTotal && mFileSend.empty() && mIsEnd)
 				{
 					break;
 				}
 				std::this_thread::sleep_for(std::chrono::milliseconds(300));
 				continue;
 			}
+
 			file->uuid = boost::uuids::uuid();
 			file->thread = id;
 			file->start = boost::posix_time::microsec_clock::local_time();
 
+			if (file->abandoned)
+			{
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Exclude file "<< file->name << ":" << file->filePosition;
+				Log::WriteFileToExclude(file);
+				mDone++;
+				file->end = boost::posix_time::microsec_clock::local_time();
+				file->ellapsed = file->end - file->start;
+				file->isEnd = true;
+				continue;
+			}
+
 			try
 			{
+				// If we got null, it meen that the processing is in progress, just wait, otherwise the file is usable, just use it
 				if (nullptr == ocr->LoadFile(file, boost::bind(&MasterProcessingWorker::AddFile, this, _1)))
 				{
 					BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "LoadFile null waiting 1000ms";
 					std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-					//AddFileBack(file);
 					continue;
 				}
 			}
 			catch (std::runtime_error& e)
 			{
-				AddFileBack(file);
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cannot load file";
+				if (file->retry < MAX_RETRY)
+				{
+					file->retry++;
+					AddFileBack(file);
+				}
+				else
+				{
+					Log::WriteFileToExclude(file);
+				}
 				continue;
 			}
 			onStartProcessFile(file);
@@ -797,9 +818,17 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 			try
 			{
 				file->result = ocr->ProcessThroughOcr(file->buffer);
-				if (file->result->size() == 0)
+				if (file->result->empty())
 				{
-					AddFileBack(file);
+					if (file->retry < MAX_RETRY)
+					{
+						file->retry++;
+						AddFileBack(file);
+					}
+					else
+					{
+						Log::WriteFileToExclude(file);
+					}
 					continue;
 				}
 			}
@@ -807,7 +836,15 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 			{
 				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Error: " << error.what();
 				onFileCanceled(file);
-				AddFileBack(file);
+				if (file->retry < MAX_RETRY)
+				{
+					file->retry++;
+					AddFileBack(file);
+				}
+				else
+				{
+					Log::WriteFileToExclude(file);
+				}
 				continue;
 			}
 
@@ -819,7 +856,13 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 			{
 				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cannot write output: " << e.what();
 				onFileCanceled(file);
-				AddFileBack(file);
+				if (file->retry < MAX_RETRY)
+				{
+					Log::WriteFileToExclude(file);
+					file->retry++;
+					AddFileBack(file);
+				}
+				continue;
 			}
 
 			auto isMerge = MergeResult(file);

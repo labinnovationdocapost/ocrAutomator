@@ -139,6 +139,16 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::SendFilesToClient(NetworkS
 				++slave->PendingProcessed;
 				break;
 			}
+			if (file->abandoned)
+			{
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Exclude file " << file->name << ":" << file->filePosition;
+				Log::WriteFileToExclude(file);
+				mDone++;
+				file->end = boost::posix_time::microsec_clock::local_time();
+				file->ellapsed = file->end - file->start;
+				file->isEnd = true;
+				continue;
+			}
 
 			boost::uuids::uuid id;
 			{

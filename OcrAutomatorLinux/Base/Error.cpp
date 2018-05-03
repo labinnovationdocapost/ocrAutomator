@@ -37,8 +37,8 @@ extern Docapost::IA::Tesseract::SlaveProcessingWorker* workerS;
 
 #define GET_EXCEPTION_NAME std::current_exception().__cxa_exception_type()->name()
 
-#define LOG_FOLDER "OcrAutomatorLog/"
-#define LOG_ERROR_File "OcrAutomatorLog/error.log"
+std::mutex Log::mFileExcludesMutex;
+std::unique_ptr<std::ofstream> Log::mFileExcludes;
 
 BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", boost::log::trivial::severity_level)
 BOOST_LOG_ATTRIBUTE_KEYWORD(tag_attr, "Tag", std::string)
@@ -173,8 +173,12 @@ void segfault_action(int sig, siginfo_t *info, void *secret)
 	exit(0);
 }
 
+bool isStopping = false;
 void segint_action(int sig, siginfo_t *info, void *secret)
 {
+	if(isStopping == true)
+		exit(0);
+	isStopping = true;
 	if (display != nullptr)
 		display->terminated(true);
 	else if (workerM != nullptr)

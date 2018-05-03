@@ -180,14 +180,12 @@ void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::T
 		//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "LoadPage";
 		auto* page = fz_load_page(mContext, doc, pageNumber);
 		fz_bound_page(mContext, page, &rect);
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Bound Page | x: " << rect.x1 - rect.x0 << " | y: " << rect.y1 - rect.y0;
 
 		float ratioX = mMaxResolution / (rect.x1 - rect.x0);
 		float ratioY = mMaxResolution / (rect.y1 - rect.y0);
 		float ratio = std::min(ratioX, ratioY);
 		ratio = std::min(ratio, 4.0f);
 
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Ratio | x: " << ratioX << " | y: " << ratioY;
 		fz_pre_scale(&ctm, ratio, ratio);
 
 
@@ -195,9 +193,7 @@ void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::T
 		fz_round_rect(&irect, &rect);
 
 		fz_display_list *list = fz_new_display_list(mContext, &rect);
-
-		//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "New Device";
-
+		
 		fz_device *dev = nullptr;
 		fz_try(mContext)
 		{
@@ -213,34 +209,25 @@ void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::T
 		fz_catch(mContext)
 		{
 			auto msg = fz_caught_message(mContext);
-			fz_drop_document(mContext, doc);
-			if (stream != nullptr)
-				fz_drop_stream(mContext, stream);
-			fz_drop_context(mContext);
-			mContext = nullptr;
-			throw std::runtime_error(std::string("cannot create device: ") + msg);
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::error) << "cannot create device for page " << pageNumber << ": " << msg;
+			(*file->siblings)[pageNumber]->abandoned = true;
+			(*file->siblings)[pageNumber]->isCompleted = true;
+			continue;
 		}
-
-		//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Destruct page";
-		//fz_drop_page(mContext, page);
-
+		
 		fz_pixmap *pix = nullptr;
 		fz_try(mContext)
 		{
-			//std::lock_guard<std::mutex> staticlock(mStaticContextMutex);
-			//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "create pixmap";
 			pix = fz_new_pixmap_with_bbox(mContext, fz_device_rgb(mContext), &irect, 0, 0);
 			fz_clear_pixmap_with_value(mContext, pix, 0xFF);
 		}
 		fz_catch(mContext)
 		{
 			auto msg = fz_caught_message(mContext);
-			fz_drop_document(mContext, doc);
-			if (stream != nullptr)
-				fz_drop_stream(mContext, stream);
-			fz_drop_context(mContext);
-			mContext = nullptr;
-			throw std::runtime_error(std::string("Cannot allocate: ") + msg);
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::error) << "cannot allocate " << pageNumber << ": " << msg;
+			(*file->siblings)[pageNumber]->abandoned = true;
+			(*file->siblings)[pageNumber]->isCompleted = true;
+			continue;
 		}
 
 
@@ -252,7 +239,6 @@ void Docapost::IA::MuPDF::MuPDF::Extract(MasterFileStatus* file, Docapost::IA::T
 		wp.quality = quality;
 		fz_rect_from_irect(&wp.area, &irect);
 
-		//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "create thread";
 		//worker_threads.create_thread(boost::bind(&MuPDF::Worker, this, wp, (*file->siblings)[pageNumber]));
 		Worker(wp, (*file->siblings)[pageNumber]);
 
@@ -329,10 +315,14 @@ void Docapost::IA::MuPDF::MuPDF::Worker(WorkerParam wp, MasterFileStatus* file)
 	{
 		auto msg = fz_caught_message(mContext);
 		fz_drop_pixmap(local_ctx, wp.pixmap);
-		throw std::runtime_error(std::string("cannot draw pages: ") + msg);
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::error) << "cannot draw pages " <<wp.pageNumber << ": " << msg;
+		fz_drop_context(local_ctx);
+		fz_drop_pixmap(mContext, wp.pixmap);
+		fz_drop_display_list(mContext, wp.displayList);
+		file->abandoned = true;
+		file->isCompleted = true;
+		return;
 	}
-
-	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "writing to jpeg";
 
 	if (wp.format == Docapost::IA::Tesseract::ImageFormatEnum::JPG)
 	{
@@ -348,8 +338,6 @@ void Docapost::IA::MuPDF::MuPDF::Worker(WorkerParam wp, MasterFileStatus* file)
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Cannot convert to specified format, rollback to jpg";
 		file->buffer = WriteToJPEG(wp, wp.quality.jpegQuality);
 	}
-
-	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "clean";
 
 	fz_drop_context(local_ctx);
 	//std::lock_guard<std::mutex> lock(mContextMutex);

@@ -38,7 +38,6 @@ namespace Docapost {
 
 				std::mutex mNetworkMutex;
 
-
 				boost::unordered_map<OutputFlags, fs::path> mOutputs;
 				boost::unordered_map<boost::uuids::uuid, std::shared_ptr<SlaveState>> mSlaves;
 				boost::unordered_map<boost::uuids::uuid, MasterFileStatus*> mFileSend;
