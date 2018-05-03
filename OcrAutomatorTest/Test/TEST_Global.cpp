@@ -156,12 +156,12 @@ void OcrCorruptPdf(Docapost::IA::Tesseract::TesseractFactory* factory, std::stri
 {
 	Fixature f; // Setup et deleter
 	files.clear();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata);
 
 	auto file = input_test_path / folder / "Corrupt";
 	auto output = output_test_path / "Corrupt";
 	test_worker->worker->AddFolder(file);
-	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Exif, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
+	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Metadata, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
 
 	test_worker->RUN();
 
@@ -190,7 +190,7 @@ void OcrFile(Docapost::IA::Tesseract::TesseractFactory* factory, std::string fol
 {
 	Fixature f; // Setup et deleter
 	files.clear();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata);
 
 	auto file = input_test_path / folder / "/TestOcr";
 	test_worker->worker->AddFolder(file);
@@ -210,7 +210,7 @@ void OcrFilePdf(Docapost::IA::Tesseract::TesseractFactory* factory, std::string 
 {
 	Fixature f; // Setup et deleter
 	files.clear();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata);
 
 	auto file = input_test_path / folder / "/TestOcr";
 	test_worker->worker->AddFolder(file);
@@ -252,12 +252,12 @@ void OcrFile_DifferentDir(Docapost::IA::Tesseract::TesseractFactory* factory, st
 {
 	Fixature f; // Setup et deleter
 	files.clear();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata);
 
 	auto file = input_test_path / folder / "/TestOcr";
 	auto output = output_test_path / "TestOcr";
 	test_worker->worker->AddFolder(file);
-	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Exif, output }, { Docapost::IA::Tesseract::OutputFlags::Text, output } });
+	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Metadata, output }, { Docapost::IA::Tesseract::OutputFlags::Text, output } });
 
 	test_worker->RUN();
 
@@ -280,12 +280,12 @@ void OcrFilePdf_DifferentDir(Docapost::IA::Tesseract::TesseractFactory* factory,
 {
 	Fixature f; // Setup et deleter
 	files.clear();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata);
 
 	auto file = input_test_path / folder / "/TestOcr";
 	auto output = output_test_path / "TestOcr";
 	test_worker->worker->AddFolder(file);
-	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Exif, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
+	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Metadata, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
 
 	test_worker->RUN();
 
@@ -326,12 +326,12 @@ void OcrFile_DifferentDir_Flatern(Docapost::IA::Tesseract::TesseractFactory* fac
 {
 	Fixature f; // Setup et deleter
 	files.clear();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif | Docapost::IA::Tesseract::OutputFlags::Flattern);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata | Docapost::IA::Tesseract::OutputFlags::Flattern);
 
 	auto file = input_test_path / folder / "/TestFlatern";
 	auto output = output_test_path / "TestFlatern";
 	test_worker->worker->AddFolder(file);
-	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Exif, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
+	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Metadata, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
 
 	test_worker->RUN();
 
@@ -353,12 +353,12 @@ void OcrFilePdf_DifferentDir_Flatern(Docapost::IA::Tesseract::TesseractFactory* 
 {
 	Fixature f; // Setup et deleter
 	files.clear();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif | Docapost::IA::Tesseract::OutputFlags::Flattern);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata | Docapost::IA::Tesseract::OutputFlags::Flattern);
 
 	auto file = input_test_path / folder / "/TestFlatern";
 	auto output = output_test_path / "TestFlatern";
 	test_worker->worker->AddFolder(file);
-	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Exif, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
+	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Metadata, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
 
 	test_worker->RUN();
 
@@ -398,12 +398,12 @@ void OcrFile_DifferentDir_MultiFile_SingleThread(Docapost::IA::Tesseract::Tesser
 {
 	Fixature f; // Setup et deleter
 	files.clear();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata);
 
 	auto file = input_test_path / folder / "/TestMulti";
 	auto output = output_test_path / "TestMulti";
 	test_worker->worker->AddFolder(file);
-	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Exif, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
+	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Metadata, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
 
 	test_worker->RUN();
 
@@ -428,12 +428,12 @@ void OcrFilePdf_DifferentDir_MultiFile_SingleThread(Docapost::IA::Tesseract::Tes
 {
 	Fixature f; // Setup et deleter
 	files.clear();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata);
 
 	auto file = input_test_path / folder / "/TestMulti";
 	auto output = output_test_path / "TestMulti";
 	test_worker->worker->AddFolder(file);
-	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Exif, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
+	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Metadata, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
 
 	test_worker->RUN();
 
@@ -465,12 +465,12 @@ void OcrFile_DifferentDir_MultiFile_MultiThread(Docapost::IA::Tesseract::Tessera
 {
 	Fixature f; // Setup et deleter
 	files.clear();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata);
 
 	auto file = input_test_path / folder / "/TestMulti";
 	auto output = output_test_path / "TestMulti";
 	test_worker->worker->AddFolder(file);
-	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Exif, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
+	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Metadata, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
 
 	test_worker->RUN(4);
 
@@ -496,12 +496,12 @@ void OcrFilePdf_DifferentDir_MultiFile_MultiThread(Docapost::IA::Tesseract::Tess
 {
 	Fixature f; // Setup et deleter
 	files.clear();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata);
 
 	auto file = input_test_path / folder / "/TestMulti";
 	auto output = output_test_path / "TestMulti";
 	test_worker->worker->AddFolder(file);
-	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Exif, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
+	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Metadata, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
 
 	test_worker->RUN(4);
 
@@ -535,12 +535,12 @@ void OcrFile_Utf8(Docapost::IA::Tesseract::TesseractFactory* factory, std::strin
 {
 	Fixature f; // Setup et deleter
 	files.clear();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif | Docapost::IA::Tesseract::OutputFlags::MemoryText);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata | Docapost::IA::Tesseract::OutputFlags::MemoryText);
 
 	auto file = input_test_path / folder / "/TestUtf8";
 	auto output = output_test_path / "TestUtf8";
 	test_worker->worker->AddFolder(file);
-	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Exif, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
+	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Metadata, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
 
 	test_worker->RUN();
 
@@ -573,12 +573,12 @@ void OcrFilePdf_Utf8(Docapost::IA::Tesseract::TesseractFactory* factory, std::st
 {
 	Fixature f; // Setup et deleter
 	files.clear();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif | Docapost::IA::Tesseract::OutputFlags::MemoryText);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata | Docapost::IA::Tesseract::OutputFlags::MemoryText);
 
 	auto file = input_test_path / folder / "/TestUtf8";
 	auto output = output_test_path / "TestUtf8";
 	test_worker->worker->AddFolder(file);
-	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Exif, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
+	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Metadata, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
 
 	test_worker->RUN();
 
@@ -627,14 +627,14 @@ void OcrFile_Slave(Docapost::IA::Tesseract::TesseractFactory* factory, Docapost:
 	Fixature f; // Setup et deleter
 	files.clear();
 	int port = f.Port();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif, port);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata, port);
 	while ((port = test_worker->worker->Port()) == 0) { std::this_thread::sleep_for(std::chrono::milliseconds(50)); }
 	auto test_slave = std::make_unique<TEST_OCRAUTOMATOR_SLAVE>(factory2, port);
 
 	auto file = input_test_path / folder / "/TestMulti";
 	auto output = output_test_path / "TestSlave";
 	test_worker->worker->AddFolder(file);
-	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Exif, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
+	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Metadata, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
 
 	test_slave->RUN(5);
 	test_worker->RUN();
@@ -664,14 +664,14 @@ void OcrFilePdf_Slave(Docapost::IA::Tesseract::TesseractFactory* factory, Docapo
 	Fixature f; // Setup et deleter
 	files.clear();
 	int port = f.Port();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif, port);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata, port);
 	while ((port = test_worker->worker->Port()) == 0) { std::this_thread::sleep_for(std::chrono::milliseconds(50)); }
 	auto test_slave = std::make_unique<TEST_OCRAUTOMATOR_SLAVE>(factory2, port);
 
 	auto file = input_test_path / folder / "/TestMulti";
 	auto output = output_test_path / "TestSlave";
 	test_worker->worker->AddFolder(file);
-	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Exif, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
+	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Metadata, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
 
 	test_slave->RUN(5);
 	test_worker->RUN();
@@ -709,14 +709,14 @@ void OcrFile_Slave_Inverse(Docapost::IA::Tesseract::TesseractFactory* factory, D
 	Fixature f; // Setup et deleter
 	files.clear();
 	int port = f.Port();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif, port);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata, port);
 	while ((port = test_worker->worker->Port()) == 0) { std::this_thread::sleep_for(std::chrono::milliseconds(50)); }
 	auto test_slave = std::make_unique<TEST_OCRAUTOMATOR_SLAVE>(factory2, port);
 
 	auto file = input_test_path / folder / "/TestMulti";
 	auto output = output_test_path / "TestSlave";
 	test_worker->worker->AddFolder(file);
-	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Exif, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
+	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Metadata, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
 
 	test_slave->RUN(5);
 	test_worker->RUN();
@@ -747,14 +747,14 @@ void OcrFilePdf_Slave_Inverse(Docapost::IA::Tesseract::TesseractFactory* factory
 	Fixature f; // Setup et deleter
 	files.clear();
 	int port = f.Port();
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif, port);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata, port);
 	while ((port = test_worker->worker->Port()) == 0) { std::this_thread::sleep_for(std::chrono::milliseconds(50)); }
 	auto test_slave = std::make_unique<TEST_OCRAUTOMATOR_SLAVE>(factory2, port);
 
 	auto file = input_test_path / folder / "/TestMulti";
 	auto output = output_test_path / "TestSlave";
 	test_worker->worker->AddFolder(file);
-	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Exif, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
+	test_worker->worker->SetOutput({ { Docapost::IA::Tesseract::OutputFlags::Metadata, output },{ Docapost::IA::Tesseract::OutputFlags::Text, output } });
 
 	test_slave->RUN(5);
 	test_worker->RUN();
@@ -849,7 +849,7 @@ size_t CurlWrite_CallbackFunc_StdString(void *contents, size_t size, size_t nmem
 }
 void OcrFile_Http_Get(Docapost::IA::Tesseract::TesseractFactory* factory)
 {
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif | Docapost::IA::Tesseract::OutputFlags::MemoryImage | Docapost::IA::Tesseract::OutputFlags::MemoryText);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata | Docapost::IA::Tesseract::OutputFlags::MemoryImage | Docapost::IA::Tesseract::OutputFlags::MemoryText);
 	http = new HttpServer(*test_worker->worker, L"0.0.0.0", 8888);
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	test_worker->worker->Run(1);
@@ -873,7 +873,7 @@ void OcrFile_Http_Get(Docapost::IA::Tesseract::TesseractFactory* factory)
 
 void OcrFile_Http_Post(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder)
 {
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif | Docapost::IA::Tesseract::OutputFlags::MemoryImage | Docapost::IA::Tesseract::OutputFlags::MemoryText);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata | Docapost::IA::Tesseract::OutputFlags::MemoryImage | Docapost::IA::Tesseract::OutputFlags::MemoryText);
 	http = new HttpServer(*test_worker->worker, L"0.0.0.0", 8888);
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	test_worker->worker->Run(1);
@@ -922,7 +922,7 @@ void OcrFile_Http_Post(Docapost::IA::Tesseract::TesseractFactory* factory, std::
 }
 void OcrFilePdf_Http_Post(Docapost::IA::Tesseract::TesseractFactory* factory, std::string folder)
 {
-	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Exif | Docapost::IA::Tesseract::OutputFlags::MemoryImage | Docapost::IA::Tesseract::OutputFlags::MemoryText);
+	auto test_worker = std::make_unique<TEST_OCRAUTOMATOR>(factory, Docapost::IA::Tesseract::OutputFlags::Text | Docapost::IA::Tesseract::OutputFlags::Metadata | Docapost::IA::Tesseract::OutputFlags::MemoryImage | Docapost::IA::Tesseract::OutputFlags::MemoryText);
 	http = new HttpServer(*test_worker->worker, L"0.0.0.0", 8888);
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	test_worker->worker->Run(1);

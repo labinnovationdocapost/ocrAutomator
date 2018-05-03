@@ -205,7 +205,7 @@ fs::path Docapost::IA::Tesseract::MasterProcessingWorker::ConstructNewExifFilePa
 	fs::path new_path;
 
 	auto relative_path = fs::relative(path, mInput);
-	auto it = mOutputs.find(OutputFlags::Exif);
+	auto it = mOutputs.find(OutputFlags::Metadata);
 	if (it == mOutputs.end() || it->second == mInput)
 	{
 		return path;
@@ -227,20 +227,21 @@ bool Docapost::IA::Tesseract::MasterProcessingWorker::FileExist(fs::path path) c
 {
 	auto new_path = ConstructNewTextFilePath(path);
 
-	if (fs::exists(new_path))
-	{
-		return true;
-	}
-	return false;
+	return fs::exists(new_path);
 }
 
-bool Docapost::IA::Tesseract::MasterProcessingWorker::MetadataExist(fs::path path) const
+bool Docapost::IA::Tesseract::MasterProcessingWorker::MetadataExist(fs::path path, bool fast) const
 {
 	auto new_path = ConstructNewExifFilePath(path);
 
 	if (!fs::exists(new_path))
 	{
 		return false;
+	}
+
+	if (fast)
+	{
+		return fs::exists(new_path);
 	}
 
 	try
@@ -343,9 +344,9 @@ int Docapost::IA::Tesseract::MasterProcessingWorker::AddPdfFile(bool resume, fs:
 				toProcess = toProcess || !FileExist(output_file);
 			}
 
-			if (mOutputTypes & OutputFlags::Exif)
+			if (mOutputTypes & OutputFlags::Metadata)
 			{
-				toProcess = toProcess || !MetadataExist(output_file);
+				toProcess = toProcess || !MetadataExist(output_file, mOutputTypes & OutputFlags::FastScan);
 			}
 
 			if (!toProcess)
@@ -406,9 +407,9 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::AddImageFile(bool resume, 
 			toProcess = toProcess || !FileExist(path);
 		}
 
-		if (mOutputTypes & OutputFlags::Exif)
+		if (mOutputTypes & OutputFlags::Metadata)
 		{
-			toProcess = toProcess || !MetadataExist(path);
+			toProcess = toProcess || !MetadataExist(path, false);
 		}
 
 		if (!toProcess)
@@ -589,7 +590,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 		}
 	}
 
-	if (mOutputTypes & OutputFlags::MemoryImage || mOutputTypes & OutputFlags::Exif)
+	if (mOutputTypes & OutputFlags::MemoryImage || mOutputTypes & OutputFlags::Metadata)
 	{
 		Exiv2::ExifData exifData;
 
@@ -675,12 +676,12 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::CreateOutput(MasterFileSta
 		}
 	}
 
-	if (mOutputTypes & OutputFlags::Exif && std::find(_file->capability.begin(), _file->capability.end(), OutputFlags::Exif) != _file->capability.end())
+	if (mOutputTypes & OutputFlags::Metadata && std::find(_file->capability.begin(), _file->capability.end(), OutputFlags::Metadata) != _file->capability.end())
 	{
 		if (MasterLocalFileStatus* file = dynamic_cast<MasterLocalFileStatus*>(_file))
 		{
 			fs::path new_path = ConstructNewExifFilePath(file->new_name);
-			auto it = mOutputs.find(OutputFlags::Exif);
+			auto it = mOutputs.find(OutputFlags::Metadata);
 			if (it != mOutputs.end() && it->second != mInput)
 			{
 				fs::create_directories(new_path.parent_path());
@@ -780,7 +781,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::ThreadLoop(int id)
 
 			if (file->abandoned)
 			{
-				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Exclude file "<< file->name << ":" << file->filePosition;
+				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Exclude file " << file->name << ":" << file->filePosition;
 				Log::WriteFileToExclude(file);
 				mDone++;
 				file->end = boost::posix_time::microsec_clock::local_time();

@@ -74,7 +74,7 @@ namespace Docapost {
 				 * \param path Chemin du document original
 				 * \return True si l'Exif existe
 				 */
-				bool MetadataExist(fs::path path)  const;
+				bool MetadataExist(fs::path path, bool fast)  const;
 				/**
 				 * \brief créer le chemin d'origine pour une page d'un document pdf
 				 * \param path chemin du pdf original

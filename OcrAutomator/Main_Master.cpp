@@ -43,24 +43,36 @@ void Master(int argc, char** argv, po::variables_map& vm)
 		}
 	}
 
+	Docapost::IA::Tesseract::OutputFlags types = Docapost::IA::Tesseract::OutputFlags::None;
 	bool resume = false;
 	if (vm.count("continue"))
 	{
+		auto options = vm["continue"].as<std::string>();
+		for(auto option : options)
+		{
+			if(option == 'f')
+			{
+				types |= Docapost::IA::Tesseract::OutputFlags::FastScan;
+			}
+			else
+			{
+				std::cout << "Invalid option : " << option << "\n";
+			}
+		}
 		resume = true;
 	}
 
 	boost::unordered_map <Docapost::IA::Tesseract::OutputFlags, fs::path> map;
-	Docapost::IA::Tesseract::OutputFlags types = Docapost::IA::Tesseract::OutputFlags::None;
 	if (vm.count("exif"))
 	{
-		types |= Docapost::IA::Tesseract::OutputFlags::Exif;
+		types |= Docapost::IA::Tesseract::OutputFlags::Metadata;
 		if (vm["exif"].as<std::string>().empty())
 		{
-			map[Docapost::IA::Tesseract::OutputFlags::Exif] = vm["output"].as<std::string>();
+			map[Docapost::IA::Tesseract::OutputFlags::Metadata] = vm["output"].as<std::string>();
 		}
 		else
 		{
-			map[Docapost::IA::Tesseract::OutputFlags::Exif] = vm["exif"].as<std::string>();
+			map[Docapost::IA::Tesseract::OutputFlags::Metadata] = vm["exif"].as<std::string>();
 		}
 	}
 

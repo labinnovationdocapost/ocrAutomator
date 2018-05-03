@@ -23,7 +23,7 @@ RTTR_REGISTRATION
 	(
 		value("None", Docapost::IA::Tesseract::OutputFlags::None),
 		value("Text", Docapost::IA::Tesseract::OutputFlags::Text),
-		value("Exif", Docapost::IA::Tesseract::OutputFlags::Exif),
+		value("Metadata", Docapost::IA::Tesseract::OutputFlags::Metadata),
 		value("Flattern", Docapost::IA::Tesseract::OutputFlags::Flattern),
 		value("MemoryText", Docapost::IA::Tesseract::OutputFlags::MemoryText),
 		value("MemoryImage", Docapost::IA::Tesseract::OutputFlags::MemoryImage)
