@@ -44,7 +44,7 @@ namespace Docapost {
 
 				void initLocks();
 
-				fz_context* mContext;
+				fz_context* mContext = nullptr;
 
 				struct WorkerParam
 				{

@@ -134,7 +134,7 @@ int _main(int argc, char* argv[])
 		//("oem", value<int>()->default_value(3)->value_name("NUM"), "Ocr Engine Mode")
 		//("lang,l", value <std::string>()->default_value("fra")->value_name("LANG"), "Langue utilise pour l'OCR")
 		("output,o", value<std::string>()->value_name("DOSSIER")->default_value(boost::filesystem::current_path().string()), "Dossier de sortie (defaut: dossier actuel)")
-		("continue,c", "le fichier (ou la page pour le PDF) n'est pas traite si le fichier text et/ou l'exif existe deja")
+		("continue,c", value<std::string>()->value_name("OPTIONS")->implicit_value(""), "le fichier (ou la page pour le PDF) n'est pas traite si le fichier text et/ou l'exif existe deja, options: fastscan [f], -cf ou --continue f")
 		("exif,e", value<std::string>()->value_name("DOSSIER")->implicit_value(""), "Copier l'image dans le fichier de sortie et écrire le resulat dans les Exif. Si non sépcifié le paramètre --output est utilisé")
 		("text,t", value<std::string>()->value_name("DOSSIER")->implicit_value(""), "Ecrire le resultat dans un fichier texte (.txt) dans le dossier de sortie. Si non sépcifié le paramètre --output est utilisé")
 		("prefixe,f", value<std::string>()->value_name("SEPARATOR")->implicit_value("__"), "Ajout le chemin relatif a [input] en prefixe du fichier.Defaut: __")
@@ -215,7 +215,7 @@ int _main(int argc, char* argv[])
 	if (vm.count("slave"))
 	{
 #ifdef __linux__
-		freopen("/var/log/TesseractAutomatorStdErr_Slave.log", "w", stderr);
+		freopen("OcrAutomatorLog/StdErr_Slave.log", "w", stderr);
 #endif
 #ifdef _WIN32
 		freopen("TesseractAutomatorStdErr_Master.log", "w", stderr);
@@ -225,7 +225,7 @@ int _main(int argc, char* argv[])
 	else
 	{
 #ifdef __linux__
-		freopen("/var/log/TesseractAutomatorStdErr_Master.log", "w", stderr);
+		freopen("OcrAutomatorLog/StdErr_Master.log", "w", stderr);
 #endif
 #ifdef _WIN32
 		freopen("TesseractAutomatorStdErr_Master.log", "w", stderr);

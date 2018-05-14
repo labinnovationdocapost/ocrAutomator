@@ -11,6 +11,7 @@ namespace Docapost {
 				std::vector<char>* mBuffer;
 			public:
 				VectorMemoryFileBuffer(std::vector<char>*);
+				VectorMemoryFileBuffer(int size);
 				unsigned char* data() override;
 				int len() override;
 				std::vector<char>* Buffer();

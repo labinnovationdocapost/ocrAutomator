@@ -1,12 +1,12 @@
 #pragma once
 
 #include <string>
-#include <ncurses.h>
 #include <vector>
 #include "Slave/SlaveFileStatus.h"
 using std::string;
 #include "Slave/SlaveProcessingWorker.h"
 #include "Base/FileSum.h"
+#include <ncurses.h>
 
 class SlaveDisplay
 {

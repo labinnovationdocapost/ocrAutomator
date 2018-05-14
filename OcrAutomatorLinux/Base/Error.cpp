@@ -37,6 +37,9 @@ extern Docapost::IA::Tesseract::SlaveProcessingWorker* workerS;
 
 #define GET_EXCEPTION_NAME std::current_exception().__cxa_exception_type()->name()
 
+std::mutex Log::mFileExcludesMutex;
+std::unique_ptr<std::ofstream> Log::mFileExcludes;
+
 BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", boost::log::trivial::severity_level)
 BOOST_LOG_ATTRIBUTE_KEYWORD(tag_attr, "Tag", std::string)
 BOOST_LOG_ATTRIBUTE_KEYWORD(timestamp, "Timestamp",
@@ -61,7 +64,6 @@ void formatter(logging::record_view const& rec, logging::formatting_ostream& str
 	strm << rec[expr::smessage];
 }
 
-#define LOG_FOLDER "OcrAutomatorLog/"
 void Log::InitLogger()
 {
 	logging::add_common_attributes();
@@ -104,7 +106,7 @@ void segfault_action(int sig, siginfo_t *info, void *secret)
 	int i, trace_size = 0;
 	ucontext_t *uc = (ucontext_t *)secret;
 
-	auto file = fopen("/var/log/OcrAutomatorLog.log", "w");
+	auto file = fopen(LOG_ERROR_File, "w");
 
 	/* Do something useful with siginfo_t */
 	if (sig == SIGSEGV)
@@ -120,7 +122,7 @@ void segfault_action(int sig, siginfo_t *info, void *secret)
 		fprintf(file, "Got signal %d\n", sig);
 	}
 
-	std::cout << "Segfault happened view /var/log/OcrAutomatorLog.log for more details" << std::endl << std::flush;
+	std::cout << "Segfault happened view " << LOG_ERROR_File << " for more details" << std::endl << std::flush;
 
 	trace_size = backtrace(trace, 16);
 	/* overwrite sigaction with caller's address */
@@ -133,6 +135,7 @@ void segfault_action(int sig, siginfo_t *info, void *secret)
 	for (i = 1; i < trace_size; ++i)
 	{
 		fprintf(file, "[bt] %s\n", messages[i]);
+		fflush(file);
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "[bt] " << messages[i];
 
 		/* find first occurence of '(' or ' ' in message[i] and assume
@@ -143,20 +146,24 @@ void segfault_action(int sig, siginfo_t *info, void *secret)
 			&& messages[i][p] != 0)
 			++p;
 
+		fprintf(file, "[bt] %p | %.*s\n", trace[i], p, messages[i]);
+		fflush(file);
 		char syscom[512];
-		sprintf(syscom, "addr2line %p -e %.*s", trace[i], p, messages[i]);
+		sprintf(syscom, "addr2line %p -e /usr/bin/%.*s", trace[i], p, messages[i]);
 		//last parameter is the filename of the symbol
 		FILE* ptr;
 		char buf[BUFSIZ];
 
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << syscom;
 		fprintf(file, "%s\n", syscom);
+		fflush(file);
 		if ((ptr = popen(syscom, "r")) != NULL) {
 			while (fgets(buf, BUFSIZ, ptr) != NULL)
 			{
 
 				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << buf;
 				fprintf(file, "%s", buf);
+				fflush(file);
 			}
 			pclose(ptr);
 		}
@@ -166,8 +173,12 @@ void segfault_action(int sig, siginfo_t *info, void *secret)
 	exit(0);
 }
 
+bool isStopping = false;
 void segint_action(int sig, siginfo_t *info, void *secret)
 {
+	if(isStopping == true)
+		exit(0);
+	isStopping = true;
 	if (display != nullptr)
 		display->terminated(true);
 	else if (workerM != nullptr)
@@ -243,7 +254,7 @@ void terminated()
 	catch (...)
 	{
 		std::string n = eptr.__cxa_exception_type()->name();
-		std::cout << "Exception " << util_demangle(__cxxabiv1::__cxa_current_exception_type()->name()) << " happened\n" << "View /var/log/OcrAutomatorException.log for more details" << std::endl << std::flush;
+		std::cout << "Exception " << util_demangle(__cxxabiv1::__cxa_current_exception_type()->name()) << " happened\n" << std::endl << std::flush;
 		std::cerr << "Unhandled exception " << n << std::endl;
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "[Unhandled exception]: " << n;
 	}

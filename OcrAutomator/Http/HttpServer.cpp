@@ -97,17 +97,14 @@ HttpServer::HttpServer(Docapost::IA::Tesseract::MasterProcessingWorker& tessR, s
 		svr.post ("/", [&](const httplib::Request& req, httplib::Response& res) {
 			CatchAllErrorSignals();
 			CatchAllExceptions();
-			//std::cout << "Recevied\n";
 			int i = 0;
 			for(auto& f : req.files)
 			{
-				//std::cout << "File\n";
 				auto file = boost::filesystem::path(f.second.filename);				
 				if(f.first == "image" && file.has_extension() && mTesseractRunner.extensions.count(file.extension().string()))
 				{
 					if(file.extension().string() == ".pdf")
 					{
-						//std::cout << "PDF\n";
 						char* img = new char[f.second.length];
 						memcpy(img, req.body.data() + f.second.offset, f.second.length);
 
@@ -128,22 +125,15 @@ HttpServer::HttpServer(Docapost::IA::Tesseract::MasterProcessingWorker& tessR, s
 					} 
 					else
 					{
-						//std::cout << "Image\n";
 						char* img = new char[f.second.length];
 						memcpy(img, req.body.data() + f.second.offset, f.second.length);
 
-						//std::cout << "copy OK\n";
 						boost::uuids::uuid uid;
-						//std::cout << /*"file : " << f.second.filename <<*/ "len : " << (img == nullptr) << "\n";
 						mTesseractRunner.AddImageFile(f.second.filename, img, f.second.length, uid);
-
-						//std::cout << "OCR OK\n";
-
+						
 						Request* re = new Request(1);
 						mRequests[uid] = re;
 
-
-						//std::cout << "Waiting ...\n";
 						re->Wait();
 
 						auto buff = re->GetOutput();
@@ -167,19 +157,3 @@ HttpServer::~HttpServer()
 	onEndProcessFile.disconnect();
 	svr.stop();
 }
-
-/*void HttpServer::handle_get(web::http::http_request message)
-{
-	ucout << message.to_string() << std::endl;
-	auto paths = web::http::uri::split_path(web::http::uri::decode(message.relative_uri().path()));
-
-	web::json::value obj;
-	obj[U("Total")] = web::json::value::number(mTesseractRunner.Total());
-	obj[U("Done")] = web::json::value::number(mTesseractRunner.Done());
-	obj[U("Remote")] = web::json::value::number(mTesseractRunner.TotalRemoteThreads());
-
-	message.reply(web::http::status_codes::OK, obj).then([=](pplx::task<void> t)
-	{
-
-	});
-}*/

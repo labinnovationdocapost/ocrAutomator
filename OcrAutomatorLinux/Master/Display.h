@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <ncurses.h>
 #include <vector>
 #include "Master/MasterFileStatus.h"
 #include "Base/FileSum.h"
@@ -9,6 +8,7 @@
 struct FileSum;
 using std::string;
 #include "Master/MasterProcessingWorker.h"
+#include <ncurses.h>
 
 class Display
 {

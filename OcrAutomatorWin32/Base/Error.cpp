@@ -36,6 +36,9 @@ extern Docapost::IA::Tesseract::MasterProcessingWorker* workerM;
 extern Docapost::IA::Tesseract::SlaveProcessingWorker* workerS;
 
 
+std::mutex Log::mFileExcludesMutex;
+std::unique_ptr<std::ofstream> Log::mFileExcludes;
+
 BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", boost::log::trivial::severity_level)
 BOOST_LOG_ATTRIBUTE_KEYWORD(tag_attr, "Tag", std::string)
 BOOST_LOG_ATTRIBUTE_KEYWORD(timestamp, "Timestamp",
@@ -59,12 +62,6 @@ void formatter(logging::record_view const& rec, logging::formatting_ostream& str
 	// Finally, put the record message to the stream
 	strm << rec[expr::smessage];
 }
-
-#ifdef WIN32
-#define LOG_FOLDER "log"
-#else
-#define LOG_FOLDER "OcrAutomator/log"
-#endif
 
 void Log::InitLogger()
 {

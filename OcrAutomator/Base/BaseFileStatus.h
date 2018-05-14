@@ -5,6 +5,7 @@
 #include <boost/uuid/uuid.hpp>
 #include "Buffer/MemoryFileBuffer.h"
 
+#define MAX_RETRY 3
 
 struct BaseFileStatus
 {
@@ -13,6 +14,8 @@ struct BaseFileStatus
 	boost::posix_time::ptime start;
 	boost::posix_time::ptime end;
 	int thread = -1;
+	int retry = 0;
+	bool abandoned = false;
 	boost::posix_time::ptime::time_duration_type ellapsed;
 	// Position of the file in it's conteneur
 	Docapost::IA::Tesseract::MemoryFileBuffer* buffer = nullptr;

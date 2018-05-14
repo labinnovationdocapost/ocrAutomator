@@ -85,27 +85,45 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::BaseOcrWithL
 	}
 	catch (std::runtime_error &e)
 	{
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cannot extract PDF file " << file->name << " error: " << e.what();
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::error) << "Cannot extract PDF file " << file->name << "|" << file->retry << "/" << MAX_RETRY << " | error: " << e.what();
+		if (file->retry < MAX_RETRY)
+		{
+			file->retry++;
+			AddFile(file);
+		}
+		else
+		{
+			Log::WriteFileToExclude(file);
+		}
 		std::lock_guard<std::mutex> lock(mCreationThreadMutex);
 		mCurrentPdfCreationThread--;
-		throw std::runtime_error("Cannot extract PDF file " + file->name + " error: " + e.what());
+		return nullptr;
 	}
 	catch (std::exception &e)
 	{
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Cannot extract PDF file " << file->name << " error: " << e.what();
+		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::error) << "Cannot extract PDF file " << file->name << "|" << file->retry << "/" << MAX_RETRY << " | error: " << e.what();
+		if (file->retry < MAX_RETRY)
+		{
+			file->retry++;
+			AddFile(file);
+		}
+		else
+		{
+			Log::WriteFileToExclude(file);
+		}
 		std::lock_guard<std::mutex> lock(mCreationThreadMutex);
 		mCurrentPdfCreationThread--;
-		throw std::runtime_error("Cannot extract PDF file " + file->name + " error: " + e.what());
+		return nullptr;
 	}
 
-	bool first = false;
 	for (auto s : *file->siblings)
 	{
 		if (s == nullptr) continue;
-		/*if(file->filePosition != s->filePosition)
-		{*/
+		if(s->buffer == nullptr)
+		{
+			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "Abandon: " << s->name << ":" << s->filePosition;
+		}
 		AddFile(s);
-		//}
 	}
 
 	std::lock_guard<std::mutex> lock(mCreationThreadMutex);
@@ -121,7 +139,6 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::Tesseract::BaseOcrWithL
 	}
 
 	std::lock_guard<std::mutex> lockThread(mCreationThreadMutex);
-	//BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Concurrent PDF Creation " << mCurrentPdfCreationThread;
 	if (mCurrentPdfCreationThread > mMaxPdfCreationThread)
 	{
 		// We put back the file on the list of file to process because we will not process it in this call

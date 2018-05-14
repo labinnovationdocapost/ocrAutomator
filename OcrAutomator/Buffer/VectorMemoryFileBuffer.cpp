@@ -4,6 +4,10 @@ Docapost::IA::Tesseract::VectorMemoryFileBuffer::VectorMemoryFileBuffer(std::vec
 {
 }
 
+Docapost::IA::Tesseract::VectorMemoryFileBuffer::VectorMemoryFileBuffer(int size) : mBuffer(new std::vector<char>(size))
+{
+}
+
 unsigned char* Docapost::IA::Tesseract::VectorMemoryFileBuffer::data()
 {
 	return (unsigned char*)mBuffer->data();

@@ -100,7 +100,7 @@ void Display::DrawHeader() const
 	}
 	else
 	{
-		mvwprintw(mTopWindow, 0, 0, "Input : %s | Exif Output: %s | Text Output : %s\n", mTesseractRunner.Input().c_str(), mTesseractRunner.Output()[Docapost::IA::Tesseract::OutputFlags::Exif].string().c_str(), mTesseractRunner.Output()[Docapost::IA::Tesseract::OutputFlags::Text].string().c_str());
+		mvwprintw(mTopWindow, 0, 0, "Input : %s | Exif Output: %s | Text Output : %s\n", mTesseractRunner.Input().c_str(), mTesseractRunner.Output()[Docapost::IA::Tesseract::OutputFlags::Metadata].string().c_str(), mTesseractRunner.Output()[Docapost::IA::Tesseract::OutputFlags::Text].string().c_str());
 	}
 	auto& ocrFactory = mTesseractRunner.ocrFactory();
 	auto tess = dynamic_cast<Docapost::IA::Tesseract::TesseractFactory*>(&ocrFactory);
