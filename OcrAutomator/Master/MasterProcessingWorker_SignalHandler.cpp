@@ -47,7 +47,6 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 
 			file->result = std::unique_ptr<std::vector<std::string>>(vector);
 
-			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << ns->Hostname() << "Writing Output " << file->name << "[" << file->filePosition << "]" << "\n";
 			CreateOutput(file);
 			auto isMerge = MergeResult(file);
 			mDone++;
@@ -57,8 +56,6 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 			RemoveFileSend(uuid);
 
 			FreeBuffers(file, mOutputTypes & OutputFlags::MemoryImage, mOutputTypes & OutputFlags::MemoryText, isMerge);
-
-			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << ns->Hostname() << "Clean " << file->name << "[" << file->filePosition << "]" << "\n";
 		}
 
 		std::lock_guard<std::mutex> lock(slave->ClientMutex);
@@ -66,7 +63,6 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::OnSlaveSynchroHandler(Netw
 		{
 			slave->Thread = new boost::thread(&MasterProcessingWorker::SendFilesToClient, this, ns);
 		}
-		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::debug) << "Synchro Ack";
 		ns->SendSynchro(mThreads.size(), mDone, mSkip, mTotal, mIsEnd, slave->PendingNotProcessed, boost::unordered_map<boost::uuids::uuid, Docapost::IA::Tesseract::MemoryFileBuffer*>());
 	}
 	catch (std::exception& e)
@@ -201,7 +197,6 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::SendFilesToClient(NetworkS
 			}
 			else
 			{
-				BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << std::this_thread::get_id() << " | Rollback PendingProcessed " << slave->PendingProcessed << "\n";
 				++slave->PendingProcessed;
 				std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 			}

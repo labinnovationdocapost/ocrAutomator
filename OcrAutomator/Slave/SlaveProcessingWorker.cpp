@@ -178,7 +178,6 @@ void Docapost::IA::Tesseract::SlaveProcessingWorker::ThreadLoop(int id)
 		ocr->InitEngine();
 		while (mAsioThread != nullptr)
 		{
-			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::trace) << "Thread ASIO: " << (mAsioThread != nullptr);
 			SlaveFileStatus * file = GetFile(); 
 			if (file == nullptr)
 			{
