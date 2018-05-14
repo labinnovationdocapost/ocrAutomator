@@ -76,7 +76,8 @@ void Log::InitLogger()
 	(
 		sinks::file::make_collector
 		(
-			keywords::target = LOG_FOLDER
+			keywords::target = LOG_FOLDER,
+			keywords::max_files = 20
 		)
 	);
 	backend->scan_for_files();

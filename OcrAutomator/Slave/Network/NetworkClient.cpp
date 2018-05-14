@@ -121,7 +121,6 @@ void NetworkClient::ReceiveData(int length)
 	{
 		if (!ec)
 		{
-			BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::debug) << "Data received";
 			Docapost::IA::Tesseract::Proto::Message_Master m;
 			m.ParseFromArray(buffer->data(), length);
 			if (m.has_status())
@@ -295,7 +294,6 @@ void NetworkClient::Connect(int port, ip::address_v4 ip, std::string version)
 
 void NetworkClient::SendDeclare(int thread, std::string version)
 {
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::debug) << "Send declare: " << version;
 	auto self(shared_from_this());
 	Docapost::IA::Tesseract::Proto::Declare* d = new Docapost::IA::Tesseract::Proto::Declare();
 	d->set_thread(thread);
@@ -324,8 +322,6 @@ void NetworkClient::SendDeclare(int thread, std::string version)
 
 void NetworkClient::SendSynchro(int thread, int threadId, int req, std::vector<SlaveFileStatus*> files)
 {
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::debug) << "Send synchro req: " << req;
-	BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::debug) << "Send synchro files:" << files.size();
 	auto self(shared_from_this());
 
 	Docapost::IA::Tesseract::Proto::Synchro_Slave* s = new Docapost::IA::Tesseract::Proto::Synchro_Slave{};
