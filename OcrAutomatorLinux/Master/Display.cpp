@@ -2,6 +2,7 @@
 #include "Ocr/Tesseract/TesseractFactory.h"
 #include <math.h>
 #include "Master/MasterLocalFileStatus.h"
+#include "Ocr/BaseOcrWithLoader.h"
 
 #define COLOR_GREY 8
 
@@ -337,6 +338,14 @@ void Display::Run()
 			else if (ch == '-')
 			{
 				mTesseractRunner.RemoveThread();
+			}
+			else if (ch == KEY_PPAGE)
+			{
+				Docapost::IA::Tesseract::BaseOcrWithLoader::AddPdfCreationThread(1);
+			}
+			else if (ch == KEY_NPAGE)
+			{
+				Docapost::IA::Tesseract::BaseOcrWithLoader::RemovePdfCreationThread(1);
 			}
 			else if (ch == 'v')
 			{

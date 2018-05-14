@@ -139,13 +139,17 @@ fs::path Docapost::IA::Tesseract::MasterProcessingWorker::ConstructNewTextFilePa
 
 bool Docapost::IA::Tesseract::MasterProcessingWorker::MergeResult(MasterFileStatus* mfile)
 {
-	// IF we do not require text writing, just do not merge
-	if (!(mOutputTypes & OutputFlags::Text))
-		return true;
 
 	MasterLocalFileStatus* file = dynamic_cast<MasterLocalFileStatus*>(mfile);
 	if (file == nullptr)
 		return true;
+
+	// IF we do not require text writing, just do not merge
+	if (!(mOutputTypes & OutputFlags::Text))
+	{
+		file->isCompleted = true;
+		return true;
+	}
 
 	if (file->filePosition < 0)
 	{
@@ -719,7 +723,7 @@ void Docapost::IA::Tesseract::MasterProcessingWorker::FreeBuffers(MasterFileStat
 				auto item = (*file->siblings)[i];
 				if (item != nullptr)
 				{
-					if (!item->isCompleted)
+					if (item->isCompleted)
 					{
 						item->result.reset();
 						break;

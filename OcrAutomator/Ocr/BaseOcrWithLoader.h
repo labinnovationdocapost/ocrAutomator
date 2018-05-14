@@ -8,7 +8,7 @@ namespace Docapost {
 			class BaseOcrWithLoader : public Ocr
 			{
 			protected:
-				static const int mMaxPdfCreationThread = 4;
+				static int mMaxPdfCreationThread;
 				static int mCurrentPdfCreationThread;
 				static std::mutex mCreationThreadMutex;
 
@@ -24,6 +24,16 @@ namespace Docapost {
 					: Ocr(format)
 				{
 				}
+
+				static void AddPdfCreationThread(int nb)
+				{
+					mMaxPdfCreationThread += nb;
+				}
+				static void RemovePdfCreationThread(int nb)
+				{
+					mMaxPdfCreationThread -= nb;
+				}
+
 
 				/**
 				* \brief
