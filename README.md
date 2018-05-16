@@ -19,20 +19,27 @@ Le projet a été testé sur Visual Studio (Windows) et GCC (linux/Ubuntu 16.04)
 - Tesseract 4.00.00
 - Leptonica 1.74
 
-## Configuration pour compiler un ELF (Linux)
-- Installer le package Tesseract 4.0 LSTM : https://launchpad.net/~alex-p/+archive/ubuntu/tesseract-ocr
-- Installer les packages libtesseract-dev, tesseract-ocr-fra, libleptonica-dev, libncurses5-dev, libexiv2-dev, libmagick++-dev, libprotobuf-dev et libarchive `sudo apt install libtesseract-dev libtesseract-ocr-fra libleptonica-dev libncurses5-dev libexiv2-dev libmagick++-dev libprotobuf-dev libarchive-dev`
-- Télécharger Boost : (https://dl.bintray.com/boostorg/release/)
-	- puis suivre la procédure : (http://www.boost.org/doc/libs/1_66_0/more/getting_started/unix-variants.html)
-	- si vous souhaitez utiliser les lib static de Boost, enlevez les .so générés précédemment
-- Télécharger MuPDF: `wget https://mupdf.com/downloads/mupdf-1.12.0-source.tar.gz -o mupdf-1.12.0-source.tar.gz`
-	- puis suivre la procédure : (https://mupdf.com/docs/building.html)
-- Télécharger RTTR : `wget http://www.rttr.org/releases/rttr-0.9.5-src.tar.gz -o rttr-0.9.5-src.tar.gz` puis extraire avec `tar -xf /path/to/rttr-0.9.5-src.tar.gz`.
-	- puis suivre la procédure : (http://www.rttr.org/doc/master/building_install_page.html)
-	- pour compiler une lib static : ```cmake -DBUILD_STATIC=ON```
-	- copier le contenu du dossier ```install``` dans ```/user/local``` (pincipalement ```lib``` et ```include```)
-- Télécharger RapidJson: `wget https://github.com/Tencent/rapidjson/archive/v1.1.0.zip -o rapidjson-1.1.0.tar.gz` puis extraire avec `tar -xf /path/to/rapidjson-1.1.0.tar.gz`.
-	- suivez la procédure : https://github.com/Tencent/rapidjson (```cmake .; make install```)
+## COnfigure and compile an ELF (Linux)
+- Install package Tesseract 4.0 LSTM : https://launchpad.net/~alex-p/+archive/ubuntu/tesseract-ocr
+- Install packages libtesseract-dev, tesseract-ocr-fra, libleptonica-dev, libncurses5-dev, libexiv2-dev, libmagick++-dev, libprotobuf-dev et libarchive `sudo apt install libtesseract-dev libtesseract-ocr-fra libleptonica-dev libncurses5-dev libexiv2-dev libmagick++-dev libprotobuf-dev libarchive-dev`
+- Download Boost : (https://dl.bintray.com/boostorg/release/)
+	- follow the procedure : (http://www.boost.org/doc/libs/1_66_0/more/getting_started/unix-variants.html)
+	- if you want to use static boost's static lib, remove .so files generated in /usr/local/lib
+- Download MuPDF: `wget https://mupdf.com/downloads/mupdf-1.12.0-source.tar.gz -o mupdf-1.12.0-source.tar.gz`
+    - on linux, up to version and 1.13 (higher version have not been tested), Modify source/fitz/colorspace.c line 3243 (https://bugs.ghostscript.com/show_bug.cgi?id=698927)
+      - \- if (srcs != dsts)
+      - \+ if (srcs != dsts && srcs->to_ccs != NULL)
+    - To avoid conflict with jpegturbo, Remove all file in thirdparty/libjpeg except 
+      - jinclude.h
+      - jmemsys.h
+	- follow the procedure : (https://mupdf.com/docs/building.html)
+- Download RTTR : `wget http://www.rttr.org/releases/rttr-0.9.5-src.tar.gz -o rttr-0.9.5-src.tar.gz` and extract with `tar -xf /path/to/rttr-0.9.5-src.tar.gz`.
+	- follow the procedure : (http://www.rttr.org/doc/master/building_install_page.html)
+	- Compile a static lib : ```cmake -DBUILD_STATIC=ON```
+	- copy the folder content ```install``` in ```/user/local``` (mainly ```lib``` and ```include```)
+- Download RapidJson: `wget https://github.com/Tencent/rapidjson/archive/v1.1.0.zip -o rapidjson-1.1.0.tar.gz` and extract with `tar -xf /path/to/rapidjson-1.1.0.tar.gz`.
+	- follow the procedure : https://github.com/Tencent/rapidjson (```cmake .; make install```)
+- Jpeg 
 
 ## Configuration pour créer un .deb et le deployer (Linux)
 - Copier le fichier Env/env-example.config vers Env/env.config et renseigner les informations de connexion

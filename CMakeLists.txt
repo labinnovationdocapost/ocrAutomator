@@ -210,6 +210,7 @@ else()
 	include_directories(${CURSES_INCLUDE_DIR})
 	add_executable(${PROJECT_NAME} ${LINUX} ${SHARED_HEADER} ${SHARED_CXX})
 	target_include_directories(${PROJECT_NAME} PUBLIC ${LINUX_ROOT})
+	target_compile_options(${PROJECT_NAME} PRIVATE -g)
 endif()
 
 target_compile_options(${PROJECT_NAME} PUBLIC "$<$<CONFIG:DEBUG>:${MY_DEBUG_OPTIONS}>")
