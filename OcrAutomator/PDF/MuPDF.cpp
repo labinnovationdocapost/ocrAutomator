@@ -18,6 +18,7 @@ const fz_matrix fz_identity = { 1, 0, 0, 1, 0, 0 };
 #endif
 
 std::mutex Docapost::IA::MuPDF::MuPDF::mStaticContextMutex;
+std::mutex Docapost::IA::MuPDF::MuPDF::mMutexes[FZ_LOCK_MAX];
 
 Docapost::IA::MuPDF::MuPDF::MuPDF()
 {

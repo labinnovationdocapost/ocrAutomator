@@ -32,7 +32,8 @@ namespace Docapost {
 
 				typedef void(*old_lock)(void*, int);
 
-				std::mutex mMutexes[FZ_LOCK_MAX];
+				// /!\ Mutex MUST be shared with all instance of mupdf to avoid problem with openjpeg and maybe other !!!
+				static std::mutex mMutexes[FZ_LOCK_MAX];
 				std::mutex mContextMutex;
 				
 				static std::mutex mStaticContextMutex;

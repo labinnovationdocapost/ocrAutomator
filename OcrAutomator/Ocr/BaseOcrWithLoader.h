@@ -33,6 +33,10 @@ namespace Docapost {
 				{
 					mMaxPdfCreationThread -= nb;
 				}
+				static int GetPdfCreationThread()
+				{
+					return mMaxPdfCreationThread;
+				}
 
 
 				/**

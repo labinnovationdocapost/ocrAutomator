@@ -3,6 +3,7 @@
 #include <math.h>
 #include "Master/MasterLocalFileStatus.h"
 #include "Ocr/BaseOcrWithLoader.h"
+#include "Base/Version.h"
 
 #define COLOR_GREY 8
 
@@ -108,9 +109,9 @@ void Display::DrawHeader() const
 	if (tess != nullptr)
 	{
 		if (mTesseractRunner.NbThreadToStop() > 0)
-			mvwprintw(mTopWindow, 1, 0, "Threads Local/Remote: %d (-%d)/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.NbThreadToStop(), mTesseractRunner.TotalRemoteThreads(), tess->Psm(), tess->Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
+			mvwprintw(mTopWindow, 1, 0, "Threads Local/Remote: %d (-%d)/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Pdf: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.NbThreadToStop(), mTesseractRunner.TotalRemoteThreads(), tess->Psm(), tess->Oem(), Docapost::IA::Tesseract::BaseOcrWithLoader::GetPdfCreationThread(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
 		else
-			mvwprintw(mTopWindow, 1, 0, "Threads Local/Remote: %d/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.TotalRemoteThreads(), tess->Psm(), tess->Oem(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
+			mvwprintw(mTopWindow, 1, 0, "Threads Local/Remote: %d/%d | Page Segmentation Mode: %d | Ocr Engine Mode: %d | Pdf: %d | Network: %s (%d)\n", mTesseractRunner.NbThreads(), mTesseractRunner.TotalRemoteThreads(), tess->Psm(), tess->Oem(), Docapost::IA::Tesseract::BaseOcrWithLoader::GetPdfCreationThread(), mTesseractRunner.NetworkEnable() ? "On" : "Off", mTesseractRunner.Port());
 	}
 
 	if (mIsEnd)
@@ -126,7 +127,7 @@ void Display::DrawHeader() const
 		mvwprintw(mTopWindow, 2, 0, "%s\n", cstring.str().c_str());
 	}
 
-	mvwprintw(mTopWindow, 3, 0, "Files Total: %d | Files Skip: %d | Mode: %d | Tesseract: %s\n", mTesseractRunner.Total(), mTesseractRunner.Skip(), mTesseractRunner.OutputTypes(), TESSERACT_VERSION_STR);
+	mvwprintw(mTopWindow, 3, 0, "Files Total: %d | Files Skip: %d | Mode: %d | Tesseract: %s | Software: %s\n", mTesseractRunner.Total(), mTesseractRunner.Skip(), mTesseractRunner.OutputTypes(), TESSERACT_VERSION_STR, VERSION);
 	wrefresh(mTopWindow);
 }
 
