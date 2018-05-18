@@ -327,6 +327,7 @@ int Docapost::IA::Tesseract::MasterProcessingWorker::AddPdfFile(bool resume, fs:
 	catch (std::runtime_error& err)
 	{
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::warning) << "cannot read pdf: " << path << "\nReason: " << err.what();
+		return 0;
 	}
 
 	std::mutex* mutex_siblings = new std::mutex();
