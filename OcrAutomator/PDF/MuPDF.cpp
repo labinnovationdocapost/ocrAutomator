@@ -315,7 +315,6 @@ void Docapost::IA::MuPDF::MuPDF::Worker(WorkerParam wp, MasterFileStatus* file)
 	fz_catch(local_ctx)
 	{
 		auto msg = fz_caught_message(mContext);
-		fz_drop_pixmap(local_ctx, wp.pixmap);
 		BOOST_LOG_WITH_LINE(Log::CommonLogger, boost::log::trivial::error) << "cannot draw pages " <<wp.pageNumber << ": " << msg;
 		fz_drop_context(local_ctx);
 		fz_drop_pixmap(mContext, wp.pixmap);
@@ -353,6 +352,8 @@ Docapost::IA::Tesseract::MemoryFileBuffer* Docapost::IA::MuPDF::MuPDF::WriteToJP
 	long unsigned int _jpegSize = 0;
 	unsigned char* _compressedImage = nullptr;
 	tjhandle _jpegCompressor = tjInitCompress();
+	putenv("TJ_PROGRESSIVE=1");
+	putenv("TJ_OPTIMIZE=1");
 	tjCompress2(_jpegCompressor, wp.pixmap->samples, wp.area.x1, 0, wp.area.y1, TJPF_RGB,
 		&_compressedImage, &_jpegSize, TJSAMP_444, quality,
 		TJFLAG_FASTDCT);
